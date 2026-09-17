@@ -156,6 +156,87 @@ let
 in
 copyFarm name
   [
+    {
+      name = "N-V-__8AAEhRag6gHL85MNqOxGFtJs5Lu9fK22BDYLMwOJs6";
+      path = fetchZigArtifact {
+        name = "boringssl";
+        url = "git+https://github.com/google/boringssl#7c1efd8d6ffb36a57feba44e8c73cf674801f3cb";
+        hash = "sha256-AWR4kyG7NTmp8ZVbF1St3RzoVsfpwBXjWHcCai3qx1Q=";
+        unpack = true;
+      };
+    }
+    {
+      name = "N-V-__8AAEaRCwCsYb_rSsH72Pb6DNFQLSjdRzTFOVsJWcoB";
+      path = fetchZigArtifact {
+        name = "libdeflate";
+        url = "git+https://github.com/ebiggers/libdeflate#92e6a0db9fa848d742f9eb286c92afc60f2c3dda";
+        hash = "sha256-QVF2XL8Qu3mTszKKtx+8BExkTGkpMANXjkAe3XXPUJQ=";
+        unpack = true;
+      };
+    }
+    {
+      name = "libxev-0.0.0-86vtcwIRFADbH4hk-EjROXxlrKIRPQdA41XiTSytYO-F";
+      path = fetchZigArtifact {
+        name = "libxev";
+        url = "git+https://github.com/mitchellh/libxev#9ce8e8e6ff89e583258a7f8e7adeeeaeae8611bf";
+        hash = "sha256-fOU1oxIxfoEgoLuWz7fVX6M+zmqpo7gqZObWiH/aDE0=";
+        unpack = true;
+      };
+    }
+    {
+      name = "N-V-__8AADNAVQBZXGMh1JSQZTQy_atNLBkNpWHtvEykxldT";
+      path = fetchZigArtifact {
+        name = "lshpack";
+        url = "git+https://github.com/litespeedtech/ls-hpack#cf0f70dd10b352194c97448eb5d00b4aa484f531";
+        hash = "sha256-ffNVUXDK76tBx+4j5otg3zji1s1VF5t0YsGpgK7xzis=";
+        unpack = true;
+      };
+    }
+    {
+      name = "N-V-__8AANUVVwDVcoOf9vCuxr9NUBhMvdV-XuREQFIxja8H";
+      path = fetchZigArtifact {
+        name = "lsqpack";
+        url = "git+https://github.com/litespeedtech/ls-qpack#91567706c41c0d97ab8dc576873ecd472d7869fa";
+        hash = "sha256-kbwtvlEmWBA+qUUwYhpZuh5rvNxBum30d6RQDbAF5AM=";
+        unpack = true;
+      };
+    }
+    {
+      name = "N-V-__8AAEX0ZgBgVniQX-qATrDP4ov_8tG_hi3LzhSAHPX-";
+      path = fetchZigArtifact {
+        name = "lsquic";
+        url = "git+https://github.com/litespeedtech/lsquic#19547405c24f60c4537478d38f4214e990be1f95";
+        hash = "sha256-vOlglXcMRTsnnSvYuwzqUVBSfsykzJ+I4UkRRa1bz5w=";
+        unpack = true;
+      };
+    }
+    {
+      name = "napi_zig-0.2.0-XRkY0Y8XAgBr17lGjp5nFI-CYpmjGManq9S4TkaY-D5g";
+      path = fetchZigArtifact {
+        name = "napi_zig";
+        url = "git+https://github.com/yuku-toolchain/napi-zig?ref=v0.2.8#253f5a92b1c0c70ad13a6583993a9befb88d1116";
+        hash = "sha256-lf+lWjEjPDGepJeIxFilHSvxnfmsJODHC4q20s79G2U=";
+        unpack = true;
+      };
+    }
+    {
+      name = "uWebZockets-1.0.9-SD3SPF9JEwDvstGyJZhrNJEU3QzznQCa8SoC36mw1JdN";
+      path = fetchZigArtifact {
+        name = "uWebZockets";
+        url = "git+https://github.com/farbenbuilds/uWebZockets?ref=v1.0.9#4ed1a9ac92e1d533a6558a659b08ca4f4a9fac46";
+        hash = "sha256-lt+tkYcIdu53T6bl6aBeWhdRfSNuf5GPcC2ct9/9edw=";
+        unpack = true;
+      };
+    }
+    {
+      name = "zslay-0.1.5-OB-IfAocAQAzPdN5Y-1_lmzsu2ZZEofMg3sD92yYrP22";
+      path = fetchZigArtifact {
+        name = "zslay";
+        url = "https://github.com/farbenbuilds/zslay/archive/refs/tags/v0.1.5.tar.gz";
+        hash = "sha256-H9tyvg383wAgSEiHLIDr2mEcxhLTJVKOek0V7GeuHQQ=";
+        unpack = true;
+      };
+    }
   ]
   [
   ]
