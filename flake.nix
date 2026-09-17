@@ -37,6 +37,12 @@
         # zon2nix does not publish packages for every supported Darwin system.
         zon2nixPackage = (inputs.zon2nix.packages.${system} or {}).zon2nix or null;
 
+        pnpm = pkgs.callPackage ./nix/pnpm.nix {};
+        pnpmMusl =
+          if isLinux
+          then pkgsMusl.callPackage ./nix/pnpm.nix {}
+          else null;
+
         hostPackages = [
           zig
           pkgs.zls
@@ -44,7 +50,7 @@
           pkgs.typescript-language-server
         ];
 
-        mkDevShell = packagePkgs: let
+        mkDevShell = packagePkgs: pnpmPackage: let
           supportsZon2nix =
             zon2nixPackage
             != null
@@ -56,7 +62,7 @@
               hostPackages
               ++ [
                 packagePkgs.nodejs
-                packagePkgs.pnpm
+                pnpmPackage
                 packagePkgs.zlib
               ]
               ++ lib.optional supportsZon2nix zon2nixPackage;
@@ -66,10 +72,10 @@
 
         devShells =
           {
-            default = mkDevShell pkgs;
+            default = mkDevShell pkgs pnpm;
           }
           // lib.optionalAttrs isLinux {
-            musl = mkDevShell pkgsMusl;
+            musl = mkDevShell pkgsMusl pnpmMusl;
           };
 
         checks.format =
