@@ -36,7 +36,7 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | All hooks | `pre-commit run --all-files` |
 | Single test | `pnpm exec vitest run tests/index.test.ts -t 'fn'` |
 | Typecheck | `pnpm typecheck` |
-| Zig formatting | `zig fmt --check src-zig` |
+| Zig formatting | `zig fmt --check --exclude src-zig/zig-pkg src-zig` |
 | Version bump | `pnpm release` |
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
