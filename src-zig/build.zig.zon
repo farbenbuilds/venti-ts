@@ -3,7 +3,19 @@
     .version = "0.0.0",
     .fingerprint = 0x813c66670d3a1e3e, // Changing this has security and trust implications.
     .minimum_zig_version = "0.16.0",
-    .dependencies = .{},
+    .dependencies = .{
+        // farbenbuilds/uWebZockets
+        .uWebZockets = .{
+            .url = "git+https://github.com/farbenbuilds/uWebZockets?ref=v1.0.9#4ed1a9ac92e1d533a6558a659b08ca4f4a9fac46",
+            .hash = "uWebZockets-1.0.9-SD3SPF9JEwDvstGyJZhrNJEU3QzznQCa8SoC36mw1JdN",
+        },
+
+        // yuku-toolchain/napi-zig
+        .napi_zig = .{
+            .url = "git+https://github.com/yuku-toolchain/napi-zig?ref=v0.2.8#253f5a92b1c0c70ad13a6583993a9befb88d1116",
+            .hash = "napi_zig-0.2.0-XRkY0Y8XAgBr17lGjp5nFI-CYpmjGManq9S4TkaY-D5g",
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",
