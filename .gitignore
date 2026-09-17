@@ -1,0 +1,31 @@
+# nix/direnv
+.direnv/
+.envrc.cache
+.envrc.local
+
+# zig
+.zig-cache/
+zig-out/
+zig-cache/
+zig-pkg/
+
+# node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# build artifacts
+*.o
+*.a
+*.so
+*.node
+result
+result-*
+tests/autobahn/reports/
+
+# os / editors
+.DS_Store
+.vscode/
+*.swp
+.cache/
