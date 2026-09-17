@@ -3,30 +3,29 @@
 ## Supported versions
 
 Security fixes apply to the current development revision and the latest
-`1.0.x` patch release. Older snapshots and unsupported raw transport internals
-do not receive backports.
+published release. Older snapshots and unreleased local builds do not receive
+backports.
 
 | Version | Supported |
 | --- | --- |
 | Current development revision | Yes |
-| Latest `1.0.x` release | Yes |
+| Latest published release | Yes |
 | Older tagged releases | No |
-| Earlier snapshots | No |
 
 ## Reporting a vulnerability
 
-Do not open a public issue, pull request, discussion, or Autobahn report that
-contains an undisclosed vulnerability.
+Do not open a public issue, pull request, or discussion that contains an
+undisclosed vulnerability.
 
 Send a private report to
 [trananhquan1009@gmail.com](mailto:trananhquan1009@gmail.com) or
 [noah1109.tran@gmail.com](mailto:noah1109.tran@gmail.com). Include:
 
-- the affected revision and target platform;
-- a minimal reproducer or packet sequence;
+- the affected revision, Node.js version, and target platform;
+- a minimal reproducer, packet sequence, or frame hex dump;
 - expected and observed behavior;
 - impact and preconditions;
-- logs or sanitizer output with secrets removed; and
+- logs with secrets removed; and
 - any suggested mitigation.
 
 The maintainers will acknowledge the report, reproduce and assess it, prepare a
@@ -34,84 +33,84 @@ fix and regression test, and coordinate disclosure. Response time depends on
 severity and maintainer availability; no fixed service-level agreement is
 offered.
 
+## Threat model
+
+The application embedding venti-ts is trusted. Network peers are untrusted. The
+attacker-controlled surface is the same as a raw WebSocket server:
+
+- the HTTP upgrade request, including headers, extensions, and path;
+- every WebSocket frame, including fragmentation, control frames, masking keys,
+  and claimed payload lengths;
+- compressed payloads when per-message deflate is negotiated;
+- connection churn, idle peers, and traffic volume.
+
+Application code passing options to the constructors is trusted. Config values
+are still validated explicitly, because accidental misconfiguration should
+produce a clear error rather than undefined engine behavior.
+
 ## Security boundaries
 
-The live network surface is HTTP/1.1, bounded HTTP/2, RFC 6455 WebSockets,
-RFC 7692 per-message deflate, HTTPS, and bounded HTTP/3 request/response
-routing. HTTP/2 accepts plaintext prior knowledge or TLS ALPN and caps each
-connection at eight streams. Raw QUIC engine, stream, packet, and QPACK
-callbacks under `src/quic` are internal and are not a supported consumer
-interface.
+The Zig engine parses and frames all untrusted bytes. It never exposes engine
+slabs, pointers, or offsets to JavaScript. Inbound payloads are copied into
+Node-owned `Buffer` instances before a handler runs; outbound buffers are
+borrowed only for the duration of the native call and copied into the bounded
+outbound queue before it returns. These two rules are the core memory-safety
+contract at the FFI boundary, and tests assert them.
 
-`http3_extensions` and `webtransport` provide bounded validators and wire
-helpers. They are not connected to the live lsquic listener, which rejects
-extended CONNECT; they do not establish WebTransport, server push, or
-application-datagram support. RFC 10008 is the separate HTTP `QUERY` method
-supported by the router. Live transports reject QUERY requests without a
-syntactically valid `Content-Type` before the route handler runs.
+Every native handle carries a generation counter. A handle used after close, or
+after its slot is reused, resolves to a typed error. Completion callbacks latch
+terminal state before dispatch, so `close` fires exactly once even under
+teardown races.
 
-Deployments must set connection, WebSocket message, write-queue, and HTTP/3
-response capacities appropriate for their traffic, select an appropriate idle
-timeout, and apply normal operating-system resource limits. The default idle
-timeout is 120 seconds; `ConfiguredAppWithTimeout` can change it or disable
-idle sweeping with zero. HTTP/3 additionally bounds decoded headers, request
-bodies, packet buffers, connections, and active streams.
+The public surface deliberately excludes features that would widen the attack
+surface without a compatibility requirement:
 
-Parameterized routing stores at most 16 borrowed captures per request and 64
-patterns per router. Global middleware is capped at 32 entries. Asynchronous
-response tokens are generation-checked and one-shot; they are confined to the
-owning event loop, invalidate on transport reuse, and must not be completed
-from another thread without first marshalling work to that loop.
+- no synchronous extension callbacks that run arbitrary JavaScript from an
+  engine thread;
+- no runtime code loading, `eval`, or `new Function`;
+- no remote artifact fetching. The native addon is resolved from the installed
+  package layout only.
 
-Per-message deflate is disabled by default. When enabled, negotiation requires
-client and server no-context-takeover, compressed input and output use separate
-caller-owned scratch slices, and decompression cannot exceed the configured
-message capacity. An 8-bit server compression window is declined because zlib
-cannot emit it reliably; incoming 8-bit client streams retain the same
-decompression bound.
+## Resource limits
 
-Request and WebSocket message slices are borrowed from fixed connection
-storage. Request and parameter slices remain valid until a synchronous handler
-returns or its asynchronous token completes; WebSocket message slices remain
-valid only for their callback. The application value itself must remain at a
-stable address after `listen` or `listen_udp`.
+Deployments must size the engine for their traffic and apply normal operating
+system limits such as file descriptors and memory caps. The compatibility layer
+maps `ws` options onto engine capacities:
 
-The C ABI in `include/uWebZockets.h` uses opaque handles and copied route paths,
-but returned `uwz_slice` values are still borrowed. Applications must destroy
-opaque handles explicitly and handle every nonzero `uwz_error`. Copy request
-fields and route parameters into caller-owned storage before a C callback
-returns if asynchronous work needs them. Copy async tokens, marshal completion
-to the owning event loop, and complete each generation at most once.
+- `maxPayload` bounds a single message. Oversized input closes the connection
+  with code `1009`; it does not allocate a fallback buffer.
+- Outbound queues are bounded. When a queue reaches its high-water mark, `send`
+  returns `false` and `bufferedAmount` reflects the queued bytes, matching `ws`
+  semantics. Producers that ignore backpressure cannot grow memory without
+  bound.
+- Idle connections are swept by a configurable timeout. Set an explicit value
+  appropriate for the deployment; disabling the sweep is permitted but shifts
+  full liveness responsibility to the application.
+- Per-message deflate is opt-in. Negotiation requires no-context-takeover, and
+  decompression is capped by the negotiated `maxPayload`, so a compressed
+  expansion bomb cannot exceed the configured message capacity.
 
-The project uses bounded buffers and protocol compliance tests to reduce risk,
-but these controls do not guarantee the absence of defects. Consumers should
-pin exact source or release hashes, review `THIRD_PARTY_NOTICES.md`, and test
-the library under their own workload before production deployment.
+## Dependency policy
 
-Application teardown is completion-driven: stop accepting new work, cancel and
-drain registered libxev operations, then release TLS, QUIC, event-loop, and slab
-storage. Consumers should call `deinit` through `defer` and must not copy or move
-an `App` after `listen` or `listen_udp` has registered callbacks.
+The published package has exactly two runtime dependencies: `napi-zig` and
+`uWebZockets`. Both are pinned exactly. The engine vendors BoringSSL, lsquic,
+zslay, libxev, libdeflate, and related components; their revisions and licenses
+are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Engine updates
+require a fresh native build, the full `ws` conformance suite, and the Autobahn
+gate before release.
 
-CI runs the centralized Zig and C ABI graph with ASan, UBSan, and leak
-detection on native Linux while instrumenting the pinned C/C++ dependencies
-and local C shim. A separate, mutually exclusive x86_64 Linux
-MemorySanitizer job rebuilds those C/C++ components with origin tracking and
-executes a focused dependency-boundary smoke. It does not claim MSan
-instrumentation of Zig code or full C ABI behavior. Google
-OSS-Fuzz/libFuzzer entrypoints exercise HTTP
-framing, WebSocket masking, and QUIC/WebTransport packet boundaries; local
-deterministic smoke seeds are retained. Autobahn, h1spec, and the pinned
-curl/ngtcp2 plus aioquic HTTP/3 gate add protocol coverage. Deployments should
-still perform workload-specific QUIC load testing.
+Do not add a runtime dependency for functionality the standard library or the
+engine already provides. Development tooling is not shipped and is excluded
+from the published tarball.
 
-Cross-platform support covers Linux, macOS, Windows (`x86_64-windows-gnu` /
-MinGW ABI), FreeBSD, NetBSD, OpenBSD, and DragonFlyBSD. The configured publish
-matrix covers Linux and macOS. A dedicated native Windows job compiles the
-complete ReleaseSafe test/ABI graph without executing it, and tagged
-releases include its static libraries. Windows runtime verification remains a
-Tier 2 deployment responsibility. The additional BSD targets share the build
-graph without dedicated runtime CI coverage.
+## Verification
+
+CI builds and executes the addon on Linux, macOS, and Windows runners. The
+compatibility suite runs the same scenarios against `ws` and venti-ts and
+compares observable behavior, and the Autobahn suite validates RFC 6455 framing
+with no exclusions. These controls reduce risk; they do not guarantee the
+absence of defects. Consumers should pin an exact version, review the shipped
+licenses, and load-test under their own workload before production deployment.
 
 ## Disclosure
 

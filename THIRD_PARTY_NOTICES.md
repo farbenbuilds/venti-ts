@@ -1,6 +1,20 @@
 # Third-Party Notices
 
-µWebZockets includes or links the following third-party software:
+venti-ts ships a prebuilt native addon. The addon statically links the
+µWebZockets engine and its vendored dependencies, so their license texts are
+included in each published platform artifact.
+
+## Runtime components
+
+| Component | Version or revision | License |
+| --- | --- | --- |
+| [uWebZockets](https://github.com/farbenbuilds/uWebZockets) | pinned in `zig/build.zig.zon` | MIT |
+| [napi-zig](https://github.com/yuku-toolchain/napi-zig) | pinned in `zig/build.zig.zon` | MIT |
+
+## Components vendored by the engine
+
+These are pinned by the uWebZockets revision selected in `zig/build.zig.zon`.
+The listed versions correspond to the engine's current pinned manifest.
 
 | Component | Version or revision | License |
 | --- | --- | --- |
@@ -12,19 +26,41 @@
 | ls-qpack | 2.7.0 | MIT |
 | ls-hpack | 2.3.5 | MIT |
 | libdeflate | 1.26 | MIT |
-| zlib | system-provided | zlib License |
-| h1spec | f0a5650a20c575fbea0f7179a3a9cfa50f20ba6e | MIT |
+| zlib | provided by the target toolchain | zlib License |
 
-The zslay and libxev license texts are in the licenses directory. C/C++ sources
-are selected by immutable Zig package hashes; the repository's submodules are
-retained for auditability. Binary release archives copy every license needed by
-the included static libraries into `licenses/vendor`, including Fiat Crypto's
-license and author attribution. zlib is linked from the
-target toolchain and is not copied into release archives; downstream
-applications must satisfy its license and linkage terms.
+BoringSSL is distributed under an ISC-style license with additional component
+licenses. lsquic bundles third-party code with its own notices. The complete
+license texts are copied into `licenses/vendor` inside each published native
+artifact and into the npm tarball. zlib is linked from the target toolchain
+rather than vendored; downstream consumers remain responsible for its license
+and linkage terms.
 
-The build applies `patches/lsquic_h3_message_error.patch` to generated lsquic
-sources so positive header-callback results remain `H3_MESSAGE_ERROR` stream
-errors as documented by the pinned API. The h1spec CI job applies
-`patches/h1spec_deno_cleanup.patch` only to close and unreference completed test
-connections. Both upstream submodules remain unchanged.
+## Development-only tooling
+
+The following are development dependencies. They are not shipped in the
+published package and require no runtime attribution.
+
+| Component | License |
+| --- | --- |
+| oxlint | MIT |
+| oxfmt | MIT |
+| tsdown | MIT |
+| vitest | MIT |
+| TypeScript | Apache-2.0 |
+| bumpp | MIT |
+| @types/node | MIT |
+| Node.js | MIT |
+| pnpm | MIT |
+| Zig | MIT |
+| Nix | LGPL-2.1 |
+| ws (conformance baseline) | MIT |
+
+The `ws` package is installed as a development dependency and used to verify
+drop-in compatibility. No `ws` source is incorporated into venti-ts.
+
+## Maintenance
+
+Every dependency change updates the pinned revision in `zig/build.zig.zon`
+together with this file. Binary releases copy the license texts for all
+statically linked components; a release is not published while any shipped
+component lacks an attribution entry.

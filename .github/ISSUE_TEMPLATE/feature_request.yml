@@ -1,0 +1,59 @@
+name: Feature Request
+description: Suggest a compatibility surface, API enhancement, or engine capability for venti-ts
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature Request
+        Thank you for contributing to **venti-ts**.
+
+        *All features must respect the core constraints: `ws` compatibility, zero object-oriented code, zero runtime dependencies beyond `napi-zig` and `uWebZockets`, and bounded fixed-capacity hot paths.*
+  - type: input
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: A concise description of the capability you are proposing.
+      placeholder: E.g. Support the 'headers' option on the upgrade response.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this needed? Does it close a 'ws' compatibility gap, reduce allocations, or improve type safety?
+      placeholder: E.g. Applications that authenticate during the upgrade need to set response headers, and 'ws' supports this today.
+    validations:
+      required: true
+  - type: textarea
+    id: desired-solution
+    attributes:
+      label: Desired Solution
+      description: How should this be shaped in the TypeScript surface and, if needed, in the Zig engine? Note any effect on the type pipeline or fixed capacities.
+      placeholder: E.g. Accept 'headers' in the server options, validate entries in compat/options.ts, and pass a bounded list to the binding.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 'ws Compatibility Check'
+      description: How does 'ws' behave for this feature? Include the exact 'ws' API shape, defaults, and edge cases if you know them.
+      placeholder: E.g. ws treats duplicate header names by joining values; undefined values throw a TypeError.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Could this be implemented in the compatibility layer without changing the engine? Why is that not sufficient?
+      placeholder: E.g. A userland wrapper works but forces a second copy of every outbound message.
+    validations:
+      required: false
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: RFC links, memory-layout considerations, or measured data from a prototype.
+      placeholder: E.g. RFC 8441 extended CONNECT notes, or a proposed Struct of Arrays layout.
+    validations:
+      required: false

@@ -1,151 +1,138 @@
-# Contributing to µWebZockets
+# Contributing to venti-ts
 
-µWebZockets accepts focused changes that preserve bounded resource use,
-protocol correctness, and a shallow data-oriented design.
+venti-ts accepts focused changes that preserve `ws`-compatible behavior,
+end-to-end type safety, bounded memory use, and the anti-OOP architecture
+described in [CODING_CONVENTION.md](CODING_CONVENTION.md).
 
 Read [CODEBASE.md](CODEBASE.md), [CODING_CONVENTION.md](CODING_CONVENTION.md),
-and [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md) before changing the transport or
-protocol paths. Report security defects privately as described in
-[SECURITY.md](SECURITY.md).
+and [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md) before touching the binding, the
+compatibility layer, or the Zig engine. Report security defects privately as
+described in [SECURITY.md](SECURITY.md).
 
 ## Development environment
 
-Use the pinned Nix shell when possible. Clone recursively when working on the
-vendored h1spec compliance suite:
+The pinned Nix shell provides Node.js, pnpm, Zig 0.16.0, zls, and the
+TypeScript tooling:
 
 ```sh
-git clone --recurse-submodules https://github.com/farbenbuilds/uWebZockets.git
-cd uWebZockets
+git clone git@github.com:farbenbuilds/venti-ts.git
+cd venti-ts
 nix develop
+pnpm install
 ```
 
-The flake pins Nixpkgs 26.05. The non-Nix toolchain requires Zig 0.16.0, CMake,
-Ninja, patch, Go, Python, Perl, and zlib development files.
+On musl hosts, use `nix develop .#musl` (the checked-in `.envrc` selects it
+automatically under `direnv`). Without Nix, install Node.js 22 or newer, pnpm,
+and Zig 0.16.0 manually. No other system tooling is required for the
+TypeScript layer; the native binding is built by Zig.
+
+## Script contract
+
+Run every command through pnpm; do not invoke package binaries directly.
+
+| Command | Tool | Purpose | State on this branch |
+| --- | --- | --- | --- |
+| `pnpm install` | pnpm | Install development dependencies | Wired |
+| `pnpm dev` | tsdown | Rebuild the TypeScript bundle in watch mode | Wired |
+| `pnpm build` | tsdown | Bundle ESM output and declarations into `dist/` | Wired |
+| `pnpm test` | vitest | Unit, integration, and boundary tests | Wired |
+| `pnpm typecheck` | tsc / tsgo | Strict type check with no emit | Wired |
+| `pnpm lint` | oxlint | Lint the TypeScript sources | Planned |
+| `pnpm format` | oxfmt | Format TypeScript, JSON, and Markdown | Planned |
+| `pnpm build:binding` | zig build | Build the `napi-zig` addon | Planned |
+| `pnpm test:compat` | vitest | Run the `ws` behavioral conformance suite | Planned |
+| `pnpm bench` | node | Benchmark against `ws` on the same host | Planned |
+
+Until the binding lands, `pnpm build` and `pnpm test` exercise the TypeScript
+surface only. The `src/index.ts` and `tests/index.test.ts` placeholders exist
+to prove the wiring; replace them, do not extend them.
 
 ## Engineering requirements
 
-- Do not allocate in request parsing, frame parsing, masking, routing, or
-  network write callbacks. Allocate fixed application storage at startup.
-- Cap every peer-controlled length, count, queue, and subscription.
-- Prefer parallel arrays or compact slabs when a hot loop reads only a subset
-  of fields. Do not force Struct of Arrays onto small one-off records.
-- Keep parsing and validation functions pure where practical. Pass mutable I/O
-  state explicitly at the event-loop boundary.
-- Finish route registration before starting either listener; route arrays are
-  immutable once `listen` or `listen_udp` succeeds.
-- Keep route captures within the 16-slot request bound, parameter patterns
-  within the 64-route bound, and middleware within its 32-entry fixed array.
-- Treat asynchronous response tokens as event-loop-confined, exactly-once
-  borrows. Marshal cross-thread completion back to the owning loop and test
-  stale-token, double-completion, disconnect, and pipelining paths.
-- Use early returns and short error paths. Never silently swallow an error.
-- Use `snake_case` for project files, functions, and variables. Preserve raw C
-  identifiers only at the FFI boundary.
-- Keep comments concise and explain constraints or non-obvious tradeoffs.
-- Do not add emoji characters anywhere in the repository.
-- Put every ordinary Zig unit test under `src/tests/` and import it from
-  `src/tests/main.zig`. Production modules must not import the centralized test
-  root. The `src/tests/fuzz_main.zig` Smith corpus runs once in the ordinary
-  suite and for the requested iteration count under `zig build fuzz`.
-- Support cross-platform targets cleanly across Linux, macOS, Windows
-  (`x86_64-windows-gnu` / MinGW ABI), FreeBSD, NetBSD, OpenBSD, and
-  DragonFlyBSD. Ensure platform-specific I/O branches remain isolated to
-  transport abstractions (POSIX and Windows IOCP via `libxev`).
-- Submit dependency fixes to the upstream project rather than rewriting
-  vendored files without an auditable patch.
+- Zero object-oriented code. No classes, `this`, `extends`, or prototype
+  mutation. Use constructor-shaped factory functions that return explicit state
+  records, as described in [CODING_CONVENTION.md](CODING_CONVENTION.md).
+- Keep every source file near or below 150 lines. Split by responsibility at
+  the first sign of a second concern.
+- Use guard clauses and early returns. No nested conditionals where a `switch`
+  or an inverted guard is clearer.
+- Do not allocate on hot paths. Parsing, framing, masking, routing, and write
+  callbacks operate on caller-owned or engine-owned fixed storage.
+- Cap every peer-controlled length, count, and queue. Exhaustion produces a
+  typed error or backpressure, never unbounded growth.
+- Add no runtime dependencies beyond `napi-zig` and `uWebZockets`. Tooling
+  belongs in `devDependencies`.
+- Keep the public type surface declared once. Never hand-edit `.d.ts` output.
+- Copy peer-controlled data into Node-owned buffers before it can be retained
+  by JavaScript. Engine slabs never escape a native call.
+- Use `kebab-case` file names and `camelCase` identifiers in TypeScript;
+  `snake_case` files, functions, and variables with `PascalCase` types in Zig.
+- Update `.github/COMMIT_CONVENTION.md`-compliant commits and keep pull
+  requests scoped to one concern.
 
-## Local checks
+## Type safety requirements
 
-Run all relevant checks before opening a pull request:
+- `tsconfig.json` runs in `strict` mode. Do not weaken compiler options to land
+  a change.
+- Public option and event types must match the `ws` names and shapes. Where
+  `ws` types are ambiguous, document the decision in the pull request.
+- Use discriminated unions for message and state variants. Do not model
+  variants with optional-field soup or sentinel strings.
+- Numeric codes from the engine are mapped to exported `as const` unions before
+  they reach consumers.
 
-```sh
-zig fmt --check build.zig src examples tests fuzz
-sh scripts/check_conventions.sh
-sh scripts/check_release_version.sh
-zig build test --summary all
-zig build test -Dsanitize=true -Doptimize=ReleaseSafe --summary all
-zig build msan -Dmemory-sanitize=true -Doptimize=ReleaseSafe --summary all
-zig build test-compile -Doptimize=ReleaseSafe --summary all
-zig build fuzz --fuzz=100K -Doptimize=ReleaseSafe
-zig build oss-fuzz-objects -Doptimize=ReleaseSafe --summary all
-zig build oss-fuzz-smoke -Doptimize=ReleaseSafe --summary all
-zig build lib -Doptimize=ReleaseFast --summary all
-```
+## Testing requirements
 
-Sanitizer commands require native Linux; MemorySanitizer additionally requires
-x86_64 and cannot be combined with `-Dsanitize=true`. `nix develop` exports
-matching sanitizer, glibc, and dynamic-linker paths automatically. Non-Nix
-setups must
-pass `-Dsanitizer-lib-dir=/path/to/compiler/runtime/lib`. When that runtime
-uses a different glibc than the host, also pass matching
-`-Dsanitizer-libc-dir` and `-Dsanitizer-dynamic-linker` paths.
-
-On Windows, install `zlib:x64-mingw-static` with vcpkg and compile the
-ReleaseSafe test graph plus the ReleaseFast library build with
-`-Dtarget=x86_64-windows-gnu` and the installed prefix passed through
-`-Dzlib-prefix`.
-
-Changes to WebSocket parsing or I/O must also run the Autobahn target. Changes
-to HTTP parsing, dispatch, or response framing must run h1spec. Changes to
-HTTP/2 or HPACK must exercise the centralized malformed-frame, flow-control,
-Huffman, table-size, header-list, and pseudo-header tests. Changes to HTTP/3
-must compile `http3_server`, exercise centralized QPACK/framing tests, and run
-the pinned curl/ngtcp2 and aioquic cross-implementation gate. The exact CI
-commands and report gate are documented in [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md).
-
-Tests should use fixed caller-owned storage for hot paths. If the unit under
-test allocates, use `std.testing.allocator` or another leak-detecting allocator
-and prove all success and error paths release ownership.
-
-New external-byte parsers or framing transformations must have deterministic
-Smith coverage and, when they form a network trust boundary, an
-`LLVMFuzzerTestOneInput` target compatible with Google OSS-Fuzz. Add bounded
-seed corpora, dictionaries where grammar tokens help, and a smoke driver that
-runs without libFuzzer. FFI changes must preserve exact C layout checks, keep
-`include/uWebZockets.h` synchronized with implemented exports, and include
-malformed and capacity-exhaustion cases.
+- Every behavioral change ships with a vitest test. Bug fixes ship with a
+  regression test that fails before the fix.
+- Boundary changes must cover: retained inbound payloads, borrowed outbound
+  buffers, exactly-once `close`, stale handle access, and capacity exhaustion.
+- `ws` compatibility tests run the same scenario against both libraries and
+  compare observable behavior. Import the real `ws` package as a dev
+  dependency only; never ship it.
+- Protocol changes must run the RFC 6455 Autobahn suite through the CI target
+  described in [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md).
+- Zig unit tests use caller-owned fixed storage for hot paths. When the unit
+  under test allocates, use a leak-detecting allocator and prove every success
+  and error path releases ownership.
+- Performance work cites measured numbers from `pnpm bench` on a quiet host,
+  including the `ws` baseline from the same run. Estimates are labeled as
+  estimates.
 
 ## Pull requests
 
-- Explain the protocol, ownership, or performance invariant being changed.
-- Include regression tests for bugs and malformed-input tests for parsers.
-- Document API, limit, configuration, or compatibility changes.
-- Separate measured performance results from estimates.
-- Note breaking changes explicitly in the pull request and changelog.
+- Explain the compatibility, ownership, or performance invariant being changed.
+- Include the commands you ran and their results.
+- Separate measured performance results from expectations.
+- Note any deviation from `ws` behavior explicitly; silent divergence is a
+  defect.
 - Keep commits concise and follow
   [.github/COMMIT_CONVENTION.md](.github/COMMIT_CONVENTION.md).
+- Fill out [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md).
 
 ## Dependency updates
 
-For Zig dependencies, update all generated package views together:
+Runtime dependencies are pinned exactly and updated deliberately:
 
-- `build.zig.zon`
-- `build.zig.zon.json`
-- `build.zig.zon.nix`
-- `build.zig.zon.txt`
-
-Record the upstream version, immutable URL or revision, Zig package hash, Nix
-hash, license, and any API migration. Rebuild from an empty Zig/vendor cache so
-a stale artifact cannot hide a dependency problem.
-
-For C/C++ package sources, retain immutable commits and Zig package hashes,
-CMake target-based builds, Ninja execution, the Zig compiler wrappers,
-target-specific cache directories, and static-library outputs. Keep lsquic's
-ls-qpack and ls-hpack revisions synchronized with the pinned lsquic source. The
-`vendor/h1spec` submodule remains a compliance input rather than a packaged
-library dependency. Do not add global compiler or linker flags when
-target-local settings work.
+- Update the pinned revision in `zig/build.zig.zon` and the matching entry in
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) in the same change.
+- Rebuild the addon from a clean cache so a stale artifact cannot hide an ABI
+  or behavior change.
+- Run the full `ws` conformance suite plus Autobahn after every engine update.
+- Development dependencies follow the pnpm lockfile. Do not add a dependency
+  for a problem the standard library already solves.
 
 ## Releasing
 
-1. Update all versioned surfaces and run `sh scripts/check_release_version.sh`.
-2. Add a dated `CHANGELOG.md` section with breaking changes and limitations;
-   do not leave an `Unreleased` placeholder in a final release snapshot.
-3. Verify `THIRD_PARTY_NOTICES.md` and every packaged license.
-4. Pass local formatting, convention, test, and build checks.
-5. Pass ASan/UBSan/leak, MemorySanitizer, Smith fuzz, OSS-Fuzz object/smoke,
-   Autobahn, h1spec, and HTTP/3 cross-implementation checks on the release
+1. Bump the version with `pnpm release` (`bumpp`) and confirm all versioned
+   surfaces agree.
+2. Update `CHANGELOG.md` with a dated section that lists breaking changes and
+   known limitations. Do not leave an `Unreleased` heading in a release
    commit.
-6. Tag the final commit as `v<version>` and push the tag.
-7. Review all seven release archives and
-   `SHA256SUMS` before announcing the release.
+3. Verify [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) against the shipped
+   native artifacts.
+4. Pass lint, format, typecheck, unit, compatibility, and Autobahn checks on
+   the release commit.
+5. Build the native addon for every supported target in the CI publish matrix.
+6. Tag the commit as `v<version>`, publish with provenance, and review the
+   packed tarball before announcing.

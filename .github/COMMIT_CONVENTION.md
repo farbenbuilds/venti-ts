@@ -1,85 +1,108 @@
 # Git Commit Message Convention
 
-> This is adapted from [Angular's commit convention](https://github.com/conventional-changelog/conventional-changelog/tree/master/packages/conventional-changelog-angular).
+venti-ts follows the [Conventional Commits](https://www.conventionalcommits.org/)
+format, adapted from
+[Angular's commit convention](https://github.com/conventional-changelog/conventional-changelog/tree/master/packages/conventional-changelog-angular).
+The convention keeps the changelog and release notes mechanical.
 
-### Examples
+## Format
 
-Appears under "Features" header, pencil subheader:
+```text
+<type>(<scope>): <subject>
 
-```
-feat(pencil): add 'graphiteWidth' option
-```
+<body>
 
-Appears under "Bug Fixes" header, graphite subheader, with a link to issue #28:
-
-```
-fix(graphite): stop graphite breaking when width < 0.1
-
-Closes #28
+<footer>
 ```
 
-Appears under "Performance Improvements" header, and under "Breaking Changes" with the breaking change explanation:
+The header is mandatory. The scope is optional. The body and footer are
+optional, but any breaking change requires a footer.
 
+## Types
+
+| Type | Use for |
+| --- | --- |
+| `feat` | A new user-visible capability |
+| `fix` | A behavior fix, including `ws` compatibility corrections |
+| `perf` | A measured performance change |
+| `refactor` | A restructure with no behavior change |
+| `test` | Test additions or corrections |
+| `docs` | Documentation only |
+| `build` | Build graph, packaging, or native artifact changes |
+| `ci` | Workflow and pipeline changes |
+| `chore` | Maintenance that fits no other type |
+| `revert` | Reverts a previous commit |
+
+`feat`, `fix`, and `perf` appear in the changelog. Any commit containing
+`BREAKING CHANGE:` appears regardless of type.
+
+## Scopes
+
+Use the module or boundary being changed:
+
+- `compat` for the `ws`-compatible surface;
+- `napi` or `binding` for the native binding layer;
+- `types` for the public type surface;
+- `protocol` for pure helpers such as close codes and framing;
+- `engine` for Zig-side protocol work;
+- `build`, `deps`, `docs`, or `ci` for their respective areas.
+
+## Examples
+
+A compatibility fix that closes an issue:
+
+```text
+fix(compat): emit close exactly once during teardown races
+
+Closes #42
 ```
-perf(pencil): remove graphiteWidth option
 
-BREAKING CHANGE: The graphiteWidth option has been removed. The default graphite width of 10mm is always used for performance reason.
+A measured engine improvement:
+
+```text
+perf(engine): unmask payloads with SIMD before the scalar tail
+
+Reduces per-frame CPU time on 16 KiB messages by 38 percent, measured
+with pnpm bench on the pinned CI runner.
 ```
 
-The following commit and commit `667ecc1` do not appear in the changelog if they are under the same release. If not, the revert commit appears under the "Reverts" header.
+A dependency update:
 
+```text
+build(deps): pin uWebZockets to the 1.0.9 engine revision
+
+BREAKING CHANGE: the engine now rejects 8-bit server compression
+windows. Consumers relying on that negotiation must update.
 ```
-revert: feat(pencil): add 'graphiteWidth' option
+
+A revert:
+
+```text
+revert: feat(compat): add per-message deflate negotiation
 
 This reverts commit 667ecc1654a317a13331b17617d973392f415f02.
 ```
 
-### Commit Message Format
+## Subject rules
 
-A commit message consists of a **header**, **body** and **footer**. The header has a **type**, **scope** and **subject**:
+- Use the imperative, present tense: `add`, not `added` or `adds`.
+- Do not capitalize the first letter.
+- Do not end with a period.
+- Keep the subject under 72 characters.
 
-```
-<type>(<scope>): <subject>
-<BLANK LINE>
-<body>
-<BLANK LINE>
-<footer>
-```
+## Body rules
 
-The **header** is mandatory and the **scope** of the header is optional.
+- Use the imperative, present tense.
+- Explain the motivation and contrast the new behavior with the old.
+- State measured numbers for `perf` commits and name the benchmark used.
+- Reference issues and pull requests where useful.
 
-### Revert
+## Footer rules
 
-If the commit reverts a previous commit, it should begin with `revert: `, followed by the header of the reverted commit. In the body it should say: `This reverts commit <hash>.`, where the hash is the SHA of the commit being reverted.
+- Breaking changes start with `BREAKING CHANGE:` followed by a description of
+  the impact and required migration.
+- Closed issues use `Closes #<number>`.
+- Release-relevant limitations must be stated in the footer, not omitted.
 
-### Type
-
-If the prefix is `feat`, `fix` or `perf`, it will appear in the changelog. However if there is any [BREAKING CHANGE](#footer), the commit will always appear in the changelog.
-
-Other prefixes are up to your discretion. Suggested prefixes are `build`, `ci`, `docs`, `style`, `refactor`, and `test` for non-changelog related tasks.
-
-Details regarding contribution can be found in the [Contributing Guidelines](../CONTRIBUTE.md).
-
-### Scope
-
-The scope could be anything specifying the place of the commit change. For example `core`, `http`, `ws`, `crypto`, `router` etc...
-
-### Subject
-
-The subject contains a succinct description of the change:
-
-- use the imperative, present tense: "change" not "changed" nor "changes"
-- don't capitalize the first letter
-- no dot (.) at the end
-
-### Body
-
-Just as in the **subject**, use the imperative, present tense: "change" not "changed" nor "changes".
-The body should include the motivation for the change and contrast this with previous behavior.
-
-### Footer
-
-The footer should contain any information about **Breaking Changes** and is also the place to
-reference GitHub issues that this commit **Closes**.
-
-**Breaking Changes** should start with the word `BREAKING CHANGE:` with a space or two newlines. The rest of the commit message is then used for this.
+Details on the contribution process are in
+[CONTRIBUTING.md](../CONTRIBUTE.md).

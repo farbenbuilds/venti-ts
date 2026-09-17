@@ -1,0 +1,77 @@
+name: Bug Report
+description: Report a functional bug, compatibility divergence, or native build failure in venti-ts
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Thank you for reporting an issue in **venti-ts**.
+        Do not disclose memory-safety defects, parser vulnerabilities, or other security issues publicly. Follow `SECURITY.md` and email the maintainers privately.
+  - type: input
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: A concise description of the bug.
+      placeholder: E.g. shutdown() does not emit 'close' when called before the handshake completes.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this? Provide a minimal TypeScript snippet, a raw frame hex dump, or both.
+      placeholder: |
+        1. Start a venti-ts server...
+        2. Connect with a 'ws' client...
+        3. Send the following frame: `81 85 37 fa 21 3d 7f 9f 4d 51 58`
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen according to the RFC 6455 behavior or the 'ws' compatibility target?
+      placeholder: E.g. The same script against 'ws' emits 'close' with code 1000 and reason ''.
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: E.g. No 'close' event fires and the process stays alive.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment and Toolchain
+      description: venti-ts version or commit, Node.js version, pnpm version, OS, architecture, and how the addon was built or installed.
+      placeholder: E.g. commit 60b97b5, Node 22.14.0, pnpm 10, NixOS x86_64, addon built with 'pnpm build:binding'.
+    validations:
+      required: true
+  - type: input
+    id: ws-baseline
+    attributes:
+      label: 'ws Baseline'
+      description: The 'ws' version you are replacing and whether the same scenario works there.
+      placeholder: E.g. ws 8.18.0; the same scenario works as expected.
+    validations:
+      required: false
+  - type: textarea
+    id: logs-and-dumps
+    attributes:
+      label: Logs, Stack Traces, or Hex Dumps
+      description: Paste relevant output. Wrap logs in code blocks (```).
+      placeholder: E.g. native addon load error or crash trace...
+    validations:
+      required: false
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other context, such as backpressure settings, maxPayload values, or per-message deflate negotiation.
+      placeholder: E.g. Reproduces only with perMessageDeflate enabled...
+    validations:
+      required: false

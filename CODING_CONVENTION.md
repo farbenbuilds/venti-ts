@@ -1,48 +1,198 @@
-# µWebZockets Coding Conventions
+# venti-ts Coding Conventions
 
-These conventions adapt the spirit of the Linux Kernel Coding Style to Zig 0.16.0, focusing on pragmatism, performance, and readability.
+These conventions bind both languages in this repository. They adapt the spirit
+of the Linux kernel coding style to strict TypeScript and Zig 0.16.0, and they
+exist to keep the codebase pure functional, data-oriented, and predictable.
 
-## 1. General Rules
-- **No Emojis**: Emojis are strictly forbidden anywhere in the codebase, including documentation, comments, and commit messages.
-- **`zig fmt`**: All code must pass `zig fmt`. While Linux style has specific brace rules, Zig's formatter is the final authority on indentation (4 spaces) and brace placement.
-- **Short and Readable Comments**: Avoid telling *how* the code works; the code should be clear enough. Comment *why* a particular approach was taken, especially for non-obvious performance optimizations or network protocol edge cases.
+## 1. Universal rules
 
-## 2. Control Flow & Linux Style Adaptations
-- **Early Returns & Minimal Indentation**: Prefer returning early to avoid deep nesting. Keep the "happy path" un-indented.
-  ```zig
-  // Bad
-  if (condition) {
-      // ... do work ...
-  } else {
-      return error.Failed;
+- **Zero object-oriented programming.** No classes, no `this`, no `extends`,
+  no prototype mutation, no stateful objects that own behavior. See section 3
+  for the sanctioned TypeScript patterns.
+- **Guard clauses first.** Validate and return early. The happy path stays at
+  the lowest indentation level. Never build nested `if`/`else` ladders.
+- **One responsibility per module.** Split by concern before a file grows a
+  second reason to change. No source file exceeds roughly 150 lines.
+- **Pure functions where practical.** Pass state explicitly. I/O state is
+  confined to the transport boundary.
+- **No emojis anywhere.** Not in code, comments, documentation, issue forms, or
+  commit messages.
+- **Comments explain why, not how.** Document invariants, protocol edge cases,
+  and non-obvious performance decisions. Do not narrate the code.
+- **No new runtime dependencies.** The published package may import only
+  `napi-zig` and `uWebZockets`. Everything else is a development tool.
+
+## 2. Control flow
+
+Return early, use `switch` over long conditionals, and keep loops free of mode
+branches.
+
+TypeScript:
+
+```ts
+function normalizePort(input: unknown): number {
+  if (typeof input !== 'number' || !Number.isInteger(input)) throw invalidPort(input)
+  if (input < 0 || input > 65535) throw invalidPort(input)
+  return input
+}
+```
+
+Zig:
+
+```zig
+fn normalize_port(input: i64) !u16 {
+    if (input < 0) return error.InvalidPort;
+    if (input > 65535) return error.InvalidPort;
+    return @intCast(input);
+}
+```
+
+Rejected shape:
+
+```ts
+if (condition) {
+  // deep branch
+} else {
+  // deep branch
+}
+```
+
+### Rules
+
+- Use `switch` for exhaustive dispatch. Zig exhaustiveness is a feature.
+- Declare variables as close to first use as possible.
+- Do not use `else` after a block that returns.
+- Bound every loop. Unbounded `while (true)` requires a documented exit
+  invariant and belongs at the event-loop boundary only.
+- Prefer iteration over a caller-provided slice to allocating an intermediate
+  collection.
+
+## 3. No OOP, by construction
+
+### TypeScript patterns
+
+`ws` compatibility demands constructor-shaped call sites. Satisfy them with
+plain functions that return explicit state records. A function that returns an
+object works with `new` without ever touching `this`, and still delivers a
+frozen instance:
+
+```ts
+export function createSocket(options: SocketOptions): SocketHandle {
+  const listeners = createListenerRegistry()
+  const state = { readyState: CONNECTING, bufferedAmount: 0 }
+
+  const send = (data: Buffer, sendOptions?: SendOptions): boolean => {
+    if (state.readyState !== OPEN) return false
+    return bindingSend(options.connection, data, sendOptions)
   }
 
-  // Good
-  if (!condition) return error.Failed;
-  // ... do work ...
-  ```
-- **Control Flow Spacing**: Put a space after keywords (`if`, `switch`, `while`, `for`).
-- **Variable Scoping**: Declare variables as close to their first use as possible.
-- **Switch Statements**: Use `switch` over long `if/else` chains. Exhaustive switching is a Zig strength; leverage it.
+  return { send, close, ping, on, off, get bufferedAmount() { return state.bufferedAmount } }
+}
+```
 
-## 3. Data-Oriented Design (DoD) & Functional Programming
-- **Zero Object-Oriented Programming (OOP)**: OOP is strictly forbidden. Do not try to emulate classes or bind hidden state to behavior. Separate pure data structures from the functions that transform them.
-- **Pure Functions**: Favor pure functions that take explicit inputs and return explicit outputs without side effects. Pass state explicitly rather than relying on hidden contexts.
-- **Data Locality**: Organize data for cache efficiency. Prefer Struct of Arrays (SoA) via `std.MultiArrayList` over Array of Structs (AoS) for large collections of entities processed in bulk.
-- **Zero Allocations & Purity**: Network fast-paths must not allocate dynamically. Functional pipelines (e.g., map/filter concepts) must be implemented via zero-allocation iterators or comptime metaprogramming, never generating intermediate heap allocations.
-- **Alignment and Padding**: Be conscious of struct sizes and padding. Order struct fields from largest to smallest to minimize padding, unless a specific memory layout is required for C interop or hardware constraints.
+Rules:
 
-## 4. Naming Conventions (Linux Style Override)
-- **File Naming**: Linux file naming (`snake_case`) is strictly enforced for all files.
-- **Functions & Variables**: `snake_case` is strictly enforced for all functions and variables to align with Linux kernel styling preferences, explicitly overriding standard Zig `camelCase`.
-- **Types**: `PascalCase` for structs, enums, unions, and error sets (Standard Zig).
-- **C Interop**: When wrapping C libraries (BoringSSL, libsquic), preserve the original C names in the raw bindings, but provide a clean `snake_case` Zig wrapper for the public API.
+- State lives in `const` records or closures, never on `this`.
+- Behavior is composed from free functions. Reuse means calling functions, not
+  extending prototypes.
+- Event handling uses an explicit listener registry module. It stores handler
+  functions in arrays and dispatches over a snapshot.
+- Data records are plain `type` aliases. Use discriminated unions for variants,
+  not subclasses.
+- Prefer `readonly` fields and `ReadonlyArray` on records that cross modules.
+- Do not use `enum`; use `as const` unions so values remain plain strings or
+  numbers at the boundary.
 
-## 5. C Interop & FFI
-- Use `@cImport` judiciously, or prefer translating C headers ahead-of-time using `translate-c` for better compilation speeds and type safety.
-- Clearly separate raw C bindings from idiomatic Zig wrappers in the directory structure (e.g., `src/c/` or `src/ffi/`).
+### Zig
 
-## 6. Error Handling
-- Use Zig's native error sets (`!Type`).
-- Never swallow errors silently. If an error is expected and ignored, document *why* with a comment.
-- Use `catch unreachable` only when you can mathematically prove the error will never occur, and document the proof.
+Zig has no classes. The equivalent failure modes are hidden globals and
+receiver-style functions that silently mutate captured state.
+
+- Pass the state pointer explicitly as the first parameter and name it for what
+  it is (`state`, `conn`, `server`), never `self`.
+- No module-level mutable variables. Compile-time constants are fine.
+- No allocator stored inside the state it allocates for.
+
+## 4. TypeScript conventions
+
+- **Files:** `kebab-case` (`close-codes.ts`, `event-registry.ts`).
+- **Variables and functions:** `camelCase`.
+- **Types and interfaces:** `PascalCase`.
+- **Constants:** `SCREAMING_SNAKE_CASE` only for true constants; prefer
+  `as const` objects for groups.
+- **Imports:** `import type` for type-only imports. `verbatimModuleSyntax`
+  enforces this; the build fails otherwise.
+- **Exports:** named exports only. No default exports.
+- **Types over interfaces** unless declaration merging is required.
+- **No `any`.** Use `unknown` at untrusted boundaries and narrow explicitly.
+- **No non-null assertions** in binding code. Validate the handle exists.
+- **Explicit return types** on every exported function.
+- Public option types mirror `ws` names exactly. Internal names never leak.
+- Errors are `Error` instances with a stable string `code`; never throw
+  strings or bare numbers.
+- Async functions do not mix `await` with callback-style native completion in
+  the same module. One style per boundary.
+
+## 5. Zig conventions
+
+- **Files, functions, variables:** `snake_case`, overriding standard Zig
+  `camelCase` to match the Linux kernel style.
+- **Types:** `PascalCase` for structs, enums, unions, and error sets.
+- **Formatting:** `zig fmt` is authoritative. Do not hand-align or fight the
+  formatter.
+- **Errors:** native error sets (`!Type`). Never swallow an error silently;
+  document any intentionally ignored error. `catch unreachable` requires a
+  written proof of impossibility.
+- **Allocation:** hot paths allocate nothing. Capacity is a `comptime`
+  constant derived from named limits, never a runtime guess.
+- **Slices over pointers:** prefer `[]u8` and `[]const u8` with explicit
+  lengths. Raw pointers require an FFI reason.
+- **`defer` and `errdefer`** own cleanup. A function that acquires a resource
+  releases it on every exit path.
+- **C interop:** raw `@cImport` or translated bindings stay in a dedicated
+  FFI module with the original C names. Public wrappers use `snake_case` and
+  Zig error sets.
+- **SIMD:** masking and UTF-8 validation operate on native vectors first and
+  handle the scalar tail in a separate function. The scalar tail is tested
+  independently.
+- **Struct layout:** order fields largest to smallest to minimize padding
+  unless a C ABI layout demands otherwise. Comment any deliberate exception.
+
+## 6. Boundary conventions
+
+- Every N-API export is a free function. It takes primitive values, slices, or
+  opaque integer handles, and returns a status code or a value type.
+- No pointer from the engine may outlive the call that produced it. Payloads
+  that JavaScript can retain are copied into Node-owned `Buffer` instances
+  before dispatch.
+- Every handle carries a generation counter. A stale generation is a typed
+  error, never a use-after-free.
+- Completion callbacks fire at most once. The binding latches terminal state
+  before dispatch.
+- Cross-thread notification uses one threadsafe-function channel per instance.
+  Do not call into JavaScript from an engine thread directly.
+
+## 7. Formatting and linting
+
+| Scope | Tool | Command |
+| --- | --- | --- |
+| TypeScript and JSON formatting | `oxfmt` | `pnpm format` |
+| TypeScript linting | `oxlint` | `pnpm lint` |
+| Type checking | `tsc --noEmit` (or the `tsdown` `tsgo` path) | `pnpm typecheck` |
+| Zig formatting | `zig fmt` | `zig fmt --check zig src` |
+| Nix formatting | `alejandra` | `nix fmt` |
+
+A pull request is not ready while any of these fail. Do not add inline
+suppressions without a comment that states why the rule cannot apply.
+
+## 8. Testing conventions
+
+- Unit tests live in `tests/` and use `vitest` with explicit imports.
+- Pure helpers are tested with table-driven cases. One `test.each` table beats
+  a dozen near-identical `test` blocks.
+- Boundary tests assert lifetime rules: retained payloads stay valid, send
+  buffers are copied, close fires exactly once, stale handles error.
+- Protocol tests feed fixed byte sequences and assert byte-exact output.
+- Never mock the native binding for behavior that the binding itself defines;
+  mock at the module seam and keep the seam small.
+- Performance assertions belong in `bench/`, never in the unit suite.

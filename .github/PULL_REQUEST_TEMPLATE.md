@@ -1,23 +1,43 @@
 ## Description
 
-Please describe the changes this PR makes and why it should be merged.
+Describe the change and why it belongs in venti-ts. Link the issue it closes.
 
 ## Type of Change
 
 - [ ] Bug fix (non-breaking change that fixes an issue)
 - [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Refactoring (no functional changes)
+- [ ] Breaking change (a `ws` behavior or public type changes)
+- [ ] Performance improvement (with measured numbers)
+- [ ] Refactoring (no functional change)
 - [ ] Documentation update
+- [ ] Build or CI change
+
+## Compatibility
+
+- [ ] This change preserves `ws` behavior for the affected surface.
+- [ ] Any intentional divergence from `ws` is documented here with a linked
+      issue and rationale.
+- [ ] No new runtime dependency was added beyond `napi-zig` and `uWebZockets`.
 
 ## Checklist
 
-- [ ] I have read the [Contributing Guidelines](../CONTRIBUTE.md)
-- [ ] My code follows the code style of this project
-- [ ] I have run `zig fmt --check build.zig build.zig.zon builds src examples tests fuzz`
-- [ ] I have run `sh scripts/check_conventions.sh`
-- [ ] I have run the relevant Debug, ReleaseSafe, and compliance tests
-- [ ] I have run ASan/UBSan and bounded fuzzing for memory or parser changes
-- [ ] I have run Autobahn without exclusions for WebSocket/RFC 7692 changes
-- [ ] I have compiled and interoperability-tested relevant HTTP/3 changes
-- [ ] I documented API, limit, dependency, and compatibility changes
+- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTE.md) and
+      [CODING_CONVENTION.md](../CODING_CONVENTION.md).
+- [ ] No classes, `this`, `extends`, or prototype mutation were introduced.
+- [ ] Every touched source file stays near or below 150 lines.
+- [ ] Control flow uses guard clauses; no nested `if`/`else` ladders.
+- [ ] `pnpm lint` passes.
+- [ ] `pnpm format --check` passes.
+- [ ] `pnpm typecheck` passes.
+- [ ] `pnpm test` passes.
+- [ ] `pnpm build` produces the bundle and declarations.
+- [ ] `zig fmt --check zig src` passes for Zig changes.
+- [ ] Boundary changes cover payload retention, buffer copying, exactly-once
+      `close`, stale handles, and capacity exhaustion.
+- [ ] `ws` conformance tests pass for compatibility changes.
+- [ ] Autobahn passes with no exclusions for framing or compression changes.
+- [ ] `pnpm bench` includes the `ws` baseline and the numbers are in the
+      description for performance changes.
+- [ ] Public type changes are reflected in the generated declarations.
+- [ ] Documentation and [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)
+      are updated for surface, limit, or dependency changes.
