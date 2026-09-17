@@ -8,12 +8,12 @@ included in each published platform artifact.
 
 | Component | Version or revision | License |
 | --- | --- | --- |
-| [uWebZockets](https://github.com/farbenbuilds/uWebZockets) | pinned in `zig/build.zig.zon` | MIT |
-| [napi-zig](https://github.com/yuku-toolchain/napi-zig) | pinned in `zig/build.zig.zon` | MIT |
+| [uWebZockets](https://github.com/farbenbuilds/uWebZockets) | pinned in `src-zig/build.zig.zon` | MIT |
+| [napi-zig](https://github.com/yuku-toolchain/napi-zig) | pinned in `src-zig/build.zig.zon` | MIT |
 
 ## Components vendored by the engine
 
-These are pinned by the uWebZockets revision selected in `zig/build.zig.zon`.
+These are pinned by the uWebZockets revision selected in `src-zig/build.zig.zon`.
 The listed versions correspond to the engine's current pinned manifest.
 
 | Component | Version or revision | License |
@@ -60,7 +60,7 @@ drop-in compatibility. No `ws` source is incorporated into venti-ts.
 
 ## Maintenance
 
-Every dependency change updates the pinned revision in `zig/build.zig.zon`
+Every dependency change updates the pinned revision in `src-zig/build.zig.zon`
 together with this file. Binary releases copy the license texts for all
 statically linked components; a release is not published while any shipped
 component lacks an attribution entry.

@@ -67,7 +67,7 @@ src/
 │   ├── framing.ts             # length and mask helpers used by tests
 │   └── backpressure.ts        # bufferedAmount and high-water policy
 └── types/                     # public and internal type-only modules
-zig/
+src-zig/
 ├── build.zig                  # addon build graph, typed dependency edge
 ├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
 └── src/
@@ -238,6 +238,6 @@ groundwork:
 - `src/index.ts` and `tests/index.test.ts` are placeholders that verify the
   build and test wiring only.
 
-The `binding/`, `compat/`, `protocol/`, `types/`, and `zig/` trees described
+The `binding/`, `compat/`, `protocol/`, `types/`, and `src-zig/` trees described
 above are the next implementation milestones. No native addon is built or
 loaded on this branch yet.

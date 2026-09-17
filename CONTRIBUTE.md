@@ -114,7 +114,7 @@ to prove the wiring; replace them, do not extend them.
 
 Runtime dependencies are pinned exactly and updated deliberately:
 
-- Update the pinned revision in `zig/build.zig.zon` and the matching entry in
+- Update the pinned revision in `src-zig/build.zig.zon` and the matching entry in
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) in the same change.
 - Rebuild the addon from a clean cache so a stale artifact cannot hide an ABI
   or behavior change.
