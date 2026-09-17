@@ -13,6 +13,8 @@ zig-pkg/
 node_modules/
 dist/
 coverage/
+*.log
+.DS_Store
 *.tsbuildinfo
 
 # build artifacts
@@ -20,12 +22,8 @@ coverage/
 *.a
 *.so
 *.node
-result
-result-*
-tests/autobahn/reports/
 
 # os / editors
-.DS_Store
 .vscode/
 *.swp
 .cache/

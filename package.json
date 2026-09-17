@@ -1,0 +1,38 @@
+{
+  "name": "venti-ts",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "A high-performance, drop-in replacement for ws, built on the µWebZockets Zig engine via napi-zig.",
+  "author": "Noah Trần (https://github.com/Coder-Blue)",
+  "license": "MIT",
+  "homepage": "https://github.com/farbenbuilds/venti-ts#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farbenbuilds/venti-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/farbenbuilds/venti-ts/issues"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "release": "bumpp",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "bumpp": "^11.1.0",
+    "tsdown": "^0.22.5",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
