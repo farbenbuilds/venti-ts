@@ -61,6 +61,12 @@
       "skillPath": "skills/ponytail/SKILL.md",
       "computedHash": "210fa0831f649ce9f8a305f7b7c8cf2a0dd09ac4dd53067109941b96e7811d4e"
     },
+    "separation-of-concerns": {
+      "source": "yanko-belov/code-craft",
+      "sourceType": "github",
+      "skillPath": "skills/separation-of-concerns/SKILL.md",
+      "computedHash": "a33f055e08ae0571bebe62442fb0a87d9796e9059a591bcfaa75bb5a806d2e4a"
+    },
     "tsdown": {
       "source": "antfu/skills",
       "sourceType": "github",
