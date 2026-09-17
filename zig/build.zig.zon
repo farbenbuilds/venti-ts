@@ -1,0 +1,12 @@
+.{
+    .name = .venti,
+    .version = "0.0.0",
+    .fingerprint = 0x813c66670d3a1e3e, // Changing this has security and trust implications.
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
