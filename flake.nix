@@ -48,15 +48,10 @@
           pkgs.zls
           pkgs.typescript
           pkgs.typescript-language-server
+          pkgs.pre-commit
         ];
 
-        mkDevShell = packagePkgs: pnpmPackage: let
-          supportsZon2nix =
-            zon2nixPackage
-            != null
-            && isLinux
-            && packagePkgs.stdenv.hostPlatform.isGnu;
-        in
+        mkDevShell = packagePkgs: pnpmPackage:
           packagePkgs.mkShell {
             packages =
               hostPackages
@@ -65,7 +60,7 @@
                 pnpmPackage
                 packagePkgs.zlib
               ]
-              ++ lib.optional supportsZon2nix zon2nixPackage;
+              ++ lib.optional (zon2nixPackage != null) zon2nixPackage;
           };
       in {
         formatter = pkgs.alejandra;
@@ -82,7 +77,7 @@
           pkgs.runCommand "check-format" {
             nativeBuildInputs = [pkgs.alejandra];
           } ''
-            alejandra --check $(find ${./.} -name '*.nix')
+            alejandra --check $(find ${./.} -name '*.nix' ! -name '*.zon.nix')
             touch $out
           '';
       };

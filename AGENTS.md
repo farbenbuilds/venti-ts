@@ -33,6 +33,7 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | Build bundle and declarations | `pnpm build` |
 | Watch rebuild | `pnpm dev` |
 | All tests (one-shot) | `pnpm exec vitest run` |
+| All hooks | `pre-commit run --all-files` |
 | Single test | `pnpm exec vitest run tests/index.test.ts -t 'fn'` |
 | Typecheck | `pnpm typecheck` |
 | Zig formatting | `zig fmt --check src-zig` |
