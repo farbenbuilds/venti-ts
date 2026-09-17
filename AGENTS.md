@@ -8,8 +8,9 @@ backpressure.
 ## Current state: docs describe the target, not the tree
 
 - `src/index.ts` and `tests/index.test.ts` are tsdown-starter placeholders.
-  There is no `zig/`, `binding/`, `compat/`, `protocol/`, or `types/` tree, no
-  `.github/workflows`, and no `pnpm-lock.yaml`.
+  `src-zig/` holds the `zig init` scaffold (a shared library with a test step);
+  there is no `binding/`, `compat/`, `protocol/`, or `types/` tree, no
+  `.github/workflows`, and no committed `pnpm-lock.yaml`.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
@@ -23,7 +24,7 @@ backpressure.
 ## Commands
 
 Use pnpm; do not invoke package binaries directly. The shell normally runs
-inside `nix develop` (Node 24, pnpm 11, Zig 0.16.0, zls).
+inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 
 | Task | Command |
 | --- | --- |
@@ -34,7 +35,7 @@ inside `nix develop` (Node 24, pnpm 11, Zig 0.16.0, zls).
 | All tests (one-shot) | `pnpm exec vitest run` |
 | Single test | `pnpm exec vitest run tests/index.test.ts -t 'fn'` |
 | Typecheck | `pnpm typecheck` |
-| Zig formatting once `zig/` exists | `zig fmt --check zig src` |
+| Zig formatting | `zig fmt --check src-zig` |
 | Version bump | `pnpm release` |
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check

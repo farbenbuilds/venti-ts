@@ -40,8 +40,8 @@ observing identical behavior.
 | `src/compat/` | `ws`-shaped factories, event registry, option validation | Use classes or hidden state |
 | `src/protocol/` | Pure TS helpers (close codes, framing, backpressure policy) | Allocate per call |
 | `src/types/` | Public and internal type-only modules | Duplicate a type that exists elsewhere |
-| `zig/src/binding.zig` | `napi-zig` exports as free functions | Call into JavaScript from engine threads |
-| `zig/src/*` | Parsers, framing, SIMD transforms, bounded queues | Allocate on hot paths |
+| `src-zig/src/binding.zig` | `napi-zig` exports as free functions | Call into JavaScript from engine threads |
+| `src-zig/src/*` | Parsers, framing, SIMD transforms, bounded queues | Allocate on hot paths |
 
 ## Boundary contract
 
