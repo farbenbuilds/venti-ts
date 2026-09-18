@@ -6,11 +6,11 @@ Security fixes apply to the current development revision and the latest
 published release. Older snapshots and unreleased local builds do not receive
 backports.
 
-| Version | Supported |
-| --- | --- |
-| Current development revision | Yes |
-| Latest published release | Yes |
-| Older tagged releases | No |
+| Version                      | Supported |
+| ---------------------------- | --------- |
+| Current development revision | Yes       |
+| Latest published release     | Yes       |
+| Older tagged releases        | No        |
 
 ## Reporting a vulnerability
 

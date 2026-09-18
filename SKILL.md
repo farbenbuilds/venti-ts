@@ -33,15 +33,15 @@ observing identical behavior.
 
 ## Target architecture and ownership
 
-| Area | Owns | Do not |
-| --- | --- | --- |
-| `src/index.ts` | Thin public re-export surface | Put logic here |
-| `src/binding/` | Native addon loading, typed N-API calls, handle generation checks | Leak engine pointers or slabs |
-| `src/compat/` | `ws`-shaped factories, event registry, option validation | Use classes or hidden state |
-| `src/protocol/` | Pure TS helpers (close codes, framing, backpressure policy) | Allocate per call |
-| `src/types/` | Public and internal type-only modules | Duplicate a type that exists elsewhere |
-| `src-zig/src/binding.zig` | `napi-zig` exports as free functions | Call into JavaScript from engine threads |
-| `src-zig/src/*` | Parsers, framing, SIMD transforms, bounded queues | Allocate on hot paths |
+| Area                      | Owns                                                              | Do not                                   |
+| ------------------------- | ----------------------------------------------------------------- | ---------------------------------------- |
+| `src/index.ts`            | Thin public re-export surface                                     | Put logic here                           |
+| `src/binding/`            | Native addon loading, typed N-API calls, handle generation checks | Leak engine pointers or slabs            |
+| `src/compat/`             | `ws`-shaped factories, event registry, option validation          | Use classes or hidden state              |
+| `src/protocol/`           | Pure TS helpers (close codes, framing, backpressure policy)       | Allocate per call                        |
+| `src/types/`              | Public and internal type-only modules                             | Duplicate a type that exists elsewhere   |
+| `src-zig/src/binding.zig` | `napi-zig` exports as free functions                              | Call into JavaScript from engine threads |
+| `src-zig/src/*`           | Parsers, framing, SIMD transforms, bounded queues                 | Allocate on hot paths                    |
 
 ## Boundary contract
 
@@ -76,24 +76,24 @@ observing identical behavior.
 
 ## Which installed skill to load
 
-| Work | Load |
-| --- | --- |
-| Public types, strict API design | `typescript-expert`, `typescript-advanced-types` |
-| Bundle, declarations | `tsdown` |
-| Slabs, SoA, SIMD, cache layout | `dod` |
-| Pure functions, explicit state | `functional-programming-fundamentals`, `pragmatic-functional-programming` |
-| Module splitting, review | `separation-of-concerns`, `clean-code` |
-| Zig language and API changes | `zig-0.16`, `zig-best-practices` |
-| Zig build graph | `zig-build-system` |
-| Capacities and specialization | `zig-comptime` |
-| C interop at the FFI edge | `zig-cinterop` |
-| Native build matrix | `zig-cross`, `nix-best-practices` |
-| Zig tests, fuzz corpora | `zig-testing` |
-| Zig failures | `zig-debugging`, `zig-compiler` |
-| Minimal correct solution | `ponytail` |
-| Dense commit and PR text | `caveman` |
-| Docs | `documentation-writer` |
-| API lookups | `context7` |
+| Work                            | Load                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| Public types, strict API design | `typescript-expert`, `typescript-advanced-types`                          |
+| Bundle, declarations            | `tsdown`                                                                  |
+| Slabs, SoA, SIMD, cache layout  | `dod`                                                                     |
+| Pure functions, explicit state  | `functional-programming-fundamentals`, `pragmatic-functional-programming` |
+| Module splitting, review        | `separation-of-concerns`, `clean-code`                                    |
+| Zig language and API changes    | `zig-0.16`, `zig-best-practices`                                          |
+| Zig build graph                 | `zig-build-system`                                                        |
+| Capacities and specialization   | `zig-comptime`                                                            |
+| C interop at the FFI edge       | `zig-cinterop`                                                            |
+| Native build matrix             | `zig-cross`, `nix-best-practices`                                         |
+| Zig tests, fuzz corpora         | `zig-testing`                                                             |
+| Zig failures                    | `zig-debugging`, `zig-compiler`                                           |
+| Minimal correct solution        | `ponytail`                                                                |
+| Dense commit and PR text        | `caveman`                                                                 |
+| Docs                            | `documentation-writer`                                                    |
+| API lookups                     | `context7`                                                                |
 
 ## Definition of done
 

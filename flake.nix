@@ -48,7 +48,6 @@
           pkgs.zls
           pkgs.typescript
           pkgs.typescript-language-server
-          pkgs.pre-commit
         ];
 
         mkDevShell = packagePkgs: pnpmPackage:

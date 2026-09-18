@@ -20,18 +20,18 @@ optional, but any breaking change requires a footer.
 
 ## Types
 
-| Type | Use for |
-| --- | --- |
-| `feat` | A new user-visible capability |
-| `fix` | A behavior fix, including `ws` compatibility corrections |
-| `perf` | A measured performance change |
-| `refactor` | A restructure with no behavior change |
-| `test` | Test additions or corrections |
-| `docs` | Documentation only |
-| `build` | Build graph, packaging, or native artifact changes |
-| `ci` | Workflow and pipeline changes |
-| `chore` | Maintenance that fits no other type |
-| `revert` | Reverts a previous commit |
+| Type       | Use for                                                  |
+| ---------- | -------------------------------------------------------- |
+| `feat`     | A new user-visible capability                            |
+| `fix`      | A behavior fix, including `ws` compatibility corrections |
+| `perf`     | A measured performance change                            |
+| `refactor` | A restructure with no behavior change                    |
+| `test`     | Test additions or corrections                            |
+| `docs`     | Documentation only                                       |
+| `build`    | Build graph, packaging, or native artifact changes       |
+| `ci`       | Workflow and pipeline changes                            |
+| `chore`    | Maintenance that fits no other type                      |
+| `revert`   | Reverts a previous commit                                |
 
 `feat`, `fix`, and `perf` appear in the changelog. Any commit containing
 `BREAKING CHANGE:` appears regardless of type.

@@ -1,0 +1,43 @@
+# Lefthook configuration: https://lefthook.dev/configuration/
+# Install with `pnpm install`; run manually with
+# `pnpm exec lefthook run pre-commit --all-files`.
+
+min_version: 2.1.14
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: oxlint
+      glob: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'
+      run: pnpm exec oxlint --fix {staged_files}
+      stage_fixed: true
+
+    - name: oxfmt
+      glob: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,md,mdx,yaml,yml}'
+      exclude:
+        - 'src-zig/**'
+      run: pnpm exec oxfmt --write {staged_files}
+      stage_fixed: true
+
+    - name: zig-fmt
+      glob: '**/*.zig'
+      run: zig fmt {staged_files}
+      stage_fixed: true
+
+    - name: zon2nix
+      glob: '**/build.zig.zon'
+      run: scripts/zon2nix.sh
+
+    - name: hygiene
+      exclude:
+        - '.agents/**'
+      run: scripts/check-staged.sh {staged_files}
+
+    - name: typecheck
+      glob: '**/*.{ts,tsx,mts,cts}'
+      run: pnpm typecheck
+
+    - name: tests
+      glob: '**/*.{ts,tsx,mts,cts}'
+      run: pnpm exec vitest run
