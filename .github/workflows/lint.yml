@@ -64,4 +64,4 @@ jobs:
       - uses: cachix/install-nix-action@v31
 
       - name: Check formatting
-        run: nix fmt -- --check
+        run: nix fmt -- --check $(git ls-files '*.nix' | grep -v '\.zon\.nix$')
