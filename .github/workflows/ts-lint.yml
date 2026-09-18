@@ -1,0 +1,67 @@
+name: TypeScript Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+      - 'tsdown.config.ts'
+      - '.oxlintrc.json'
+      - '.oxfmtrc.json'
+      - 'scripts/oxlint-plugin.mjs'
+      - '.github/workflows/ts-lint.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+      - 'tsdown.config.ts'
+      - '.oxlintrc.json'
+      - '.oxfmtrc.json'
+      - 'scripts/oxlint-plugin.mjs'
+      - '.github/workflows/ts-lint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: ts-lint-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  typescript:
+    name: TypeScript and formatting
+    runs-on: ubuntu-24.04
+    environment: ci
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/setup@v2
+        with:
+          version: 12.4.2
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
