@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="misc/venti_banner.png" alt="venti-ts banner" />
+</p>
+
 # venti-ts
 
 A high-performance, drop-in replacement for [`ws`](https://github.com/websockets/ws),
