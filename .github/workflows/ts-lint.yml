@@ -43,7 +43,9 @@ jobs:
   typescript:
     name: TypeScript and formatting
     runs-on: ubuntu-24.04
-    environment: ci
+    environment:
+      name: TS Lint
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@v6
 

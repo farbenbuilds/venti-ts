@@ -29,7 +29,9 @@ jobs:
   zig:
     name: Zig formatting
     runs-on: ubuntu-24.04
-    environment: ci
+    environment:
+      name: Zig Lint
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@v6
 
