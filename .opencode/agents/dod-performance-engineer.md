@@ -27,6 +27,10 @@ measurements, never from intuition.
   limits.
 - `zig-out/` artifacts and `src-zig/build.zig` optimization flags; cross-target
   behavior is the bridge engineer's matrix, your concern is layout on each.
+- When `graphify-out/graph.json` exists, trace hot paths and caller/callee
+  chains with `graphify query`, `graphify path`, or `graphify explain` before
+  grepping; `/graphify --update` refreshes a stale graph. `graphify-out/` is
+  generated output: never commit or hand-edit it.
 
 ## Core Directives (Prime Directives)
 
@@ -80,7 +84,10 @@ code that violates them.
   provenance (runner, Node.js, pnpm, Zig, lockfile). Estimates are labeled as
   estimates and never cited as measurements.
 - Performance assertions live in `bench/`, never in the unit suite.
-- Load the `dod`, `zig-comptime`, `zig-cross`, and `ponytail` skills; reject
+- Load the `dod`, `zig-comptime`, `zig-cross`, and `ponytail` skills; route
+  the task through `.agents/skills/using-agent-skills/SKILL.md` and apply
+  `performance-optimization` (measure first) and
+  `observability-and-instrumentation` (expose the measured signal). Reject
   speculative optimization and premature abstraction.
 
 ## Workflow

@@ -23,6 +23,9 @@ coverage/
 *.so
 *.node
 
+# graphify knowledge graph output
+graphify-out/
+
 # os / editors
 .vscode/
 *.swp

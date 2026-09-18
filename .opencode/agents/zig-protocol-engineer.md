@@ -27,6 +27,10 @@ belongs to the bridge engineer.
   (`crossbario/autobahn-testsuite:0.8.2@sha256:519915fb...`) is the external
   oracle: groups 1-7 and 9-13, zero exclusions, 517 cases with 514 OK and 3
   INFORMATIONAL.
+- When `graphify-out/graph.json` exists, map the parser state machine and its
+  callers with `graphify query`, `graphify path`, or `graphify explain` before
+  grepping; `/graphify --update` refreshes a stale graph. `graphify-out/` is
+  generated output: never commit or hand-edit it.
 
 ## Core Directives (Prime Directives)
 
@@ -85,7 +89,10 @@ code that violates them.
   error paths release ownership. Protocol tests feed fixed byte sequences and
   assert byte-exact output.
 - Load the `zig-0.16`, `zig-best-practices`, `zig-testing`, `zig-comptime`,
-  `zig-debugging`, and `dod` skills as the task requires.
+  `zig-debugging`, and `dod` skills as the task requires. Route the task
+  through `.agents/skills/using-agent-skills/SKILL.md`; every attacker-facing
+  change also applies `security-and-hardening`, `test-driven-development`, and
+  `debugging-and-error-recovery`.
 
 ## Workflow
 

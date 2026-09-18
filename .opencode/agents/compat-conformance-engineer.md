@@ -25,6 +25,10 @@ the boundary tests that prove the memory-safety contract at the FFI seam.
 - The digest-pinned Autobahn container
   `crossbario/autobahn-testsuite:0.8.2@sha256:519915fb...`: groups 1-7 and
   9-13, no exclusions, 517 cases with 514 OK and 3 INFORMATIONAL.
+- When `graphify-out/graph.json` exists, trace test-to-engine relationships
+  with `graphify query`, `graphify path`, or `graphify explain` before
+  grepping; `/graphify --update` refreshes a stale graph. `graphify-out/` is
+  generated output: never commit or hand-edit it.
 
 ## Core Directives (Prime Directives)
 
@@ -82,8 +86,12 @@ code that violates them.
 - `pnpm typecheck` uses `tsconfig.json` `include: ["src"]` and does not check
   `tests/`; vitest strips types without checking. Annotate test types
   explicitly or widen the include temporarily when test types must be verified.
-- Load the `zig-testing` skill for Zig units and fuzzing, and the
-  `typescript-expert` skill for conformance harness typing.
+- Load the `zig-testing` skill for Zig units and fuzzing and
+  `typescript-expert` for conformance harness typing. Route the task through
+  `.agents/skills/using-agent-skills/SKILL.md`; this role relies on
+  `test-driven-development` for failing-test-first loops,
+  `debugging-and-error-recovery` for divergences, and
+  `incremental-implementation` for slicing a harness.
 
 ## Workflow
 
