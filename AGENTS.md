@@ -9,35 +9,37 @@ backpressure.
 
 - `src/index.ts` and `tests/index.test.ts` are tsdown-starter placeholders.
   `src-zig/` holds the `zig init` scaffold (a shared library with a test step);
-  there is no `binding/`, `compat/`, `protocol/`, or `types/` tree, no
-  `.github/workflows`, and no committed `pnpm-lock.yaml`.
+  there is no `binding/`, `compat/`, `protocol/`, or `types/` tree and no
+  `.github/workflows`.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
   and code.
-- Documented scripts `lint`, `format`, `build:binding`, `test:compat`, and
-  `bench` do not exist in `package.json`. Only `build`, `dev`, `test`,
-  `typecheck`, `release`, and `prepublishOnly` are wired.
-- `pnpm install --frozen-lockfile` fails because no lockfile is committed yet;
-  use plain `pnpm install`.
+- Documented scripts `build:binding`, `test:compat`, and `bench` do not exist
+  in `package.json`. `build`, `dev`, `format`, `format:check`, `lint`,
+  `lint:fix`, `test`, `typecheck`, `release`, and `prepublishOnly` are wired.
+- Git hooks are installed by `lefthook` during `pnpm install` (allowed through
+  `pnpm-workspace.yaml`); `pnpm-lock.yaml` is committed.
 
 ## Commands
 
 Use pnpm; do not invoke package binaries directly. The shell normally runs
 inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 
-| Task | Command |
-| --- | --- |
-| Environment | `nix develop` (musl hosts: `nix develop .#musl`; `.envrc` selects it under direnv) |
-| Install | `pnpm install` |
-| Build bundle and declarations | `pnpm build` |
-| Watch rebuild | `pnpm dev` |
-| All tests (one-shot) | `pnpm exec vitest run` |
-| All hooks | `pre-commit run --all-files` |
-| Single test | `pnpm exec vitest run tests/index.test.ts -t 'fn'` |
-| Typecheck | `pnpm typecheck` |
-| Zig formatting | `zig fmt --check --exclude src-zig/zig-pkg src-zig` |
-| Version bump | `pnpm release` |
+| Task                          | Command                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| Environment                   | `nix develop` (musl hosts: `nix develop .#musl`; `.envrc` selects it under direnv) |
+| Install                       | `pnpm install`                                                                     |
+| Build bundle and declarations | `pnpm build`                                                                       |
+| Watch rebuild                 | `pnpm dev`                                                                         |
+| Lint                          | `pnpm lint` (`pnpm lint:fix` to apply fixes)                                       |
+| Check formatting              | `pnpm format:check` (`pnpm format` to write)                                       |
+| All tests (one-shot)          | `pnpm exec vitest run`                                                             |
+| All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
+| Single test                   | `pnpm exec vitest run tests/index.test.ts -t 'fn'`                                 |
+| Typecheck                     | `pnpm typecheck`                                                                   |
+| Zig formatting                | `zig fmt --check --exclude src-zig/zig-pkg src-zig`                                |
+| Version bump                  | `pnpm release`                                                                     |
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
 `tests/`, and vitest strips types without checking them. Widen the include

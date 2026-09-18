@@ -13,14 +13,14 @@ same commands locally as described in [CONTRIBUTE.md](CONTRIBUTE.md).
 
 ## Workflows
 
-| Workflow | Trigger | Purpose |
-| --- | --- | --- |
-| `lint.yml` | pushes and pull requests to `main`, manual | oxlint, oxfmt, typecheck, zig fmt, Nix formatting |
-| `test.yml` | pushes and pull requests to `main`, manual | vitest unit, integration, and boundary tests |
-| `native.yml` | pushes and pull requests to `main`, manual, reusable | Build and test the `napi-zig` addon on the native matrix |
-| `compat.yml` | pushes and pull requests to `main`, manual | RFC 6455 Autobahn suite and `ws` behavioral conformance |
-| `benchmark.yml` | pull requests to `main`, nightly, manual | Regression guard against the `main` baseline and `ws` |
-| `publish.yml` | `v*` tag push | Verification, prebuild packaging, npm release with provenance |
+| Workflow        | Trigger                                              | Purpose                                                       |
+| --------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
+| `lint.yml`      | pushes and pull requests to `main`, manual           | oxlint, oxfmt, typecheck, zig fmt, Nix formatting             |
+| `test.yml`      | pushes and pull requests to `main`, manual           | vitest unit, integration, and boundary tests                  |
+| `native.yml`    | pushes and pull requests to `main`, manual, reusable | Build and test the `napi-zig` addon on the native matrix      |
+| `compat.yml`    | pushes and pull requests to `main`, manual           | RFC 6455 Autobahn suite and `ws` behavioral conformance       |
+| `benchmark.yml` | pull requests to `main`, nightly, manual             | Regression guard against the `main` baseline and `ws`         |
+| `publish.yml`   | `v*` tag push                                        | Verification, prebuild packaging, npm release with provenance |
 
 Every workflow runs against the Node.js version pinned in `flake.nix`. The
 pnpm store and the Zig cache are cached per lockfile hash; caches are never
@@ -30,7 +30,7 @@ shared between the candidate and baseline benchmark jobs.
 
 ```sh
 pnpm lint
-pnpm format --check
+pnpm format:check
 pnpm typecheck
 zig fmt --check zig src
 nix fmt --check
@@ -71,15 +71,15 @@ integration suite against the compiled artifact. Cross-compilation is the
 default; a target without a native runner is built and packaged, then executed
 only where a runner exists.
 
-| Target | Runner | Executed |
-| --- | --- | --- |
-| `x86_64-linux-gnu` | `ubuntu-24.04` | Yes |
-| `aarch64-linux-gnu` | `ubuntu-24.04-arm` | Yes |
-| `x86_64-linux-musl` | `ubuntu-24.04` | Yes, in an Alpine container |
-| `aarch64-linux-musl` | `ubuntu-24.04-arm` | Yes, in an Alpine container |
-| `x86_64-macos` | `macos-14` | Yes |
-| `aarch64-macos` | `macos-14` | Yes |
-| `x86_64-windows-msvc` | `windows-2025` | Yes |
+| Target                | Runner             | Executed                    |
+| --------------------- | ------------------ | --------------------------- |
+| `x86_64-linux-gnu`    | `ubuntu-24.04`     | Yes                         |
+| `aarch64-linux-gnu`   | `ubuntu-24.04-arm` | Yes                         |
+| `x86_64-linux-musl`   | `ubuntu-24.04`     | Yes, in an Alpine container |
+| `aarch64-linux-musl`  | `ubuntu-24.04-arm` | Yes, in an Alpine container |
+| `x86_64-macos`        | `macos-14`         | Yes                         |
+| `aarch64-macos`       | `macos-14`         | Yes                         |
+| `x86_64-windows-msvc` | `windows-2025`     | Yes                         |
 
 Each job runs the full vitest suite against the built addon, not a stub. A job
 that cannot load its own artifact fails the workflow.

@@ -94,17 +94,17 @@ records; they never use `class`, `this`, or prototype chains. See
 
 ## Compatibility targets
 
-| Surface | Status |
-| --- | --- |
-| Package scaffolding and toolchain | Scaffolded |
-| Native binding (`napi-zig` + Zig engine) | Planned |
-| `WebSocketServer` construction and options | Planned |
-| `connection`, `message`, `ping`, `pong`, `close` events | Planned |
-| Text, binary, and fragmented messages | Planned |
-| Close codes and reasons | Planned |
-| Per-message deflate (RFC 7692) | Planned |
-| ESM and CJS entry points | Toolchain configured |
-| `ws` behavioral conformance suite | Planned |
+| Surface                                                 | Status               |
+| ------------------------------------------------------- | -------------------- |
+| Package scaffolding and toolchain                       | Scaffolded           |
+| Native binding (`napi-zig` + Zig engine)                | Planned              |
+| `WebSocketServer` construction and options              | Planned              |
+| `connection`, `message`, `ping`, `pong`, `close` events | Planned              |
+| Text, binary, and fragmented messages                   | Planned              |
+| Close codes and reasons                                 | Planned              |
+| Per-message deflate (RFC 7692)                          | Planned              |
+| ESM and CJS entry points                                | Toolchain configured |
+| `ws` behavioral conformance suite                       | Planned              |
 
 ## Performance
 
@@ -124,6 +124,7 @@ pnpm test           # vitest unit and integration tests
 pnpm typecheck      # tsc --noEmit
 pnpm lint           # oxlint
 pnpm format         # oxfmt
+pnpm format:check   # verify formatting without writing
 ```
 
 The native binding is built with Zig 0.16.0 from the pinned `nix develop`
@@ -132,15 +133,15 @@ shell. The exact command contract is documented in
 
 ## Documentation
 
-| Document | Contents |
-| --- | --- |
-| [CODEBASE.md](CODEBASE.md) | Repository layout, binding architecture, data flow, ownership |
-| [CODING_CONVENTION.md](CODING_CONVENTION.md) | TypeScript and Zig style, anti-OOP rules, naming |
-| [CONTRIBUTE.md](CONTRIBUTE.md) | Environment setup, checks, testing, pull requests, release |
-| [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md) | Workflows, native build matrix, compliance, benchmarks, publishing |
-| [SECURITY.md](SECURITY.md) | Threat model, reporting, supported versions |
-| [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) | Runtime and development dependency licenses |
-| [SKILL.md](SKILL.md) | Agent workflow conventions for this repository |
+| Document                                         | Contents                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------ |
+| [CODEBASE.md](CODEBASE.md)                       | Repository layout, binding architecture, data flow, ownership      |
+| [CODING_CONVENTION.md](CODING_CONVENTION.md)     | TypeScript and Zig style, anti-OOP rules, naming                   |
+| [CONTRIBUTE.md](CONTRIBUTE.md)                   | Environment setup, checks, testing, pull requests, release         |
+| [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md)           | Workflows, native build matrix, compliance, benchmarks, publishing |
+| [SECURITY.md](SECURITY.md)                       | Threat model, reporting, supported versions                        |
+| [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) | Runtime and development dependency licenses                        |
+| [SKILL.md](SKILL.md)                             | Agent workflow conventions for this repository                     |
 
 ## License
 

@@ -38,9 +38,16 @@ Current tree on this branch:
 venti-ts/
 ├── flake.nix                  # pinned Node.js, pnpm, Zig 0.16.0 dev shell
 ├── flake.lock                 # locked Nix inputs
+├── lefthook.yml               # pre-commit hook contract
+├── .oxlintrc.json             # oxlint rules for the TypeScript tree
+├── .oxfmtrc.json              # oxfmt formatting rules
+├── pnpm-workspace.yaml        # pnpm settings (lefthook build approval)
 ├── package.json               # package metadata, scripts, exports
 ├── tsconfig.json              # strict TypeScript configuration
 ├── tsdown.config.ts           # bundle and declaration pipeline
+├── scripts/
+│   ├── check-staged.sh        # staged-file hygiene checks
+│   └── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
 ├── src/
 │   └── index.ts               # public export surface (placeholder)
 ├── tests/
@@ -89,15 +96,15 @@ bench/          # benchmark harness that runs venti-ts and ws side by side
 The boundary is a small set of free functions with primitive or slice
 arguments. There is no shared mutable object graph across the boundary.
 
-| Concern | Owner | Rule |
-| --- | --- | --- |
-| Public API shape and defaults | TypeScript | Mirrors `ws`; validated before any native call |
-| Option validation | TypeScript | Explicit per-field checks; no coercion of untrusted input |
-| Connection and parser state | Zig | Fixed-capacity slabs owned by the engine |
-| Frame assembly, masking, UTF-8 | Zig | SIMD fast paths with scalar tails |
-| Outbound queues and backpressure | Zig | Bounded; overflow reports backpressure to JS |
-| Message payloads observed by JS | Node | Copied into Node-owned `Buffer` at the boundary |
-| Event dispatch | TypeScript | Explicit listener arrays; no hidden emitter inheritance |
+| Concern                          | Owner      | Rule                                                      |
+| -------------------------------- | ---------- | --------------------------------------------------------- |
+| Public API shape and defaults    | TypeScript | Mirrors `ws`; validated before any native call            |
+| Option validation                | TypeScript | Explicit per-field checks; no coercion of untrusted input |
+| Connection and parser state      | Zig        | Fixed-capacity slabs owned by the engine                  |
+| Frame assembly, masking, UTF-8   | Zig        | SIMD fast paths with scalar tails                         |
+| Outbound queues and backpressure | Zig        | Bounded; overflow reports backpressure to JS              |
+| Message payloads observed by JS  | Node       | Copied into Node-owned `Buffer` at the boundary           |
+| Event dispatch                   | TypeScript | Explicit listener arrays; no hidden emitter inheritance   |
 
 Two lifetime rules are absolute:
 
@@ -228,11 +235,15 @@ the ABI.
 `chore/add-basic-documents` contains the toolchain and documentation
 groundwork:
 
-- `package.json` defines the package scripts (`build`, `dev`, `test`,
-  `typecheck`, `release`, `prepublishOnly`) and development dependencies.
+- `package.json` defines the package scripts (`build`, `dev`, `format`,
+  `format:check`, `lint`, `lint:fix`, `test`, `typecheck`, `release`,
+  `prepublishOnly`) and development dependencies.
 - `tsconfig.json` enables `strict`, `verbatimModuleSyntax`, and
   `isolatedModules`.
 - `tsdown.config.ts` enables bundled declaration output.
+- `.oxlintrc.json` and `.oxfmtrc.json` encode
+  [CODING_CONVENTION.md](CODING_CONVENTION.md); `lefthook.yml` runs them on
+  every commit alongside `zig fmt`, typecheck, and the test suite.
 - `flake.nix` pins Node.js, pnpm, Zig 0.16.0, zls, and TypeScript tooling;
   `.#musl` selects a musl dev shell on musl hosts.
 - `src/index.ts` and `tests/index.test.ts` are placeholders that verify the

@@ -86,7 +86,16 @@ export function createSocket(options: SocketOptions): SocketHandle {
     return bindingSend(options.connection, data, sendOptions)
   }
 
-  return { send, close, ping, on, off, get bufferedAmount() { return state.bufferedAmount } }
+  return {
+    send,
+    close,
+    ping,
+    on,
+    off,
+    get bufferedAmount() {
+      return state.bufferedAmount
+    },
+  }
 }
 ```
 
@@ -174,13 +183,21 @@ receiver-style functions that silently mutate captured state.
 
 ## 7. Formatting and linting
 
-| Scope | Tool | Command |
-| --- | --- | --- |
-| TypeScript and JSON formatting | `oxfmt` | `pnpm format` |
-| TypeScript linting | `oxlint` | `pnpm lint` |
-| Type checking | `tsc --noEmit` (or the `tsdown` `tsgo` path) | `pnpm typecheck` |
-| Zig formatting | `zig fmt` | `zig fmt --check zig src` |
-| Nix formatting | `alejandra` | `nix fmt` |
+| Scope                          | Tool                                         | Command                                             |
+| ------------------------------ | -------------------------------------------- | --------------------------------------------------- |
+| TypeScript and JSON formatting | `oxfmt`                                      | `pnpm format` (`pnpm format:check` to verify)       |
+| TypeScript linting             | `oxlint`                                     | `pnpm lint` (`pnpm lint:fix` to apply safe fixes)   |
+| Type checking                  | `tsc --noEmit` (or the `tsdown` `tsgo` path) | `pnpm typecheck`                                    |
+| Zig formatting                 | `zig fmt`                                    | `zig fmt --check --exclude src-zig/zig-pkg src-zig` |
+| Nix formatting                 | `alejandra`                                  | `nix fmt`                                           |
+
+`.oxlintrc.json` encodes the mechanically checkable rules from this document.
+The local plugin in `scripts/oxlint-plugin.mjs` bans classes, `this`, prototype
+mutation, enums, and emoji; native rules cover `max-lines`, `no-else-return`,
+`typescript/consistent-type-definitions`, `typescript/consistent-type-imports`,
+`typescript/explicit-module-boundary-types`, `typescript/no-explicit-any`,
+`typescript/no-non-null-assertion`, `import/no-default-export`, and
+`unicorn/filename-case`. `lefthook.yml` runs the checks before every commit.
 
 A pull request is not ready while any of these fail. Do not add inline
 suppressions without a comment that states why the rule cannot apply.
