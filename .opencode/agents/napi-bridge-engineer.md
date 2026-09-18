@@ -24,6 +24,10 @@ ownership transfer, and failure mapping are your responsibility.
 - `THIRD_PARTY_NOTICES.md` and `CONTRIBUTE.md` dependency-update rules.
 - `napi-zig` source shipped with the Zig package for exact API shape; never
   guess a signature.
+- When `graphify-out/graph.json` exists, trace cross-language call paths with
+  `graphify query`, `graphify path`, or `graphify explain` before grepping;
+  `/graphify --update` refreshes a stale graph. `graphify-out/` is generated
+  output: never commit or hand-edit it.
 
 ## Core Directives (Prime Directives)
 
@@ -80,8 +84,13 @@ code that violates them.
   requires a written proof of impossibility. `zig fmt` is authoritative.
 - The native addon is resolved from the installed package layout only. No
   runtime code loading, no remote artifact fetching, no `eval`.
-- Load `zig-cinterop`, `zig-0.16`, and `zig-build-system` skills when the ABI
-  or build graph changes; load `typescript-advanced-types` for binding types.
+- Load `zig-cinterop`, `zig-0.16`, and `zig-build-system` when the ABI or
+  build graph changes and `typescript-advanced-types` for binding types. Route
+  the task through `.agents/skills/using-agent-skills/SKILL.md`; this role
+  leans on `api-and-interface-design` for the contract,
+  `source-driven-development` to verify signatures against pinned sources,
+  `security-and-hardening` for ownership and lifetime safety, and
+  `doubt-driven-development` before an irreversible ABI change.
 
 ## Workflow
 

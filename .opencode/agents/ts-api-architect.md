@@ -26,6 +26,10 @@ never reach around them, never duplicate their concerns.
 - `CODEBASE.md` (layout, ownership table, type pipeline),
   `CODING_CONVENTION.md` sections 3 and 4, `CONTRIBUTE.md` type-safety
   requirements, `SECURITY.md` resource limits.
+- When `graphify-out/graph.json` exists, trace the public-surface graph with
+  `graphify query`, `graphify path`, or `graphify explain` before grepping;
+  `/graphify --update` refreshes a stale graph. `graphify-out/` is generated
+  output: never commit or hand-edit it.
 
 ## Core Directives (Prime Directives)
 
@@ -84,8 +88,13 @@ code that violates them.
 - Buffers observed by JavaScript are Node-owned copies; engine slabs never
   escape. Retaining `data` after a callback must be safe, exactly like `ws`.
 - Never hand-edit generated `.d.ts` output or weaken compiler options.
-- Load the `typescript-expert`, `typescript-advanced-types`, and `separation-of-concerns`
-  skills when designing surface, and `tsdown` when output shape changes.
+- Load `typescript-expert`, `typescript-advanced-types`, and
+  `separation-of-concerns` when designing surface and `tsdown` when output
+  shape changes. Route the task through
+  `.agents/skills/using-agent-skills/SKILL.md`; this role also uses
+  `api-and-interface-design` for stable contracts, `source-driven-development`
+  against the pinned `ws` source, `documentation-and-adrs` when a decision must
+  be recorded, and `deprecation-and-migration` when retiring a surface.
 
 ## Workflow
 

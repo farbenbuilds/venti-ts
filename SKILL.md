@@ -30,6 +30,11 @@ observing identical behavior.
 - Zero OOP is absolute in both languages. No `class`, `this`, `extends`, or
   prototype mutation. Constructor-shaped exports are plain functions returning
   explicit state records.
+- Route the task before writing code: `.agents/skills/using-agent-skills/SKILL.md`
+  picks the lifecycle skill, and this skill picks the domain skills. When
+  `graphify-out/graph.json` exists, answer architecture questions from
+  `graphify query`/`graphify path`/`graphify explain` before reading files;
+  `/graphify --update` refreshes a stale graph.
 
 ## Target architecture and ownership
 
@@ -76,6 +81,33 @@ observing identical behavior.
 
 ## Which installed skill to load
 
+`.agents/skills/**` is managed by `skills-lock.json`. `using-agent-skills`
+routes to the lifecycle skill; load the domain skills the work needs.
+
+Lifecycle:
+
+| Work                              | Load                                                     |
+| --------------------------------- | -------------------------------------------------------- |
+| Ambiguous ask or vague idea       | `interview-me`, `idea-refine`                            |
+| New feature or protocol surface   | `spec-driven-development`, `planning-and-task-breakdown` |
+| Quality bar not written down      | `constraint-driven-development`                          |
+| Multi-file implementation         | `incremental-implementation`                             |
+| API or FFI shape decisions        | `api-and-interface-design`                               |
+| Verify against official sources   | `source-driven-development`, `context7`                  |
+| Test-first changes                | `test-driven-development`                                |
+| Divergence or failing case        | `debugging-and-error-recovery`                           |
+| Non-trivial or irreversible call  | `doubt-driven-development`                               |
+| Pre-merge review                  | `code-review-and-quality`, `code-simplification`         |
+| Untrusted input and lifetime risk | `security-and-hardening`                                 |
+| Measured performance work         | `performance-optimization`                               |
+| Logs, metrics, alerts             | `observability-and-instrumentation`                      |
+| Commits, PRs, releases            | `git-workflow-and-versioning`, `shipping-and-launch`     |
+| CI workflow changes               | `ci-cd-and-automation`                                   |
+| Docs and ADRs                     | `documentation-and-adrs`, `documentation-writer`         |
+| Retiring an export or option      | `deprecation-and-migration`                              |
+
+Domain:
+
 | Work                            | Load                                                                      |
 | ------------------------------- | ------------------------------------------------------------------------- |
 | Public types, strict API design | `typescript-expert`, `typescript-advanced-types`                          |
@@ -92,7 +124,6 @@ observing identical behavior.
 | Zig failures                    | `zig-debugging`, `zig-compiler`                                           |
 | Minimal correct solution        | `ponytail`                                                                |
 | Dense commit and PR text        | `caveman`                                                                 |
-| Docs                            | `documentation-writer`                                                    |
 | API lookups                     | `context7`                                                                |
 
 ## Definition of done

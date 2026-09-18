@@ -71,6 +71,35 @@ temporarily or annotate explicitly when test types must be verified.
 - Threat model and private reporting: `SECURITY.md`
 - License obligations kept in sync with dependencies: `THIRD_PARTY_NOTICES.md`
 
+## Agent skills and plugins
+
+- `.agents/skills/**` is the local skill pack pinned by `skills-lock.json`;
+  never hand-edit installed skills, and commit the lockfile and skill tree
+  together. `using-agent-skills` is the discovery meta-skill: route a task to
+  its workflow skill before starting. `SKILL.md` maps the pack to this repo.
+- The `addyosmani/agent-skills` lifecycle pack supplies `interview-me`,
+  `idea-refine`, `spec-driven-development`, `constraint-driven-development`,
+  `planning-and-task-breakdown`, `context-engineering`,
+  `source-driven-development`, `incremental-implementation`,
+  `doubt-driven-development`, `test-driven-development`,
+  `debugging-and-error-recovery`, `code-review-and-quality`,
+  `code-simplification`, `security-and-hardening`,
+  `performance-optimization`, `api-and-interface-design`,
+  `observability-and-instrumentation`, `git-workflow-and-versioning`,
+  `ci-cd-and-automation`, `documentation-and-adrs`,
+  `deprecation-and-migration`, and `shipping-and-launch`. UI-oriented skills
+  (`frontend-ui-engineering`, `browser-testing-with-devtools`) apply only when
+  a task genuinely needs them; this addon is not a UI project.
+- graphify is installed as a global opencode plugin. When
+  `graphify-out/graph.json` exists, treat codebase and architecture questions
+  as graph queries first: `graphify query "<question>"`, `graphify path A B`,
+  `graphify explain X`; refresh with `/graphify --update`. `graphify-out/` is
+  generated output, gitignored, and never edited or committed by hand.
+- `.opencode/agents/**` is the sub-agent roster: compatibility conformance,
+  data-oriented performance, native bridge, read-only refactor auditor,
+  TypeScript API, and Zig protocol. Each agent inherits the rules here and
+  loads the skills relevant to its ownership area.
+
 ## Workflow notes
 
 - Commits follow Conventional Commits (`.github/COMMIT_CONVENTION.md`).
@@ -79,7 +108,5 @@ temporarily or annotate explicitly when test types must be verified.
 - `ws` behavior is the compatibility contract. When adding a surface, check
   what `ws` does and test both implementations once the conformance harness
   exists. `ws` may be a devDependency only, never a runtime dependency.
-- `.agents/skills/**` is managed by `skills-lock.json`; do not hand-edit
-  installed skills.
 - `package.json` `files` currently ships only `dist/`. Native addon artifacts
   must be added to `files` before any real publish.

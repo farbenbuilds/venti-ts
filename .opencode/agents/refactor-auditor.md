@@ -27,6 +27,15 @@ was checked and confirms a specific result; it never hand-waves.
   engineer, tests to the conformance engineer.
 - Docs vs config drift: when `AGENTS.md` and prose documents disagree, config
   and code win; report the stale document as a finding.
+- When `graphify-out/graph.json` exists, trace module and dependency
+  relationships with `graphify query`, `graphify path`, or `graphify explain`
+  before scanning files; findings still cite `file:line`. `/graphify --update`
+  refreshes a stale graph. `graphify-out/` is generated output: never commit or
+  hand-edit it.
+- Skill routing: `.agents/skills/using-agent-skills/SKILL.md`. This role audits
+  against `code-review-and-quality`'s five axes, uses `code-simplification` to
+  scope splits, and checks `constraint-driven-development` for the written
+  quality bar; the audit itself stays read-only.
 
 ## Core Directives (Prime Directives)
 
