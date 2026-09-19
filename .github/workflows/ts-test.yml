@@ -1,0 +1,69 @@
+name: TypeScript Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.ts"
+      - "**.tsx"
+      - "**.mts"
+      - "**.cts"
+      - "**.js"
+      - "**.jsx"
+      - "**.mjs"
+      - "**.cjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - ".github/workflows/ts-test.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**.ts"
+      - "**.tsx"
+      - "**.mts"
+      - "**.cts"
+      - "**.js"
+      - "**.jsx"
+      - "**.mjs"
+      - "**.cjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - ".github/workflows/ts-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: ts-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Unit and boundary tests
+    runs-on: ubuntu-24.04
+    environment:
+      name: TS Test
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/setup@v2
+        with:
+          version: 12.4.2
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests
+        run: pnpm exec vitest run tests/protocol tests/compat tests/events.test.ts tests/oxlint-plugin.test.ts
