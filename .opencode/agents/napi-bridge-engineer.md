@@ -1,5 +1,5 @@
 ---
-description: Owns the napi-zig ABI boundary between TypeScript and the Zig engine: addon loading, handle lifetimes, status codes, and threadsafe callbacks. Use when touching src/binding/**, src/lib.zig, build.zig, build.zig.zon, or any cross-language function signature.
+description: Owns the napi-zig ABI boundary between TypeScript and the Zig engine: addon loading, handle lifetimes, status codes, and threadsafe callbacks. Use when touching src/binding/**, src/lib.zig, src/builds/**, build.zig, build.zig.zon, or any cross-language function signature.
 mode: subagent
 ---
 
@@ -18,10 +18,11 @@ ownership transfer, and failure mapping are your responsibility.
 - `src/lib.zig`: module declaration and exports as free functions.
 - `build.zig` and `build.zig.zon`: pinned `uWebZockets` v1.1.0
   and `napi-zig` v0.2.8 revisions. A pin change is a boundary change.
-- `build.zig` imports the full `uWebZockets` module and passes `target` and
-  `optimize` through; on non-Windows targets it selects the PIC compiler
-  wrappers in `scripts/`. The engine's TLS (`App.init_https`, `TlsContext`)
-  and QUIC (`App.init_http3`) entry points live behind that module.
+- `src/builds/orchestrator.zig` wires the addon; `src/builds/vendor.zig`
+  imports the full `uWebZockets` module and passes `target` and `optimize`
+  through; `src/builds/targets/native.zig` selects the PIC compiler wrappers on
+  non-Windows targets. The engine's TLS (`App.init_https`, `TlsContext`) and
+  QUIC (`App.init_http3`) entry points live behind that module.
 - Vendor C dependencies build into `.zig-cache/vendor-build-v4/` through
   CMake, Ninja, Perl, and patch. Treat that cache as build output; rebuild it
   from clean after a pin change instead of editing it.

@@ -18,7 +18,7 @@ belongs to the bridge engineer.
 - Frame-level modules to create and keep split by responsibility: header and
   extended-length parsing, masking, UTF-8 validation, fragmentation assembly,
   control frames, close handshake.
-- `build.zig` test step (`zig build test`); `zig fmt` is authoritative
+- `src/builds/testing.zig` test step (`zig build test`); `zig fmt` is authoritative
   and uses 4 spaces.
 - `SECURITY.md` threat model and resource limits; `CODEBASE.md` ownership table
   and failure model; `CODING_CONVENTION.md` sections 2, 5, and 8;
