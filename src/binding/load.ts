@@ -1,7 +1,7 @@
-import { existsSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { existsSync } from "node:fs"
+import { createRequire } from "node:module"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 export type VentiAddon = {
   engineVersion(): string
@@ -11,14 +11,14 @@ export type VentiAddon = {
 const require = createRequire(import.meta.url)
 
 const candidatePaths = [
-  ['zig-out', 'lib', 'venti.node'],
-  ['dist', 'venti.node'],
+  ["zig-out", "lib", "venti.node"],
+  ["dist", "venti.node"],
 ]
 
 function findPackageRoot(start: string): string | undefined {
   let current: string | undefined = start
   while (current !== undefined) {
-    if (existsSync(join(current, 'package.json'))) return current
+    if (existsSync(join(current, "package.json"))) return current
     const parent = dirname(current)
     current = parent === current ? undefined : parent
   }
@@ -28,7 +28,7 @@ function findPackageRoot(start: string): string | undefined {
 function resolveAddonPath(): string {
   const root = findPackageRoot(dirname(fileURLToPath(import.meta.url)))
   if (root === undefined) {
-    throw new Error('venti-ts: package root not found while resolving the native addon')
+    throw new Error("venti-ts: package root not found while resolving the native addon")
   }
   for (const parts of candidatePaths) {
     const candidate = join(root, ...parts)

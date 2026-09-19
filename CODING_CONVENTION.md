@@ -31,7 +31,7 @@ TypeScript:
 
 ```ts
 function normalizePort(input: unknown): number {
-  if (typeof input !== 'number' || !Number.isInteger(input)) throw invalidPort(input)
+  if (typeof input !== "number" || !Number.isInteger(input)) throw invalidPort(input)
   if (input < 0 || input > 65535) throw invalidPort(input)
   return input
 }

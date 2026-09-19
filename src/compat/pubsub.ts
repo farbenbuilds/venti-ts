@@ -1,4 +1,4 @@
-import type { EventMap, Handler, Registry } from '../types/pubsub'
+import type { EventMap, Handler, Registry } from "../types/pubsub"
 
 export function createRegistry<E extends EventMap>(): Registry<E> {
   return {}

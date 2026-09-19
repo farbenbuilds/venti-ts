@@ -54,7 +54,7 @@ body:
   - type: input
     id: ws-baseline
     attributes:
-      label: 'ws Baseline'
+      label: "ws Baseline"
       description: The 'ws' version you are replacing and whether the same scenario works there.
       placeholder: E.g. ws 8.18.0; the same scenario works as expected.
     validations:

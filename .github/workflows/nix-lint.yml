@@ -5,16 +5,16 @@ on:
     branches:
       - main
     paths:
-      - '**/*.nix'
-      - 'flake.lock'
-      - '.github/workflows/nix-lint.yml'
+      - "**/*.nix"
+      - "flake.lock"
+      - ".github/workflows/nix-lint.yml"
   pull_request:
     branches:
       - main
     paths:
-      - '**/*.nix'
-      - 'flake.lock'
-      - '.github/workflows/nix-lint.yml'
+      - "**/*.nix"
+      - "flake.lock"
+      - ".github/workflows/nix-lint.yml"
   workflow_dispatch:
 
 permissions:
