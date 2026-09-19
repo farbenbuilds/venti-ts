@@ -58,36 +58,46 @@ of venti-ts.
 
 ## WebSocketServer
 
-| Surface                         | Contract                                                                                                                                                                                                                 | Owner                                           | Status | Evidence |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------ | -------- |
-| Constructor and listen callback | `new WebSocketServer(options?, callback?)`                                                                                                                                                                               | `src/compat/server.ts`                          | todo   | -        |
-| Options                         | `host`, `port`, `backlog`, `server`, `noServer`, `path`, `clientTracking`, `verifyClient`, `handleProtocols`, `perMessageDeflate`, `maxPayload`, `skipUTF8Validation`, `allowSynchronousEvents`, `autoPong`, `WebSocket` | `src/compat/options.ts`                         | todo   | -        |
-| Observable properties           | `options`, `path`, `clients`                                                                                                                                                                                             | `src/compat/server.ts`, `src/types/server.ts`   | todo   | -        |
-| Methods                         | `address()`, `close(cb?)`, `handleUpgrade()`, `shouldHandle()`                                                                                                                                                           | `src/compat/server.ts`, `src/compat/upgrade.ts` | todo   | -        |
-| Events                          | `connection`, `error`, `headers`, `close`, `listening`, `wsClientError`                                                                                                                                                  | `src/compat/server.ts`, `src/types/server.ts`   | todo   | -        |
-| HTTP server integration         | `noServer` routing, `server` option, `upgrade` wiring with the Node `http.Server`                                                                                                                                        | `src/compat/upgrade.ts`                         | todo   | -        |
-| Handshake policy                | `verifyClient` sync/async, `handleProtocols`, origin/path checks                                                                                                                                                         | `src/compat/upgrade.ts`                         | todo   | -        |
-| Rejections                      | `wsClientError` for handshake failures, destroy semantics                                                                                                                                                                | `src/compat/upgrade.ts`                         | todo   | -        |
+| Surface                         | Contract                                                                                                                                                                                                                 | Owner                                           | Status  | Evidence                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------- | ------------------------------ |
+| Constructor and listen callback | `new WebSocketServer(options?, callback?)`                                                                                                                                                                               | `src/compat/server.ts`                          | todo    | -                              |
+| Options                         | `host`, `port`, `backlog`, `server`, `noServer`, `path`, `clientTracking`, `verifyClient`, `handleProtocols`, `perMessageDeflate`, `maxPayload`, `skipUTF8Validation`, `allowSynchronousEvents`, `autoPong`, `WebSocket` | `src/compat/{options,server-options}.ts`        | partial | `tests/compat/options.test.ts` |
+| Observable properties           | `options`, `path`, `clients`                                                                                                                                                                                             | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                              |
+| Methods                         | `address()`, `close(cb?)`, `handleUpgrade()`, `shouldHandle()`                                                                                                                                                           | `src/compat/server.ts`, `src/compat/upgrade.ts` | todo    | -                              |
+| Events                          | `connection`, `error`, `headers`, `close`, `listening`, `wsClientError`                                                                                                                                                  | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                              |
+| HTTP server integration         | `noServer` routing, `server` option, `upgrade` wiring with the Node `http.Server`                                                                                                                                        | `src/compat/upgrade.ts`                         | todo    | -                              |
+| Handshake policy                | `verifyClient` sync/async, `handleProtocols`, origin/path checks                                                                                                                                                         | `src/compat/upgrade.ts`                         | todo    | -                              |
+| Rejections                      | `wsClientError` for handshake failures, destroy semantics                                                                                                                                                                | `src/compat/upgrade.ts`                         | todo    | -                              |
 
 ## Stream and client
 
-| Surface                 | Contract                                                                                      | Owner                  | Status   | Evidence |
-| ----------------------- | --------------------------------------------------------------------------------------------- | ---------------------- | -------- | -------- |
-| `createWebSocketStream` | Duplex stream over an open socket                                                             | `src/compat/stream.ts` | todo     | -        |
-| Client construction     | `new WebSocket(address, protocols?, options?)`, redirects, `unexpected-response`              | `src/compat/client.ts` | deferred | -        |
-| Client options          | `followRedirects`, `maxRedirects`, `origin`, `headers`, `agent`, TLS options, `finishRequest` | deferred               | deferred | -        |
+| Surface                 | Contract                                                                                      | Owner                          | Status   | Evidence                       |
+| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------ | -------- | ------------------------------ |
+| `createWebSocketStream` | Duplex stream over an open socket                                                             | `src/compat/stream.ts`         | todo     | -                              |
+| Client construction     | `new WebSocket(address, protocols?, options?)`, redirects, `unexpected-response`              | `src/compat/client.ts`         | deferred | -                              |
+| Client options          | `followRedirects`, `maxRedirects`, `origin`, `headers`, `agent`, TLS options, `finishRequest` | `src/compat/client-options.ts` | partial  | `tests/compat/options.test.ts` |
 
 ## Boundary and lifetime invariants
 
-| Invariant                  | Contract                                                              | Owner                                                   | Status | Evidence |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------- | ------ | -------- |
-| Retained inbound payloads  | Frames are copied into Node-owned buffers before handlers run         | `src/binding/socket.ts`, `src/socket.zig`               | todo   | -        |
-| Borrowed outbound buffers  | Buffers live only for the native call, then land in the bounded queue | `src/binding/socket.ts`, `src/socket.zig`               | todo   | -        |
-| Generation-checked handles | Stale handles produce typed errors, never crashes or use-after-free   | `src/binding/errors.ts`, `src/handles.zig`              | todo   | -        |
-| Exactly-once close         | Terminal state is latched before `close` dispatch                     | `src/compat/close.ts`, `src/socket.zig`                 | todo   | -        |
-| Backpressure               | `send() === false` plus `bufferedAmount`, bounded queues              | `src/protocol/backpressure.ts`, `src/binding/socket.ts` | todo   | -        |
-| Close code mapping         | `maxPayload` 1009, protocol errors 1002, policy rejections 1008       | `src/protocol/close-codes.ts`, `src/socket.zig`         | todo   | -        |
-| Per-message deflate        | Option normalization in TS, codec in the engine                       | `src/compat/options.ts`, `src/socket.zig`               | todo   | -        |
+| Invariant                  | Contract                                                                                            | Owner                                                                     | Status  | Evidence                              |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------- | ------------------------------------- |
+| Retained inbound payloads  | Frames are copied into Node-owned buffers before handlers run                                       | `src/binding/socket.ts`, `src/socket.zig`                                 | todo    | -                                     |
+| Borrowed outbound buffers  | Buffers live only for the native call, then land in the bounded queue                               | `src/binding/socket.ts`, `src/socket.zig`                                 | todo    | -                                     |
+| Generation-checked handles | Stale handles produce typed errors, never crashes or use-after-free                                 | `src/binding/errors.ts`, `src/handles.zig`                                | todo    | -                                     |
+| Exactly-once close         | Terminal state is latched before `close` dispatch                                                   | `src/compat/close.ts`, `src/socket.zig`                                   | todo    | -                                     |
+| Backpressure               | `bufferedAmount` growth plus send callbacks, bounded queues; `send` returns no value, matching `ws` | `src/protocol/backpressure.ts`, `src/binding/socket.ts`                   | partial | `tests/protocol/backpressure.test.ts` |
+| Close code mapping         | `maxPayload` 1009, protocol errors 1002, policy rejections 1008                                     | `src/protocol/close-codes.ts`, `src/socket.zig`                           | partial | `tests/protocol/close-codes.test.ts`  |
+| Per-message deflate        | Option normalization in TS, codec in the engine                                                     | `src/compat/{options,server-options,client-options}.ts`, `src/socket.zig` | partial | `tests/compat/options.test.ts`        |
+
+## Error shape policy
+
+venti-ts throws `Error` instances that keep the `ws` constructor (`TypeError`,
+`RangeError`, `SyntaxError`) and message text wherever `ws` defines one, and
+adds a stable `ERR_*` code from `src/types/errors.ts` to every error. `ws` uses
+`WS_ERR_*` codes internally and leaves many thrown errors uncoded. This
+additive divergence follows the repository rule that errors carry a stable
+string code; the compat factories must pin the class, message, and code of
+every thrown error with tests as they land.
 
 ## Verification surface
 

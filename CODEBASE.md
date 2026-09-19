@@ -226,7 +226,7 @@ records the upstream version.
 JS: new WebSocketServer(options)
       |
       v
-compat/options.ts: validate and normalize
+compat/{options,server-options,client-options}.ts: validate and normalize
       |
       v
 binding/server.ts: createServer(config) ----> Zig engine
@@ -262,9 +262,9 @@ binding/socket.ts: send(handle, slice, opcode, fin) ----> Zig outbound ring
 ```
 
 Backpressure flows the other way: when the outbound ring exceeds its
-high-water mark, the native call reports it, `send` returns `false`, and
-`socket.bufferedAmount` reflects the queued byte count, matching `ws`
-semantics.
+high-water mark, the native call reports it, queue growth stays visible through
+`socket.bufferedAmount`, and pending sends drain through their callbacks.
+`ws` does not return a boolean from `send`, so neither does venti-ts.
 
 ## Event loop model
 
@@ -308,8 +308,8 @@ the ABI.
 
 ## Current branch state
 
-`feat/add-ws-types` layers the public type surface and the listener registry on
-top of the merged build graph:
+`feat/protocol-compat-leaves` adds the pure leaf modules on top of the merged
+type surface and listener registry:
 
 - `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` contract (`@types/ws`
   8.18.1) with an ESM footer; `src/index.ts` re-exports it as type-only
@@ -317,20 +317,28 @@ top of the merged build graph:
 "venti-ts"` matches `ws`. No runtime `ws` surface exists yet.
 - `src/types/{events,socket,server}.ts` define the registry types,
   `SocketState`, `ServerState`, and the Node-style event maps extracted from
-  the vendored contract; `src/types/{close,errors,status}.ts` define the
-  ready-state and close-code unions, the stable error codes, and the engine
-  status to error-code mapping. `src/compat/events.ts` implements the registry:
-  copy-on-write buckets, dispatch over the array captured at call time, no
-  classes and no `this`. Event handlers receive payloads only; `this` binding,
-  `once`, and the no-listener `error` policy belong to the compat factories.
+  the vendored contract; `src/types/{close,errors,status,options}.ts` define the
+  ready-state and close-code unions, the stable error codes, the engine status
+  to error-code mapping, and the normalized option records. `src/compat/events.ts`
+  implements the registry: copy-on-write buckets, dispatch over the array
+  captured at call time, no classes and no `this`. Event handlers receive
+  payloads only; `this` binding, `once`, and the no-listener `error` policy
+  belong to the compat factories.
+- `src/protocol/{close-codes,framing,backpressure}.ts` hold the RFC 6455 close
+  code predicates (mirroring `ws`), frame header and mask math, and the
+  bufferedAmount water-mark policy. `src/compat/{options,server-options,
+client-options,errors}.ts` normalize server and client options with the `ws`
+  defaults, including per-message deflate, and build coded errors;
+  `tests/protocol` and `tests/compat` cover them.
 - `pnpm typecheck` includes `tests/types`, whose fixtures pin the public
-  consumer surface, every event-map entry, and state-record literals.
-  `tsconfig.dist-types.json` checks `tests/declarations` against the built
-  `dist/index.d.mts` through the package `exports` map with
-  `skipLibCheck: false`; `pnpm build` ends with that check.
+  consumer surface, every event-map entry, state-record literals, and the
+  protocol close-code set. `tsconfig.dist-types.json` checks
+  `tests/declarations` against the built `dist/index.d.mts` through the package
+  `exports` map with `skipLibCheck: false`; `pnpm build` ends with that check.
 - `tests/events.test.ts` covers duplicate handlers, removal and addition
   during dispatch, listener counts, exception propagation, and the deliberate
-  no-listener `error` policy.
+  no-listener `error` policy. `pnpm exec vitest run tests/protocol tests/compat`
+  runs the pure leaf suites without a native build.
 
 The build-graph bullets below come from `refactor/build-orchestrator` and
 remain current:
@@ -370,6 +378,6 @@ remain current:
 - `tests/binding.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
-The `protocol/` tree, the `compat/` factories, and the engine modules beside
+The `compat/` factories, the `binding/` handles, and the engine modules beside
 `src/lib.zig` are the next implementation milestones. The addon currently
 exposes only the engine version; socket and server handles land next.
