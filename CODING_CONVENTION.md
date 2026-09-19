@@ -131,7 +131,10 @@ receiver-style functions that silently mutate captured state.
   `as const` objects for groups.
 - **Imports:** `import type` for type-only imports. `verbatimModuleSyntax`
   enforces this; the build fails otherwise.
-- **Exports:** named exports only. No default exports.
+- **Exports:** named exports only. No default exports. The one exception is
+  `src/index.ts`, which mirrors `ws` with a type-only default re-export so that
+  `import type WebSocket from "venti-ts"` stays drop-in; the runtime default
+  arrives with the compatibility layer.
 - **Types over interfaces** unless declaration merging is required.
 - **No `any`.** Use `unknown` at untrusted boundaries and narrow explicitly.
 - **No non-null assertions** in binding code. Validate the handle exists.

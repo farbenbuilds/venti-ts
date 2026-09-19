@@ -1,7 +1,7 @@
 {
   "name": "venti-ts",
   "version": "0.0.0",
-  "description": "A high-performance, drop-in replacement for ws, built on the µWebZockets Zig engine via napi-zig.",
+  "description": "A high-performance, drop-in replacement for ws, built on the first-party µWebZockets Zig engine via napi-zig.",
   "homepage": "https://github.com/farbenbuilds/venti-ts#readme",
   "bugs": {
     "url": "https://github.com/farbenbuilds/venti-ts/issues"
@@ -16,12 +16,13 @@
     "dist"
   ],
   "type": "module",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "pnpm run build:binding && tsdown",
+    "build": "pnpm run build:binding && tsdown && pnpm run typecheck:dist",
     "build:binding": "napi-zig build",
     "dev": "tsdown --watch",
     "format": "oxfmt",
@@ -31,6 +32,7 @@
     "test": "pnpm run build:binding && vitest run",
     "test:watch": "pnpm run build:binding && vitest",
     "typecheck": "tsc --noEmit",
+    "typecheck:dist": "tsc -p tsconfig.dist-types.json",
     "release": "bumpp",
     "prepublishOnly": "pnpm run build"
   },

@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "declaration": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "skipLibCheck": false
+  },
+  "include": ["tests/declarations"]
+}

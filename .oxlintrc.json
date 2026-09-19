@@ -33,14 +33,21 @@
       }
     },
     {
-      "files": ["tsdown.config.ts"],
+      "files": ["tsdown.config.ts", "src/index.ts"],
       "rules": {
         "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["tests/declarations/consumer.ts"],
+      "rules": {
+        "import/default": "off"
       }
     }
   ],
   "ignorePatterns": [
     ".agents/**",
+    "src/types/ws.d.ts",
     "dist/**",
     "zig-out/**",
     "zig-pkg/**",
