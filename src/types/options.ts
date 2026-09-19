@@ -1,8 +1,10 @@
 import type { PerMessageDeflateOptions, ServerOptions } from "./ws"
 
 export type NormalizedPerMessageDeflate = {
-  readonly serverNoContextTakeover: boolean
-  readonly clientNoContextTakeover: boolean
+  readonly serverNoContextTakeover: boolean | undefined
+  readonly clientNoContextTakeover: boolean | undefined
+  readonly serverMaxWindowBits: number | undefined
+  readonly clientMaxWindowBits: number | undefined
   readonly threshold: number
   readonly concurrencyLimit: number
   readonly zlibDeflateOptions: PerMessageDeflateOptions["zlibDeflateOptions"]

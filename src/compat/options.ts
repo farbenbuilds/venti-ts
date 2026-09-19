@@ -26,7 +26,7 @@ export function normalizeProtocols(protocols: string | string[] | undefined): re
     seen.add(protocol)
     index += 1
   }
-  return list
+  return [...list]
 }
 
 export function normalizePerMessageDeflate(
@@ -37,8 +37,10 @@ export function normalizePerMessageDeflate(
   if (resolved === false) return false
   const options: PerMessageDeflateOptions = resolved === true ? {} : resolved
   return {
-    serverNoContextTakeover: options.serverNoContextTakeover ?? false,
-    clientNoContextTakeover: options.clientNoContextTakeover ?? false,
+    serverNoContextTakeover: options.serverNoContextTakeover,
+    clientNoContextTakeover: options.clientNoContextTakeover,
+    serverMaxWindowBits: options.serverMaxWindowBits,
+    clientMaxWindowBits: options.clientMaxWindowBits,
     threshold: options.threshold ?? DEFAULT_THRESHOLD,
     concurrencyLimit: options.concurrencyLimit ?? DEFAULT_CONCURRENCY_LIMIT,
     zlibDeflateOptions: options.zlibDeflateOptions,
