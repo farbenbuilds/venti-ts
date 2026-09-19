@@ -3,8 +3,8 @@
 ## Scope
 
 venti-ts is a Node.js native addon that exposes the
-[µWebZockets](https://github.com/farbenbuilds/uWebZockets) Zig engine through a
-`ws`-compatible TypeScript surface. The repository contains two languages with
+[µWebZockets](https://github.com/farbenbuilds/uWebZockets) first-party Zig
+engine through a `ws`-compatible TypeScript surface. The repository contains two languages with
 a single hard boundary between them: TypeScript owns the public API, argument
 validation, and generated type surface; Zig owns buffer lifetime, protocol
 parsing, framing, and backpressure.

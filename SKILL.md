@@ -11,10 +11,10 @@ the working method and the non-obvious constraints.
 
 ## Mission
 
-venti-ts is a drop-in `ws` replacement whose protocol engine is µWebZockets
-(Zig) reached through `napi-zig`. The TypeScript layer owns API shape,
-validation, and generated types. The Zig layer owns parsing, buffers, and
-backpressure. Consumers should migrate by changing an import specifier and
+venti-ts is a drop-in `ws` replacement whose protocol engine is the first-party
+µWebZockets (Zig) engine reached through `napi-zig`. The TypeScript layer owns
+API shape, validation, and generated types. The Zig layer owns parsing, buffers,
+and backpressure. Consumers should migrate by changing an import specifier and
 observing identical behavior.
 
 ## Ground truth before writing code

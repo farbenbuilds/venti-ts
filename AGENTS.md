@@ -1,9 +1,9 @@
 # AGENTS.md
 
 venti-ts is a pre-alpha Node.js native addon: a drop-in `ws` replacement whose
-protocol engine is µWebZockets (Zig), reached through `napi-zig`. TypeScript
-owns the public surface and types; Zig will own parsing, buffers, and
-backpressure.
+protocol engine is µWebZockets, a first-party Zig engine built for this project,
+reached through `napi-zig`. TypeScript owns the public surface and types; Zig
+will own parsing, buffers, and backpressure.
 
 ## Current state: docs describe the target, not the tree
 
@@ -78,7 +78,8 @@ declarations through the package `exports` map; it needs `tsdown` output.
 - Naming: TS files `kebab-case`, TS identifiers `camelCase`; Zig files,
   functions, and variables `snake_case`; Zig types `PascalCase`. Zig is
   formatted by `zig fmt` (4 spaces).
-- The published package may depend only on `napi-zig` and `uWebZockets`;
+- The published package may depend only on `napi-zig` and `uWebZockets`, the
+  first-party engine;
   everything else belongs in `devDependencies`.
 - Hot paths allocate nothing. Capacities are fixed or `comptime`, and every
   peer-controlled length is capped.

@@ -6,7 +6,8 @@
 
 A high-performance, drop-in replacement for [`ws`](https://github.com/websockets/ws),
 implemented as a Node.js native addon. venti-ts wraps the zero-allocation
-[µWebZockets](https://github.com/farbenbuilds/uWebZockets) Zig engine through
+[µWebZockets](https://github.com/farbenbuilds/uWebZockets) Zig engine, built
+for this project by the venti-ts author, through
 [`napi-zig`](https://github.com/yuku-toolchain/napi-zig), keeping the hot path
 inside Zig while the public surface stays idiomatic TypeScript.
 
@@ -35,9 +36,9 @@ exists yet; do not deploy this in production.
 - **Pure functional and procedural code.** No classes, no `this` binding, no
   inheritance. State is explicit, functions are pure where practical, and I/O
   state is confined to the transport boundary.
-- **Zero external runtime dependencies.** The published package depends only on
-  `napi-zig` and `uWebZockets`; linting, formatting, bundling, and testing live
-  exclusively in the development toolchain.
+- **Minimal runtime dependencies.** The published package depends only on
+  `napi-zig` and `uWebZockets`, the first-party engine; linting, formatting,
+  bundling, and testing live exclusively in the development toolchain.
 
 ## Architecture at a glance
 
@@ -150,6 +151,7 @@ shell. The exact command contract is documented in
 
 ## License
 
-MIT. µWebZockets is MIT-licensed and provides the protocol engine. The `ws`
-project is MIT-licensed and defines the compatibility target; no `ws` source is
-incorporated. venti-ts is not affiliated with either project.
+MIT. µWebZockets is the first-party MIT-licensed protocol engine, created for
+venti-ts by the same author. The `ws` project is MIT-licensed and defines the
+compatibility target; no `ws` source is incorporated. venti-ts is not
+affiliated with the `ws` project.

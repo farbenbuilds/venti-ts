@@ -1,7 +1,7 @@
 {
   "name": "venti-ts",
   "version": "0.0.0",
-  "description": "A high-performance, drop-in replacement for ws, built on the µWebZockets Zig engine via napi-zig.",
+  "description": "A high-performance, drop-in replacement for ws, built on the first-party µWebZockets Zig engine via napi-zig.",
   "homepage": "https://github.com/farbenbuilds/venti-ts#readme",
   "bugs": {
     "url": "https://github.com/farbenbuilds/venti-ts/issues"

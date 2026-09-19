@@ -6,8 +6,8 @@ included in each published platform artifact.
 
 ## Runtime components
 
-µWebZockets is a first-party engine by the same author as venti-ts and is
-pinned in `build.zig.zon`. The remaining runtime component is:
+µWebZockets is the first-party engine created for venti-ts by the same author
+and is pinned in `build.zig.zon`. The remaining runtime component is:
 
 | Component                                              | Version or revision       | License |
 | ------------------------------------------------------ | ------------------------- | ------- |
