@@ -5,7 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "**.ts"
+      - "**.tsx"
+      - "**.mts"
+      - "**.cts"
+      - "**.js"
+      - "**.jsx"
+      - "**.mjs"
+      - "**.cjs"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -20,7 +27,14 @@ on:
     branches:
       - main
     paths:
-      - "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "**.ts"
+      - "**.tsx"
+      - "**.mts"
+      - "**.cts"
+      - "**.js"
+      - "**.jsx"
+      - "**.mjs"
+      - "**.cjs"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
