@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
     });
 
     napi_zig.addLib(b, napi_dep, .{
-        .name = "venti-ts",
+        .name = "venti",
         .root = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,

@@ -10,8 +10,8 @@ export type VentiAddon = {
 const require = createRequire(import.meta.url)
 
 const candidatePaths = [
-  ['zig-out', 'lib', 'venti-ts.node'],
-  ['dist', 'venti-ts.node'],
+  ['zig-out', 'lib', 'venti.node'],
+  ['dist', 'venti.node'],
 ]
 
 function findPackageRoot(start: string): string | undefined {

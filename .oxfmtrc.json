@@ -13,6 +13,6 @@
     "build.zig.zon.json",
     "build.zig.zon.nix",
     "build.zig.zon.txt",
-    "venti-ts.js"
+    "venti.js"
   ]
 }

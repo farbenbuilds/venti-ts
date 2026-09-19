@@ -45,6 +45,6 @@
     "zig-out/**",
     "zig-pkg/**",
     ".zig-cache/**",
-    "venti-ts.js"
+    "venti.js"
   ]
 }
