@@ -7,20 +7,23 @@ not a proof that all memory or security defects are absent.
 
 ## Current state
 
-This branch contains no `.github/workflows` files. The workflow contract below
-defines what the first CI change implements. Until then, contributors run the
-same commands locally as described in [CONTRIBUTE.md](CONTRIBUTE.md).
+The pipeline is implemented incrementally. `ts-lint.yml`, `zig-lint.yml`,
+`nix-lint.yml`, and `ts-test.yml` are wired; the workflows marked planned below
+are the contract for the remaining changes. Until they land, contributors run
+the same commands locally as described in [CONTRIBUTE.md](CONTRIBUTE.md).
 
 ## Workflows
 
-| Workflow        | Trigger                                              | Purpose                                                       |
-| --------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
-| `lint.yml`      | pushes and pull requests to `main`, manual           | oxlint, oxfmt, typecheck, zig fmt, Nix formatting             |
-| `test.yml`      | pushes and pull requests to `main`, manual           | vitest unit, integration, and boundary tests                  |
-| `native.yml`    | pushes and pull requests to `main`, manual, reusable | Build and test the `napi-zig` addon on the native matrix      |
-| `compat.yml`    | pushes and pull requests to `main`, manual           | RFC 6455 Autobahn suite and `ws` behavioral conformance       |
-| `benchmark.yml` | pull requests to `main`, nightly, manual             | Regression guard against the `main` baseline and `ws`         |
-| `publish.yml`   | `v*` tag push                                        | Verification, prebuild packaging, npm release with provenance |
+| Workflow        | State       | Trigger                                              | Purpose                                                       |
+| --------------- | ----------- | ---------------------------------------------------- | ------------------------------------------------------------- |
+| `ts-lint.yml`   | Implemented | pushes and pull requests to `main`, manual           | oxlint, oxfmt, typecheck                                      |
+| `zig-lint.yml`  | Implemented | pushes and pull requests to `main`, manual           | `zig fmt` and the Zig build graph                             |
+| `nix-lint.yml`  | Implemented | pushes and pull requests to `main`, manual           | Nix formatting and flake checks                               |
+| `ts-test.yml`   | Implemented | pushes and pull requests to `main`, manual           | vitest unit, boundary, and registry tests without the addon   |
+| `native.yml`    | Planned     | pushes and pull requests to `main`, manual, reusable | Build and test the `napi-zig` addon on the native matrix      |
+| `compat.yml`    | Planned     | pushes and pull requests to `main`, manual           | RFC 6455 Autobahn suite and `ws` behavioral conformance       |
+| `benchmark.yml` | Planned     | pull requests to `main`, nightly, manual             | Regression guard against the `main` baseline and `ws`         |
+| `publish.yml`   | Planned     | `v*` tag push                                        | Verification, prebuild packaging, npm release with provenance |
 
 Every workflow runs against the Node.js version pinned in `flake.nix`. The
 pnpm store and the Zig cache are cached per lockfile hash; caches are never
@@ -63,6 +66,11 @@ clean checkout. Tests run in vitest and cover option normalization, close-code
 mapping, event dispatch ordering, boundary lifetime rules, and capacity
 exhaustion. The build job uploads `dist/` and the generated `.d.ts` bundle so
 reviewers can inspect the published type surface without building locally.
+
+`ts-test.yml` runs the pure suites (`tests/protocol`, `tests/compat`,
+`tests/events.test.ts`, `tests/oxlint-plugin.test.ts`) without the native
+toolchain. `tests/binding.test.ts` and the addon-backed suites run through
+`pnpm test` in the planned native workflow.
 
 ## Native addon matrix
 
