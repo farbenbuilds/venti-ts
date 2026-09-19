@@ -59,10 +59,10 @@ venti-ts/
 │   ├── binding/
 │   │   └── load.ts            # native addon resolution and typed loading
 │   ├── compat/
-│   │   └── pubsub.ts          # listener registry replacing EventEmitter
+│   │   └── events.ts          # listener registry replacing EventEmitter
 │   ├── types/
 │   │   ├── ws.d.ts            # vendored DefinitelyTyped ws contract, ESM footer
-│   │   ├── pubsub.ts          # event-map, handler, and registry types
+│   │   ├── events.ts          # event-map, handler, and registry types
 │   │   ├── socket.ts          # SocketState and the socket event map
 │   │   └── server.ts          # ServerState and the server event map
 │   └── builds/
@@ -74,7 +74,7 @@ venti-ts/
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
 │   ├── binding.test.ts        # native pipeline smoke test
-│   ├── pubsub.test.ts         # listener registry behavior
+│   ├── events.test.ts         # listener registry behavior
 │   ├── types/                 # fixtures checked by pnpm typecheck
 │   └── declarations/          # fixtures checked by pnpm typecheck:dist
 └── .github/                   # community templates, issue forms, lint workflows
@@ -298,9 +298,9 @@ top of the merged build graph:
   8.18.1) with an ESM footer; `src/index.ts` re-exports it as type-only
   exports, including a type-only default so `import type WebSocket from
 "venti-ts"` matches `ws`. No runtime `ws` surface exists yet.
-- `src/types/{pubsub,socket,server}.ts` define the registry types,
+- `src/types/{events,socket,server}.ts` define the registry types,
   `SocketState`, `ServerState`, and the Node-style event maps extracted from
-  the vendored contract. `src/compat/pubsub.ts` implements the registry:
+  the vendored contract. `src/compat/events.ts` implements the registry:
   copy-on-write buckets, dispatch over the array captured at call time, no
   classes and no `this`. Event handlers receive payloads only; `this` binding,
   `once`, and the no-listener `error` policy belong to the compat factories.
@@ -309,7 +309,7 @@ top of the merged build graph:
   `tsconfig.dist-types.json` checks `tests/declarations` against the built
   `dist/index.d.mts` through the package `exports` map with
   `skipLibCheck: false`; `pnpm build` ends with that check.
-- `tests/pubsub.test.ts` covers duplicate handlers, removal and addition
+- `tests/events.test.ts` covers duplicate handlers, removal and addition
   during dispatch, listener counts, exception propagation, and the deliberate
   no-listener `error` policy.
 
