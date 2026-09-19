@@ -1,10 +1,10 @@
-import { createRegistry, dispatch, subscribe } from '../../src/compat/pubsub'
-import type { EventMap, Handler, Registry } from '../../src/types/pubsub'
-import type { ServerEventMap, ServerState } from '../../src/types/server'
-import type { SocketEventMap, SocketState } from '../../src/types/socket'
-import type { WebSocket } from '../../src/types/ws'
-import type { ClientRequest, IncomingMessage } from 'node:http'
-import type { Duplex } from 'node:stream'
+import { createRegistry, dispatch, subscribe } from "../../src/compat/pubsub"
+import type { EventMap, Handler, Registry } from "../../src/types/pubsub"
+import type { ServerEventMap, ServerState } from "../../src/types/server"
+import type { SocketEventMap, SocketState } from "../../src/types/socket"
+import type { WebSocket } from "../../src/types/ws"
+import type { ClientRequest, IncomingMessage } from "node:http"
+import type { Duplex } from "node:stream"
 
 type HandlerTable<E extends EventMap> = {
   [K in keyof E]: Handler<E[K]>
@@ -36,7 +36,7 @@ export const socketHandlers: HandlerTable<SocketEventMap> = {
     void url
     void request
   },
-  'unexpected-response': (request: ClientRequest, response: IncomingMessage): void => {
+  "unexpected-response": (request: ClientRequest, response: IncomingMessage): void => {
     void request
     void response
   },
@@ -64,10 +64,10 @@ export const serverHandlers: HandlerTable<ServerEventMap> = {
 }
 
 export const socketState: SocketState = {
-  url: 'ws://example.test',
-  protocol: '',
-  extensions: '',
-  binaryType: 'nodebuffer',
+  url: "ws://example.test",
+  protocol: "",
+  extensions: "",
+  binaryType: "nodebuffer",
   readyState: 0,
   bufferedAmount: 0,
   isPaused: false,
@@ -77,7 +77,7 @@ export const socketState: SocketState = {
 
 export const serverState: ServerState = {
   options: {},
-  path: '/',
+  path: "/",
   clients: new Set<WebSocket>(),
   listeners: createRegistry<ServerEventMap>(),
 }
@@ -87,15 +87,15 @@ export type ServerRegistry = Registry<ServerEventMap>
 
 export function registerMessage(
   socket: SocketState,
-  handler: Handler<SocketEventMap['message']>,
+  handler: Handler<SocketEventMap["message"]>,
 ): SocketState {
-  return { ...socket, listeners: subscribe(socket.listeners, 'message', handler) }
+  return { ...socket, listeners: subscribe(socket.listeners, "message", handler) }
 }
 
 export function announceClose(socket: SocketState): number {
-  return dispatch(socket.listeners, 'close', 1000, Buffer.from('done'))
+  return dispatch(socket.listeners, "close", 1000, Buffer.from("done"))
 }
 
 export function announceOpen(): number {
-  return dispatch(createRegistry<SocketEventMap>(), 'open')
+  return dispatch(createRegistry<SocketEventMap>(), "open")
 }

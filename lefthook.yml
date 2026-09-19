@@ -9,33 +9,33 @@ pre-commit:
   parallel: true
   jobs:
     - name: oxlint
-      glob: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'
+      glob: "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
       run: pnpm exec oxlint --fix {staged_files}
       stage_fixed: true
 
     - name: oxfmt
-      glob: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,md,mdx,yaml,yml}'
+      glob: "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,md,mdx,yaml,yml}"
       run: pnpm exec oxfmt --write {staged_files}
       stage_fixed: true
 
     - name: zig-fmt
-      glob: '**/*.zig'
+      glob: "**/*.zig"
       run: zig fmt {staged_files}
       stage_fixed: true
 
     - name: zon2nix
-      glob: '**/build.zig.zon'
+      glob: "**/build.zig.zon"
       run: scripts/zon2nix.sh
 
     - name: hygiene
       exclude:
-        - '.agents/**'
+        - ".agents/**"
       run: scripts/check-staged.sh {staged_files}
 
     - name: typecheck
-      glob: '**/*.{ts,tsx,mts,cts}'
+      glob: "**/*.{ts,tsx,mts,cts}"
       run: pnpm typecheck
 
     - name: tests
-      glob: '**/*.{ts,tsx,mts,cts}'
+      glob: "**/*.{ts,tsx,mts,cts}"
       run: pnpm test

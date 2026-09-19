@@ -83,12 +83,12 @@ pnpm build
 The target surface is a drop-in replacement for `ws`:
 
 ```ts
-import { WebSocketServer } from 'venti-ts'
+import { WebSocketServer } from "venti-ts"
 
 const server = new WebSocketServer({ port: 8080 })
 
-server.on('connection', (socket) => {
-  socket.on('message', (data, isBinary) => {
+server.on("connection", (socket) => {
+  socket.on("message", (data, isBinary) => {
     socket.send(data, { binary: isBinary })
   })
 })

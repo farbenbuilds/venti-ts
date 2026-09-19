@@ -1,9 +1,9 @@
-import type { ClientRequest, IncomingMessage } from 'node:http'
-import type { Registry } from './pubsub'
-import type { WebSocket } from './ws'
+import type { ClientRequest, IncomingMessage } from "node:http"
+import type { Registry } from "./pubsub"
+import type { WebSocket } from "./ws"
 
-export type ReadyState = WebSocket['readyState']
-export type BinaryType = WebSocket['binaryType']
+export type ReadyState = WebSocket["readyState"]
+export type BinaryType = WebSocket["binaryType"]
 
 export type SocketEventMap = {
   open: []
@@ -14,10 +14,10 @@ export type SocketEventMap = {
   pong: [data: Buffer]
   upgrade: [request: IncomingMessage]
   redirect: [url: string, request: ClientRequest]
-  'unexpected-response': [request: ClientRequest, response: IncomingMessage]
+  "unexpected-response": [request: ClientRequest, response: IncomingMessage]
 }
 
-export type SocketDomHandlers = Pick<WebSocket, 'onopen' | 'onerror' | 'onclose' | 'onmessage'>
+export type SocketDomHandlers = Pick<WebSocket, "onopen" | "onerror" | "onclose" | "onmessage">
 
 export type SocketState = {
   readonly url: string

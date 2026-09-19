@@ -5,32 +5,32 @@ on:
     branches:
       - main
     paths:
-      - '**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'tsconfig.json'
-      - 'tsconfig.dist-types.json'
-      - 'tsdown.config.ts'
-      - '.oxlintrc.json'
-      - '.oxfmtrc.json'
-      - 'scripts/oxlint-plugin.mjs'
-      - '.github/workflows/ts-lint.yml'
+      - "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - "tsconfig.dist-types.json"
+      - "tsdown.config.ts"
+      - ".oxlintrc.json"
+      - ".oxfmtrc.json"
+      - "scripts/oxlint-plugin.mjs"
+      - ".github/workflows/ts-lint.yml"
   pull_request:
     branches:
       - main
     paths:
-      - '**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'tsconfig.json'
-      - 'tsconfig.dist-types.json'
-      - 'tsdown.config.ts'
-      - '.oxlintrc.json'
-      - '.oxfmtrc.json'
-      - 'scripts/oxlint-plugin.mjs'
-      - '.github/workflows/ts-lint.yml'
+      - "**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.json"
+      - "tsconfig.dist-types.json"
+      - "tsdown.config.ts"
+      - ".oxlintrc.json"
+      - ".oxfmtrc.json"
+      - "scripts/oxlint-plugin.mjs"
+      - ".github/workflows/ts-lint.yml"
   workflow_dispatch:
 
 permissions:
