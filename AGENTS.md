@@ -7,17 +7,17 @@ backpressure.
 
 ## Current state: docs describe the target, not the tree
 
-- `src/index.ts` and `tests/index.test.ts` are tsdown-starter placeholders.
-  `src-zig/` holds the `zig init` scaffold (a shared library with a test step);
-  there is no `binding/`, `compat/`, `protocol/`, or `types/` tree and no
-  `.github/workflows`.
+- `src-zig/` is a `napi-zig` addon project: `build.zig` calls `napi_zig.addLib`
+  and `src/root.zig` exposes `engineVersion()`. `src/binding/load.ts` resolves
+  and loads the built `.node`; `src/index.ts` is still an empty public surface.
+  There is no `compat/`, `protocol/`, or `types/` tree yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
   and code.
-- Documented scripts `build:binding`, `test:compat`, and `bench` do not exist
-  in `package.json`. `build`, `dev`, `format`, `format:check`, `lint`,
-  `lint:fix`, `test`, `typecheck`, `release`, and `prepublishOnly` are wired.
+- Documented scripts `test:compat` and `bench` do not exist in `package.json`.
+  `build`, `build:binding`, `dev`, `format`, `format:check`, `lint`, `lint:fix`,
+  `test`, `test:watch`, `typecheck`, `release`, and `prepublishOnly` are wired.
 - Git hooks are installed by `lefthook` during `pnpm install` (allowed through
   `pnpm-workspace.yaml`); `pnpm-lock.yaml` is committed.
 
@@ -30,13 +30,15 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | ----------------------------- | ---------------------------------------------------------------------------------- |
 | Environment                   | `nix develop` (musl hosts: `nix develop .#musl`; `.envrc` selects it under direnv) |
 | Install                       | `pnpm install`                                                                     |
-| Build bundle and declarations | `pnpm build`                                                                       |
-| Watch rebuild                 | `pnpm dev`                                                                         |
+| Build native addon and bundle | `pnpm build`                                                                       |
+| Build native addon only       | `pnpm build:binding`                                                               |
+| Watch bundle rebuild          | `pnpm dev`                                                                         |
 | Lint                          | `pnpm lint` (`pnpm lint:fix` to apply fixes)                                       |
 | Check formatting              | `pnpm format:check` (`pnpm format` to write)                                       |
-| All tests (one-shot)          | `pnpm exec vitest run`                                                             |
+| All tests (one-shot)          | `pnpm test` (rebuilds the binding first)                                           |
+| Watch tests                   | `pnpm test:watch`                                                                  |
 | All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
-| Single test                   | `pnpm exec vitest run tests/index.test.ts -t 'fn'`                                 |
+| Single test                   | `pnpm exec vitest run tests/binding.test.ts`                                       |
 | Typecheck                     | `pnpm typecheck`                                                                   |
 | Zig formatting                | `zig fmt --check --exclude src-zig/zig-pkg src-zig`                                |
 | Version bump                  | `pnpm release`                                                                     |

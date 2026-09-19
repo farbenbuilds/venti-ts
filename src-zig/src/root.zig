@@ -1,18 +1,16 @@
-//! By convention, root.zig is the root source file when making a package.
 const std = @import("std");
-const Io = std.Io;
+const napi = @import("napi-zig");
+const uwz = @import("uwebzockets_version");
 
-/// This is a documentation comment to explain the `printAnotherMessage` function below.
-///
-/// Accepting an `Io.Writer` instance is a handy way to write reusable code.
-pub fn printAnotherMessage(writer: *Io.Writer) Io.Writer.Error!void {
-    try writer.print("Run `zig build test` to run the tests.\n", .{});
+comptime {
+    napi.module(@This());
 }
 
-pub fn add(a: i32, b: i32) i32 {
-    return a + b;
+/// Version of the linked uWebZockets engine, for example "1.1.0".
+pub fn engine_version() []const u8 {
+    return uwz.string;
 }
 
-test "basic add functionality" {
-    try std.testing.expect(add(3, 7) == 10);
+test "engine version matches the linked uWebZockets release" {
+    try std.testing.expectEqualStrings(uwz.string, engine_version());
 }

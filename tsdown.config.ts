@@ -5,5 +5,5 @@ export default defineConfig({
     tsgo: true,
   },
   exports: true,
-  // ...config options
+  copy: ['src-zig/zig-out/lib/venti-ts.node'],
 })

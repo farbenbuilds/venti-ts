@@ -220,11 +220,11 @@ copyFarm name
       };
     }
     {
-      name = "uWebZockets-1.0.9-SD3SPF9JEwDvstGyJZhrNJEU3QzznQCa8SoC36mw1JdN";
+      name = "uWebZockets-1.1.0-SD3SPLcSFQD_-Rkl-LGKBns4gAOjBkFibnPv9bJP628i";
       path = fetchZigArtifact {
         name = "uWebZockets";
-        url = "git+https://github.com/farbenbuilds/uWebZockets?ref=v1.0.9#4ed1a9ac92e1d533a6558a659b08ca4f4a9fac46";
-        hash = "sha256-lt+tkYcIdu53T6bl6aBeWhdRfSNuf5GPcC2ct9/9edw=";
+        url = "git+https://github.com/farbenbuilds/uWebZockets?ref=v1.1.0#bccfe98fddf61982ee249fe184c677c22197d238";
+        hash = "sha256-tGq/hF6/y2dzxkpHoUNEAvJtgYFRRVSv5scd3SkgIAs=";
         unpack = true;
       };
     }
