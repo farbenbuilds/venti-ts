@@ -1,5 +1,5 @@
 import type { ClientRequest, IncomingMessage } from "node:http"
-import type { Registry } from "./pubsub"
+import type { Registry } from "./events"
 import type { WebSocket } from "./ws"
 
 export type ReadyState = WebSocket["readyState"]

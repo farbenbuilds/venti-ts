@@ -5,7 +5,7 @@ import {
   listenerCount,
   subscribe,
   unsubscribe,
-} from "../src/compat/pubsub"
+} from "../src/compat/events"
 
 type TestEventMap = {
   open: []

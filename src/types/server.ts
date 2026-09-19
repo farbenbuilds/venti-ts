@@ -1,6 +1,6 @@
 import type { IncomingMessage } from "node:http"
 import type { Duplex } from "node:stream"
-import type { Registry } from "./pubsub"
+import type { Registry } from "./events"
 import type { ServerOptions, WebSocket } from "./ws"
 
 export type ServerEventMap = {

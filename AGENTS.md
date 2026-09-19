@@ -14,8 +14,8 @@ will own parsing, buffers, and backpressure.
   sources. `src/binding/load.ts` resolves and loads the built `.node`;
   `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` declarations, and
   `src/index.ts` re-exports that surface as type-only ESM exports.
-  `src/types/{socket,server,pubsub}.ts` hold the internal state records, event
-  maps, and listener-registry types; `src/compat/pubsub.ts` implements the
+  `src/types/{events,socket,server}.ts` hold the internal state records, event
+  maps, and listener-registry types; `src/compat/events.ts` implements the
   listener registry. There is no `protocol/` tree yet, and no runtime `ws`
   surface.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
