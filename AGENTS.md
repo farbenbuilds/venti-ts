@@ -15,8 +15,9 @@ will own parsing, buffers, and backpressure.
   `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` declarations, and
   `src/index.ts` re-exports that surface as type-only ESM exports.
   `src/types/{events,socket,server}.ts` hold the internal state records, event
-  maps, and listener-registry types; `src/compat/events.ts` implements the
-  listener registry. There is no `protocol/` tree yet, and no runtime `ws`
+  maps, and listener-registry types; `src/types/{close,errors,status}.ts` hold
+  the ready-state, close-code, error-code, and engine-status unions, and
+  `src/compat/events.ts` implements the listener registry. There is no `protocol/` tree yet, and no runtime `ws`
   surface.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
