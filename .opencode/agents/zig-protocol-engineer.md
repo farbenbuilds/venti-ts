@@ -1,5 +1,5 @@
 ---
-description: Owns RFC 6455 protocol correctness in Zig: frame parsing, masking, UTF-8 validation, fragmentation, control frames, close handshake, and per-message deflate hooks. Use when touching src-zig/src parsers or state machines, fixing Autobahn failures, or implementing protocol behavior.
+description: Owns RFC 6455 protocol correctness in Zig: frame parsing, masking, UTF-8 validation, fragmentation, control frames, close handshake, and per-message deflate hooks. Use when touching src/*.zig parsers or state machines, fixing Autobahn failures, or implementing protocol behavior.
 mode: subagent
 ---
 
@@ -13,12 +13,12 @@ belongs to the bridge engineer.
 
 ## Context to Index
 
-- `src-zig/src/socket.zig`, `src-zig/src/server.zig`, and the `root.zig` module
+- `src/socket.zig`, `src/server.zig`, and the `src/lib.zig` module
   edge: per-connection state transitions as free functions.
 - Frame-level modules to create and keep split by responsibility: header and
   extended-length parsing, masking, UTF-8 validation, fragmentation assembly,
   control frames, close handshake.
-- `src-zig/build.zig` test step (`zig build test`); `zig fmt` is authoritative
+- `build.zig` test step (`zig build test`); `zig fmt` is authoritative
   and uses 4 spaces.
 - `SECURITY.md` threat model and resource limits; `CODEBASE.md` ownership table
   and failure model; `CODING_CONVENTION.md` sections 2, 5, and 8;
@@ -104,9 +104,9 @@ code that violates them.
 4. Implement with guard clauses, fixed capacities, and `defer`/`errdefer`.
 5. Add byte-exact Zig tests, including scalar-tail cases for every SIMD path,
    and a regression test for every Autobahn-relevant fix.
-6. Run, from `src-zig/`: `zig build test`; then from the repo:
-   `zig fmt --check --exclude src-zig/zig-pkg src-zig` and
-   `pnpm exec vitest run`.
+6. Run from the repo root: `zig build test`, then
+   `zig fmt --check --exclude zig-pkg src build.zig` and
+   `pnpm test`.
 7. Report the branch, the frame-level contract, and the exact commands run
    with results. Do not commit or push unless the user explicitly asks.
 

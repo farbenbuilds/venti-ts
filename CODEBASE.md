@@ -44,22 +44,32 @@ venti-ts/
 ├── pnpm-workspace.yaml        # pnpm settings (lefthook build approval)
 ├── package.json               # package metadata, scripts, exports
 ├── tsconfig.json              # strict TypeScript configuration
-├── tsdown.config.ts           # bundle and declaration pipeline
+├── tsdown.config.ts           # bundle, declaration, and native artifact pipeline
+├── build.zig                  # napi_zig.addLib build graph
+├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
 ├── scripts/
 │   ├── check-staged.sh        # staged-file hygiene checks
-│   └── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
+│   ├── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
+│   ├── zig-cc-pic             # PIC C compiler wrapper for musl vendor builds
+│   └── zig-cxx-pic            # PIC C++ compiler wrapper for musl vendor builds
 ├── src/
-│   └── index.ts               # public export surface (placeholder)
+│   ├── index.ts               # public export surface (empty placeholder)
+│   ├── lib.zig                # napi-zig root module declaration and exports
+│   └── binding/
+│       └── load.ts            # native addon resolution and typed loading
 ├── tests/
-│   └── index.test.ts          # vitest smoke test (placeholder)
-└── .github/                   # community templates and issue forms
+│   └── binding.test.ts        # native pipeline smoke test
+└── .github/                   # community templates, issue forms, lint workflows
 ```
 
 Target layout as the binding lands:
 
 ```text
+build.zig                      # addon build graph, typed dependency edge
+build.zig.zon                  # pinned uWebZockets and napi-zig revisions
 src/
 ├── index.ts                   # thin public re-export surface
+├── lib.zig                    # napi-zig module declaration and exports
 ├── binding/                   # native addon loading and typed N-API calls
 │   ├── load.ts                # platform/arch addon resolution, one error type
 │   ├── server.ts              # server handle create/listen/close free functions
@@ -73,16 +83,18 @@ src/
 │   ├── close-codes.ts         # RFC 6455 close code constants and predicates
 │   ├── framing.ts             # length and mask helpers used by tests
 │   └── backpressure.ts        # bufferedAmount and high-water policy
-└── types/                     # public and internal type-only modules
-src-zig/
-├── build.zig                  # addon build graph, typed dependency edge
-├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
-└── src/
-    ├── binding.zig            # napi-zig module declaration and exports
-    ├── server.zig             # engine lifecycle as free functions
-    ├── socket.zig             # per-connection handles and state transitions
-    └── ...                    # further modules split by one responsibility
+├── types/                     # public and internal type-only modules
+├── server.zig                 # engine lifecycle as free functions
+├── socket.zig                 # per-connection handles and state transitions
+└── ...                        # further Zig modules split by one responsibility
 ```
+
+Zig and TypeScript share `src/`. `napi-zig` expects the addon root module at
+`src/lib.zig`, `tsdown` expects the package entry at `src/index.ts`, and the
+file extensions keep the two languages apart. `build.zig` and `build.zig.zon`
+stay at the repository root so the `napi-zig` CLI runs there without a
+working-directory flag. Future Zig modules live beside the TypeScript files in
+`src/` or in a dedicated subdirectory split by responsibility.
 
 Test and tooling directories:
 
@@ -232,23 +244,38 @@ the ABI.
 
 ## Current branch state
 
-`chore/add-basic-documents` contains the toolchain and documentation
-groundwork:
+`feat/napi-zig-binding` wires the native pipeline end to end:
 
-- `package.json` defines the package scripts (`build`, `dev`, `format`,
-  `format:check`, `lint`, `lint:fix`, `test`, `typecheck`, `release`,
-  `prepublishOnly`) and development dependencies.
-- `tsconfig.json` enables `strict`, `verbatimModuleSyntax`, and
-  `isolatedModules`.
-- `tsdown.config.ts` enables bundled declaration output.
+- `package.json` defines the package scripts (`build`, `build:binding`, `dev`,
+  `format`, `format:check`, `lint`, `lint:fix`, `test`, `test:watch`,
+  `typecheck`, `release`, `prepublishOnly`) and development dependencies,
+  including the `napi-zig` CLI.
+- `tsdown.config.ts` enables bundled declaration output and copies the host
+  `.node` artifact into `dist/`, so `pnpm build` produces a self-contained
+  package for the current platform.
+- `build.zig` builds the addon through `napi_zig.addLib` and links the full
+  `uWebZockets` engine module; `src/lib.zig` exposes `engineVersion()` and
+  `http3Available()`. The engine's TLS surface (`App.init_https`,
+  `TlsContext.init`) is reachable from the addon but not yet exposed to
+  TypeScript.
+- The engine's vendored C dependencies build once into
+  `.zig-cache/vendor-build-v4/` through CMake and Ninja; non-Windows targets
+  use the PIC compiler wrappers in `scripts/` because the vendored static
+  libraries link into the shared addon.
+- `napi-zig` was wired by hand following its manual setup guide, never with
+  `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
+  not scaffolded over.
+- `src/binding/load.ts` resolves the `.node` from `zig-out/` first and from
+  `dist/` second, returning a typed `VentiAddon` record. No public surface is
+  exported yet.
 - `.oxlintrc.json` and `.oxfmtrc.json` encode
   [CODING_CONVENTION.md](CODING_CONVENTION.md); `lefthook.yml` runs them on
   every commit alongside `zig fmt`, typecheck, and the test suite.
 - `flake.nix` pins Node.js, pnpm, Zig 0.16.0, zls, and TypeScript tooling;
   `.#musl` selects a musl dev shell on musl hosts.
-- `src/index.ts` and `tests/index.test.ts` are placeholders that verify the
-  build and test wiring only.
+- `tests/binding.test.ts` proves the Zig build, addon load, and version
+  round-trip.
 
-The `binding/`, `compat/`, `protocol/`, `types/`, and `src-zig/` trees described
-above are the next implementation milestones. No native addon is built or
-loaded on this branch yet.
+The `compat/`, `protocol/`, and `types/` trees and the engine modules beside
+`src/lib.zig` are the next implementation milestones. The addon currently
+exposes only the engine version; server and socket handles land next.

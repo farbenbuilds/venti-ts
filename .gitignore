@@ -8,6 +8,7 @@
 zig-out/
 zig-cache/
 zig-pkg/
+venti.js
 
 # node
 node_modules/

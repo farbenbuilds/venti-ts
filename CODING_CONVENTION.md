@@ -183,13 +183,13 @@ receiver-style functions that silently mutate captured state.
 
 ## 7. Formatting and linting
 
-| Scope                          | Tool                                         | Command                                             |
-| ------------------------------ | -------------------------------------------- | --------------------------------------------------- |
-| TypeScript and JSON formatting | `oxfmt`                                      | `pnpm format` (`pnpm format:check` to verify)       |
-| TypeScript linting             | `oxlint`                                     | `pnpm lint` (`pnpm lint:fix` to apply safe fixes)   |
-| Type checking                  | `tsc --noEmit` (or the `tsdown` `tsgo` path) | `pnpm typecheck`                                    |
-| Zig formatting                 | `zig fmt`                                    | `zig fmt --check --exclude src-zig/zig-pkg src-zig` |
-| Nix formatting                 | `alejandra`                                  | `nix fmt`                                           |
+| Scope                          | Tool                                         | Command                                           |
+| ------------------------------ | -------------------------------------------- | ------------------------------------------------- |
+| TypeScript and JSON formatting | `oxfmt`                                      | `pnpm format` (`pnpm format:check` to verify)     |
+| TypeScript linting             | `oxlint`                                     | `pnpm lint` (`pnpm lint:fix` to apply safe fixes) |
+| Type checking                  | `tsc --noEmit` (or the `tsdown` `tsgo` path) | `pnpm typecheck`                                  |
+| Zig formatting                 | `zig fmt`                                    | `zig fmt --check --exclude zig-pkg src build.zig` |
+| Nix formatting                 | `alejandra`                                  | `nix fmt`                                         |
 
 `.oxlintrc.json` encodes the mechanically checkable rules from this document.
 The local plugin in `scripts/oxlint-plugin.mjs` bans classes, `this`, prototype

@@ -13,7 +13,8 @@ the boundary tests that prove the memory-safety contract at the FFI seam.
 ## Context to Index
 
 - `tests/**` (vitest 4, explicit imports): unit, integration, and boundary
-  tests. `tests/index.test.ts` is a placeholder to replace, not extend.
+  tests. `tests/binding.test.ts` is the native pipeline smoke test; replace it
+  as the `ws` surface lands, do not extend it.
 - `bench/**` (to be created) for performance assertions; never in the unit
   suite.
 - `ws` as a devDependency only. Never import it from published code.
@@ -101,9 +102,9 @@ code that violates them.
 3. Write the `ws` leg and the venti-ts leg from the same scenario function;
    never copy one implementation into the other.
 4. Add boundary and capacity tests when the change touches lifetimes.
-5. Run `pnpm exec vitest run` (single test:
+5. Run `pnpm test` (single test:
    `pnpm exec vitest run tests/<file>.test.ts -t '<name>'`); for Zig units run
-   `zig build test` from `src-zig/`.
+   `zig build test` from the repo root.
 6. Report the branch, the scenario matrix, and the exact commands run with
    results. Do not commit or push unless the user explicitly asks.
 

@@ -21,13 +21,15 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "pnpm run build:binding && tsdown",
+    "build:binding": "napi-zig build",
     "dev": "tsdown --watch",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "test": "vitest",
+    "test": "pnpm run build:binding && vitest run",
+    "test:watch": "pnpm run build:binding && vitest",
     "typecheck": "tsc --noEmit",
     "release": "bumpp",
     "prepublishOnly": "pnpm run build"
@@ -36,6 +38,7 @@
     "@types/node": "^26.1.1",
     "bumpp": "^11.1.0",
     "lefthook": "^2.1.14",
+    "napi-zig": "^0.2.8",
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",
     "tsdown": "^0.22.5",

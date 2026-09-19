@@ -7,17 +7,19 @@ backpressure.
 
 ## Current state: docs describe the target, not the tree
 
-- `src/index.ts` and `tests/index.test.ts` are tsdown-starter placeholders.
-  `src-zig/` holds the `zig init` scaffold (a shared library with a test step);
-  there is no `binding/`, `compat/`, `protocol/`, or `types/` tree and no
-  `.github/workflows`.
+- `build.zig` calls `napi_zig.addLib`, imports the full `uWebZockets` engine
+  module, and `src/lib.zig` exposes `engineVersion()` and `http3Available()`,
+  following the `napi-zig` layout: the Zig root module lives in `src/` next to
+  the TypeScript sources. `src/binding/load.ts` resolves and loads the built
+  `.node`; `src/index.ts` is still an empty public surface. There is no
+  `compat/`, `protocol/`, or `types/` tree yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
   and code.
-- Documented scripts `build:binding`, `test:compat`, and `bench` do not exist
-  in `package.json`. `build`, `dev`, `format`, `format:check`, `lint`,
-  `lint:fix`, `test`, `typecheck`, `release`, and `prepublishOnly` are wired.
+- Documented scripts `test:compat` and `bench` do not exist in `package.json`.
+  `build`, `build:binding`, `dev`, `format`, `format:check`, `lint`, `lint:fix`,
+  `test`, `test:watch`, `typecheck`, `release`, and `prepublishOnly` are wired.
 - Git hooks are installed by `lefthook` during `pnpm install` (allowed through
   `pnpm-workspace.yaml`); `pnpm-lock.yaml` is committed.
 
@@ -30,16 +32,27 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | ----------------------------- | ---------------------------------------------------------------------------------- |
 | Environment                   | `nix develop` (musl hosts: `nix develop .#musl`; `.envrc` selects it under direnv) |
 | Install                       | `pnpm install`                                                                     |
-| Build bundle and declarations | `pnpm build`                                                                       |
-| Watch rebuild                 | `pnpm dev`                                                                         |
+| Build native addon and bundle | `pnpm build`                                                                       |
+| Build native addon only       | `pnpm build:binding`                                                               |
+| Watch bundle rebuild          | `pnpm dev`                                                                         |
 | Lint                          | `pnpm lint` (`pnpm lint:fix` to apply fixes)                                       |
 | Check formatting              | `pnpm format:check` (`pnpm format` to write)                                       |
-| All tests (one-shot)          | `pnpm exec vitest run`                                                             |
+| All tests (one-shot)          | `pnpm test` (rebuilds the binding first)                                           |
+| Watch tests                   | `pnpm test:watch`                                                                  |
 | All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
-| Single test                   | `pnpm exec vitest run tests/index.test.ts -t 'fn'`                                 |
+| Single test                   | `pnpm exec vitest run tests/binding.test.ts`                                       |
 | Typecheck                     | `pnpm typecheck`                                                                   |
-| Zig formatting                | `zig fmt --check --exclude src-zig/zig-pkg src-zig`                                |
+| Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |
 | Version bump                  | `pnpm release`                                                                     |
+
+The first `pnpm build:binding` compiles BoringSSL, lsquic, and libdeflate into
+`.zig-cache/vendor-build-v4/` (minutes and roughly a gigabyte); later builds are
+incremental. `nix develop` provides CMake, Ninja, Perl, and patch, and pins
+`UWEBZOCKETS_DEFAULT_TARGET` and `UWEBZOCKETS_ZLIB_PREFIX` so the vendor build
+finds the right libc and zlib. Do not delete `.zig-cache` or `zig-pkg` casually.
+Every non-Windows target builds the vendor C libraries through the PIC
+wrappers in `scripts/`; on musl hosts `.envrc` selects `.#musl`. Cross-compile
+with `zig build -Dtarget=<triple>` plus a matching `UWEBZOCKETS_ZLIB_PREFIX`.
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
 `tests/`, and vitest strips types without checking them. Widen the include
@@ -87,9 +100,11 @@ temporarily or annotate explicitly when test types must be verified.
   `performance-optimization`, `api-and-interface-design`,
   `observability-and-instrumentation`, `git-workflow-and-versioning`,
   `ci-cd-and-automation`, `documentation-and-adrs`,
-  `deprecation-and-migration`, and `shipping-and-launch`. UI-oriented skills
-  (`frontend-ui-engineering`, `browser-testing-with-devtools`) apply only when
-  a task genuinely needs them; this addon is not a UI project.
+  `deprecation-and-migration`, and `shipping-and-launch`. UI and browser
+  skills are not part of this pack; venti-ts is a Node.js package, not a UI
+  project. `using-agent-skills` and `test-driven-development` carry local edits
+  that strip their browser routing; a `skills update` may restore it, so
+  re-remove any UI guidance it brings back.
 - graphify is installed as a global opencode plugin. When
   `graphify-out/graph.json` exists, treat codebase and architecture questions
   as graph queries first: `graphify query "<question>"`, `graphify path A B`,
@@ -108,5 +123,7 @@ temporarily or annotate explicitly when test types must be verified.
 - `ws` behavior is the compatibility contract. When adding a surface, check
   what `ws` does and test both implementations once the conformance harness
   exists. `ws` may be a devDependency only, never a runtime dependency.
-- `package.json` `files` currently ships only `dist/`. Native addon artifacts
-  must be added to `files` before any real publish.
+- `package.json` `files` ships only `dist/`; `tsdown` copies the host
+  `.node` artifact into `dist/`, so the built package is self-contained for
+  the build platform. Per-platform artifacts must land before any real
+  publish.

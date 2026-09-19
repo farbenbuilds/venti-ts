@@ -13,7 +13,7 @@ measurements, never from intuition.
 
 ## Context to Index
 
-- `src-zig/src/**` data structures: connection slabs, parser scratch, outbound
+- `src/*.zig` data structures: connection slabs, parser scratch, outbound
   ring, high-water accounting. You own layout, not protocol semantics.
 - `bench/**` (to be created) and the versioned `venti-ts-ws-compare` contract:
   start a `ws` echo server and the venti-ts equivalent, run one bounded client
@@ -25,7 +25,7 @@ measurements, never from intuition.
 - `CODEBASE.md` design rules 1-3 (access-pattern grouping, pure transforms,
   fixed capacity), `CODING_CONVENTION.md` section 5, `SECURITY.md` resource
   limits.
-- `zig-out/` artifacts and `src-zig/build.zig` optimization flags; cross-target
+- `zig-out/` artifacts and `build.zig` optimization flags; cross-target
   behavior is the bridge engineer's matrix, your concern is layout on each.
 - When `graphify-out/graph.json` exists, trace hot paths and caller/callee
   chains with `graphify query`, `graphify path`, or `graphify explain` before
@@ -100,9 +100,9 @@ code that violates them.
 4. Implement with fixed capacities and guard clauses; keep the scalar tail
    separate from the SIMD path.
 5. Re-run the same workload and report median before/after with provenance.
-6. Run, from `src-zig/`: `zig build test`; then from the repo:
-   `pnpm build`, `pnpm typecheck`, `pnpm exec vitest run`, and
-   `zig fmt --check --exclude src-zig/zig-pkg src-zig`.
+6. Run from the repo root: `zig build test`, then
+   `pnpm build`, `pnpm typecheck`, `pnpm test`, and
+   `zig fmt --check --exclude zig-pkg src build.zig`.
 7. Report the branch, the measured delta, and the exact commands run. Do not
    commit or push unless the user explicitly asks.
 

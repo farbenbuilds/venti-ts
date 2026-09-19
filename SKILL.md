@@ -38,15 +38,15 @@ observing identical behavior.
 
 ## Target architecture and ownership
 
-| Area                      | Owns                                                              | Do not                                   |
-| ------------------------- | ----------------------------------------------------------------- | ---------------------------------------- |
-| `src/index.ts`            | Thin public re-export surface                                     | Put logic here                           |
-| `src/binding/`            | Native addon loading, typed N-API calls, handle generation checks | Leak engine pointers or slabs            |
-| `src/compat/`             | `ws`-shaped factories, event registry, option validation          | Use classes or hidden state              |
-| `src/protocol/`           | Pure TS helpers (close codes, framing, backpressure policy)       | Allocate per call                        |
-| `src/types/`              | Public and internal type-only modules                             | Duplicate a type that exists elsewhere   |
-| `src-zig/src/binding.zig` | `napi-zig` exports as free functions                              | Call into JavaScript from engine threads |
-| `src-zig/src/*`           | Parsers, framing, SIMD transforms, bounded queues                 | Allocate on hot paths                    |
+| Area            | Owns                                                              | Do not                                   |
+| --------------- | ----------------------------------------------------------------- | ---------------------------------------- |
+| `src/index.ts`  | Thin public re-export surface                                     | Put logic here                           |
+| `src/binding/`  | Native addon loading, typed N-API calls, handle generation checks | Leak engine pointers or slabs            |
+| `src/compat/`   | `ws`-shaped factories, event registry, option validation          | Use classes or hidden state              |
+| `src/protocol/` | Pure TS helpers (close codes, framing, backpressure policy)       | Allocate per call                        |
+| `src/types/`    | Public and internal type-only modules                             | Duplicate a type that exists elsewhere   |
+| `src/lib.zig`   | `napi-zig` module declaration and exports as free functions       | Call into JavaScript from engine threads |
+| `src/*.zig`     | Parsers, framing, SIMD transforms, bounded queues                 | Allocate on hot paths                    |
 
 ## Boundary contract
 
@@ -73,9 +73,8 @@ observing identical behavior.
    discriminated unions, and `import type` for type-only imports.
 4. Add tests for the behavior and the boundaries: retained payloads, borrowed
    buffers, exactly-once close, stale handles, capacity exhaustion.
-5. Run, in order: `pnpm build`, `pnpm typecheck`,
-   `pnpm exec vitest run`, then `zig fmt --check zig src` for any Zig change.
-   Do not invent `pnpm lint` or `pnpm format`; they are not wired yet.
+5. Run, in order: `pnpm build`, `pnpm typecheck`, `pnpm test`, then
+   `zig fmt --check --exclude zig-pkg src build.zig` for any Zig change.
 6. Update `README.md`, `CODEBASE.md`, or `THIRD_PARTY_NOTICES.md` when the
    surface, limits, or dependencies change.
 
@@ -132,7 +131,7 @@ Domain:
   with a linked issue.
 - No new runtime dependency beyond `napi-zig` and `uWebZockets`.
 - No file near or above 150 lines; no OOP constructs anywhere.
-- `pnpm build`, `pnpm typecheck`, and `pnpm exec vitest run` pass.
+- `pnpm build`, `pnpm typecheck`, and `pnpm test` pass.
 - Boundary and capacity tests exist for every behavior change.
 - Generated declarations are not hand-edited.
 - Docs and `THIRD_PARTY_NOTICES.md` are current.

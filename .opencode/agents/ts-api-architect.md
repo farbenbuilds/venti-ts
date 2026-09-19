@@ -107,7 +107,7 @@ code that violates them.
    compose behavior from free functions.
 5. Add vitest coverage for the behavior, and boundary tests when the change
    touches lifetimes.
-6. Run, in order: `pnpm build`, `pnpm typecheck`, `pnpm exec vitest run`,
+6. Run, in order: `pnpm build`, `pnpm typecheck`, `pnpm test`,
    `pnpm lint`, `pnpm format:check`. Fix failures; do not suppress rules.
 7. Report the branch, the behavior contract, and the exact commands run with
    results. Do not commit or push unless the user explicitly asks.

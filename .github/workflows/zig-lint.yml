@@ -5,15 +5,17 @@ on:
     branches:
       - main
     paths:
-      - 'src-zig/**/*.zig'
-      - 'src-zig/build.zig.zon'
+      - 'src/**/*.zig'
+      - 'build.zig'
+      - 'build.zig.zon'
       - '.github/workflows/zig-lint.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'src-zig/**/*.zig'
-      - 'src-zig/build.zig.zon'
+      - 'src/**/*.zig'
+      - 'build.zig'
+      - 'build.zig.zon'
       - '.github/workflows/zig-lint.yml'
   workflow_dispatch:
 
@@ -40,4 +42,4 @@ jobs:
           version: 0.16.0
 
       - name: Check formatting
-        run: zig fmt --check --exclude src-zig/zig-pkg src-zig
+        run: zig fmt --check --exclude zig-pkg src build.zig

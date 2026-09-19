@@ -26,31 +26,42 @@ automatically under `direnv`). Without Nix, install Node.js 22 or newer, pnpm,
 and Zig 0.16.0 manually. No other system tooling is required for the
 TypeScript layer; the native binding is built by Zig.
 
+The first `pnpm build:binding` compiles the engine's vendored C dependencies
+(BoringSSL, lsquic, libdeflate) into `.zig-cache/vendor-build-v4/`. That takes
+minutes and about a gigabyte; later builds are incremental. The dev shell
+provides the required CMake, Ninja, Perl, and patch, and pins the default Zig
+target and zlib prefix for the vendor build. Do not delete `.zig-cache` or
+`zig-pkg` casually. Cross-compiling to another architecture
+(`zig build -Dtarget=<triple>`) additionally needs `UWEBZOCKETS_ZLIB_PREFIX`
+pointing at a zlib built for that target.
+
 ## Script contract
 
 Run every command through pnpm; do not invoke package binaries directly.
 
-| Command              | Tool       | Purpose                                         | State on this branch |
-| -------------------- | ---------- | ----------------------------------------------- | -------------------- |
-| `pnpm install`       | pnpm       | Install development dependencies                | Wired                |
-| `pnpm dev`           | tsdown     | Rebuild the TypeScript bundle in watch mode     | Wired                |
-| `pnpm build`         | tsdown     | Bundle ESM output and declarations into `dist/` | Wired                |
-| `pnpm test`          | vitest     | Unit, integration, and boundary tests           | Wired                |
-| `pnpm typecheck`     | tsc / tsgo | Strict type check with no emit                  | Wired                |
-| `pnpm lint`          | oxlint     | Lint the TypeScript sources                     | Wired                |
-| `pnpm format`        | oxfmt      | Format TypeScript, JSON, and Markdown           | Wired                |
-| `pnpm format:check`  | oxfmt      | Verify formatting without writing files         | Wired                |
-| `pnpm build:binding` | zig build  | Build the `napi-zig` addon                      | Planned              |
-| `pnpm test:compat`   | vitest     | Run the `ws` behavioral conformance suite       | Planned              |
-| `pnpm bench`         | node       | Benchmark against `ws` on the same host         | Planned              |
+| Command              | Tool       | Purpose                                     | State on this branch |
+| -------------------- | ---------- | ------------------------------------------- | -------------------- |
+| `pnpm install`       | pnpm       | Install development dependencies            | Wired                |
+| `pnpm dev`           | tsdown     | Rebuild the TypeScript bundle in watch mode | Wired                |
+| `pnpm build`         | napi-zig   | Build the native addon and bundle `dist/`   | Wired                |
+| `pnpm build:binding` | napi-zig   | Build the native addon only                 | Wired                |
+| `pnpm test`          | vitest     | Unit, integration, and boundary tests       | Wired                |
+| `pnpm test:watch`    | vitest     | Rerun tests on change                       | Wired                |
+| `pnpm typecheck`     | tsc / tsgo | Strict type check with no emit              | Wired                |
+| `pnpm lint`          | oxlint     | Lint the TypeScript sources                 | Wired                |
+| `pnpm format`        | oxfmt      | Format TypeScript, JSON, and Markdown       | Wired                |
+| `pnpm format:check`  | oxfmt      | Verify formatting without writing files     | Wired                |
+| `pnpm test:compat`   | vitest     | Run the `ws` behavioral conformance suite   | Planned              |
+| `pnpm bench`         | node       | Benchmark against `ws` on the same host     | Planned              |
 
 `pnpm install` also installs the `lefthook` Git hooks. Run every hook against
 the whole tree with `pnpm exec lefthook run pre-commit --all-files`; a normal
 `git commit` runs them against the staged files.
 
-Until the binding lands, `pnpm build` and `pnpm test` exercise the TypeScript
-surface only. The `src/index.ts` and `tests/index.test.ts` placeholders exist
-to prove the wiring; replace them, do not extend them.
+`pnpm build` and `pnpm test` rebuild the native binding first, so a clean
+checkout needs nothing beyond `nix develop` and `pnpm install`. `src/index.ts`
+is intentionally empty and `tests/binding.test.ts` only proves the native
+pipeline; replace both as the `ws` surface lands, do not extend them.
 
 ## Engineering requirements
 
@@ -119,7 +130,7 @@ to prove the wiring; replace them, do not extend them.
 
 Runtime dependencies are pinned exactly and updated deliberately:
 
-- Update the pinned revision in `src-zig/build.zig.zon` and the matching entry in
+- Update the pinned revision in `build.zig.zon` and the matching entry in
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) in the same change.
 - Rebuild the addon from a clean cache so a stale artifact cannot hide an ABI
   or behavior change.

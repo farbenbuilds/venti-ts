@@ -50,17 +50,51 @@
           pkgs.typescript-language-server
         ];
 
-        mkDevShell = packagePkgs: pnpmPackage:
-          packagePkgs.mkShell {
-            packages =
-              hostPackages
-              ++ [
-                packagePkgs.nodejs
-                pnpmPackage
-                packagePkgs.zlib
-              ]
-              ++ lib.optional (zon2nixPackage != null) zon2nixPackage;
+        mkDevShell = packagePkgs: pnpmPackage: let
+          # The uWebZockets vendor build wants one prefix holding both zlib.h
+          # and libz.a; nixpkgs splits those across the dev and static outputs.
+          zlibPrefix = packagePkgs.symlinkJoin {
+            name = "venti-zlib";
+            paths = [
+              packagePkgs.zlib.dev
+              packagePkgs.zlib.static
+            ];
           };
+          # Zig cannot detect the host glibc from inside the Nix store, so the
+          # default target pins the libc version explicitly. uWebZockets reads
+          # the same variable for its own build graph.
+          hostPlatform = packagePkgs.stdenv.hostPlatform;
+          zigTarget =
+            if !hostPlatform.isLinux
+            then null
+            else if hostPlatform.isMusl
+            then "${hostPlatform.parsed.cpu.name}-linux-musl"
+            else "${hostPlatform.parsed.cpu.name}-linux-gnu.${packagePkgs.glibc.version}";
+        in
+          packagePkgs.mkShell (
+            {
+              packages =
+                hostPackages
+                ++ [
+                  packagePkgs.nodejs
+                  pnpmPackage
+                  packagePkgs.zlib
+                  # The vendor build compiles BoringSSL, lsquic, and libdeflate
+                  # through CMake and Ninja; lsquic generates sources with Perl,
+                  # and prepare_lsquic_source.sh applies a patch.
+                  packagePkgs.cmakeMinimal
+                  packagePkgs.ninja
+                  packagePkgs.patch
+                  packagePkgs.perl
+                ]
+                ++ lib.optional (zon2nixPackage != null) zon2nixPackage;
+
+              UWEBZOCKETS_ZLIB_PREFIX = zlibPrefix;
+            }
+            // lib.optionalAttrs (zigTarget != null) {
+              UWEBZOCKETS_DEFAULT_TARGET = zigTarget;
+            }
+          );
       in {
         formatter = pkgs.alejandra;
 
