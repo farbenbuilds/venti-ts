@@ -6,10 +6,12 @@ included in each published platform artifact.
 
 ## Runtime components
 
-| Component                                                  | Version or revision       | License |
-| ---------------------------------------------------------- | ------------------------- | ------- |
-| [uWebZockets](https://github.com/farbenbuilds/uWebZockets) | pinned in `build.zig.zon` | MIT     |
-| [napi-zig](https://github.com/yuku-toolchain/napi-zig)     | pinned in `build.zig.zon` | MIT     |
+µWebZockets is a first-party engine by the same author as venti-ts and is
+pinned in `build.zig.zon`. The remaining runtime component is:
+
+| Component                                              | Version or revision       | License |
+| ------------------------------------------------------ | ------------------------- | ------- |
+| [napi-zig](https://github.com/yuku-toolchain/napi-zig) | pinned in `build.zig.zon` | MIT     |
 
 ## Components vendored by the engine
 
@@ -35,29 +37,35 @@ artifact and into the npm tarball. zlib is linked from the target toolchain
 rather than vendored; downstream consumers remain responsible for its license
 and linkage terms.
 
+## Vendored type definitions
+
+`src/types/ws.d.ts` is adapted from the DefinitelyTyped declarations for `ws`
+(MIT) and is embedded in `dist/index.d.mts`. No `ws` runtime code is
+incorporated.
+
+| Component                                                                            | License |
+| ------------------------------------------------------------------------------------ | ------- |
+| [@types/ws](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ws) | MIT     |
+
 ## Development-only tooling
 
 The following are development dependencies. They are not shipped in the
 published package and require no runtime attribution.
 
-| Component                 | License    |
-| ------------------------- | ---------- |
-| lefthook                  | MIT        |
-| oxfmt                     | MIT        |
-| oxlint                    | MIT        |
-| tsdown                    | MIT        |
-| vitest                    | MIT        |
-| TypeScript                | Apache-2.0 |
-| bumpp                     | MIT        |
-| @types/node               | MIT        |
-| Node.js                   | MIT        |
-| pnpm                      | MIT        |
-| Zig                       | MIT        |
-| Nix                       | LGPL-2.1   |
-| ws (conformance baseline) | MIT        |
-
-The `ws` package is installed as a development dependency and used to verify
-drop-in compatibility. No `ws` source is incorporated into venti-ts.
+| Component   | License    |
+| ----------- | ---------- |
+| lefthook    | MIT        |
+| oxfmt       | MIT        |
+| oxlint      | MIT        |
+| tsdown      | MIT        |
+| vitest      | MIT        |
+| TypeScript  | Apache-2.0 |
+| bumpp       | MIT        |
+| @types/node | MIT        |
+| Node.js     | MIT        |
+| pnpm        | MIT        |
+| Zig         | MIT        |
+| Nix         | LGPL-2.1   |
 
 ## Maintenance
 

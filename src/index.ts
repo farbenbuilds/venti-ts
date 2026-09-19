@@ -1,1 +1,22 @@
-export {}
+export type {
+  WebSocket,
+  WebSocket as default,
+  AddressInfo,
+  CertMeta,
+  ClientOptions,
+  CloseEvent,
+  Data,
+  ErrorEvent,
+  Event,
+  EventListenerOptions,
+  FinishRequestCallback,
+  MessageEvent,
+  PerMessageDeflateOptions,
+  RawData,
+  Server,
+  ServerOptions,
+  VerifyClientCallbackAsync,
+  VerifyClientCallbackSync,
+  WebSocketEventMap,
+  WebSocketServer,
+} from './types/ws'

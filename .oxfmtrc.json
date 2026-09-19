@@ -4,6 +4,7 @@
   "singleQuote": true,
   "ignorePatterns": [
     ".agents/**",
+    "src/types/ws.d.ts",
     "flake.lock",
     "pnpm-lock.yaml",
     "skills-lock.json",

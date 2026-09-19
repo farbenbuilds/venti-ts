@@ -39,20 +39,21 @@ pointing at a zlib built for that target.
 
 Run every command through pnpm; do not invoke package binaries directly.
 
-| Command              | Tool       | Purpose                                     | State on this branch |
-| -------------------- | ---------- | ------------------------------------------- | -------------------- |
-| `pnpm install`       | pnpm       | Install development dependencies            | Wired                |
-| `pnpm dev`           | tsdown     | Rebuild the TypeScript bundle in watch mode | Wired                |
-| `pnpm build`         | napi-zig   | Build the native addon and bundle `dist/`   | Wired                |
-| `pnpm build:binding` | napi-zig   | Build the native addon only                 | Wired                |
-| `pnpm test`          | vitest     | Unit, integration, and boundary tests       | Wired                |
-| `pnpm test:watch`    | vitest     | Rerun tests on change                       | Wired                |
-| `pnpm typecheck`     | tsc / tsgo | Strict type check with no emit              | Wired                |
-| `pnpm lint`          | oxlint     | Lint the TypeScript sources                 | Wired                |
-| `pnpm format`        | oxfmt      | Format TypeScript, JSON, and Markdown       | Wired                |
-| `pnpm format:check`  | oxfmt      | Verify formatting without writing files     | Wired                |
-| `pnpm test:compat`   | vitest     | Run the `ws` behavioral conformance suite   | Planned              |
-| `pnpm bench`         | node       | Benchmark against `ws` on the same host     | Planned              |
+| Command               | Tool       | Purpose                                     | State on this branch |
+| --------------------- | ---------- | ------------------------------------------- | -------------------- |
+| `pnpm install`        | pnpm       | Install development dependencies            | Wired                |
+| `pnpm dev`            | tsdown     | Rebuild the TypeScript bundle in watch mode | Wired                |
+| `pnpm build`          | napi-zig   | Build the native addon and bundle `dist/`   | Wired                |
+| `pnpm build:binding`  | napi-zig   | Build the native addon only                 | Wired                |
+| `pnpm test`           | vitest     | Unit, integration, and boundary tests       | Wired                |
+| `pnpm test:watch`     | vitest     | Rerun tests on change                       | Wired                |
+| `pnpm typecheck`      | tsc / tsgo | Strict type check with no emit              | Wired                |
+| `pnpm typecheck:dist` | tsc        | Check built declarations through `exports`  | Wired                |
+| `pnpm lint`           | oxlint     | Lint the TypeScript sources                 | Wired                |
+| `pnpm format`         | oxfmt      | Format TypeScript, JSON, and Markdown       | Wired                |
+| `pnpm format:check`   | oxfmt      | Verify formatting without writing files     | Wired                |
+| `pnpm test:compat`    | vitest     | Run the `ws` behavioral conformance suite   | Planned              |
+| `pnpm bench`          | node       | Benchmark against `ws` on the same host     | Planned              |
 
 `pnpm install` also installs the `lefthook` Git hooks. Run every hook against
 the whole tree with `pnpm exec lefthook run pre-commit --all-files`; a normal
@@ -60,8 +61,9 @@ the whole tree with `pnpm exec lefthook run pre-commit --all-files`; a normal
 
 `pnpm build` and `pnpm test` rebuild the native binding first, so a clean
 checkout needs nothing beyond `nix develop` and `pnpm install`. `src/index.ts`
-is intentionally empty and `tests/binding.test.ts` only proves the native
-pipeline; replace both as the `ws` surface lands, do not extend them.
+re-exports the vendored `ws` type surface and gains value exports as the
+compatibility layer lands; `tests/binding.test.ts` only proves the native
+pipeline, so replace it as the `ws` surface lands, do not extend it.
 
 ## Engineering requirements
 
@@ -90,6 +92,9 @@ pipeline; replace both as the `ws` surface lands, do not extend them.
 
 - `tsconfig.json` runs in `strict` mode. Do not weaken compiler options to land
   a change.
+- Consumer-facing type changes must keep `tests/types/consumer.ts` compiling;
+  after `tsdown`, `pnpm typecheck:dist` proves the package `exports` map
+  resolves the built declaration bundle via `tests/declarations/consumer.ts`.
 - Public option and event types must match the `ws` names and shapes. Where
   `ws` types are ambiguous, document the decision in the pull request.
 - Use discriminated unions for message and state variants. Do not model

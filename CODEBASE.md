@@ -44,6 +44,7 @@ venti-ts/
 ├── pnpm-workspace.yaml        # pnpm settings (lefthook build approval)
 ├── package.json               # package metadata, scripts, exports
 ├── tsconfig.json              # strict TypeScript configuration
+├── tsconfig.dist-types.json   # built-declaration check through package exports
 ├── tsdown.config.ts           # bundle, declaration, and native artifact pipeline
 ├── build.zig                  # build entry, delegates to src/builds/orchestrator.zig
 ├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
@@ -53,10 +54,17 @@ venti-ts/
 │   ├── zig-cc-pic             # PIC C compiler wrapper for vendored C builds
 │   └── zig-cxx-pic            # PIC C++ compiler wrapper for vendored C builds
 ├── src/
-│   ├── index.ts               # public export surface (empty placeholder)
+│   ├── index.ts               # public export surface (type-only re-exports)
 │   ├── lib.zig                # napi-zig root module declaration and exports
 │   ├── binding/
 │   │   └── load.ts            # native addon resolution and typed loading
+│   ├── compat/
+│   │   └── pubsub.ts          # listener registry replacing EventEmitter
+│   ├── types/
+│   │   ├── ws.d.ts            # vendored DefinitelyTyped ws contract, ESM footer
+│   │   ├── pubsub.ts          # event-map, handler, and registry types
+│   │   ├── socket.ts          # SocketState and the socket event map
+│   │   └── server.ts          # ServerState and the server event map
 │   └── builds/
 │       ├── orchestrator.zig   # build entry: addon, build options, tests
 │       ├── vendor.zig         # engine dependency, version, C toolchain
@@ -65,7 +73,10 @@ venti-ts/
 │           ├── default.zig    # default build target query
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
-│   └── binding.test.ts        # native pipeline smoke test
+│   ├── binding.test.ts        # native pipeline smoke test
+│   ├── pubsub.test.ts         # listener registry behavior
+│   ├── types/                 # fixtures checked by pnpm typecheck
+│   └── declarations/          # fixtures checked by pnpm typecheck:dist
 └── .github/                   # community templates, issue forms, lint workflows
 ```
 
@@ -169,10 +180,28 @@ Rules that keep the pipeline honest:
 - Public types are declared once and re-exported, never redefined per module.
 - The binding layer imports types with `import type` so no runtime graph is
   created for declarations.
-- Generated declarations are treated as build output; hand-edited `.d.ts`
-  files are rejected in review.
+- Generated declarations are treated as build output. The one hand-maintained
+  declaration is `src/types/ws.d.ts`, the vendored `@types/ws` contract below.
 - Numeric status codes crossing the boundary are mapped to stable unions in
   TypeScript and never leaked as magic integers.
+
+### Vendored declarations
+
+`src/types/ws.d.ts` is a vendored copy of the DefinitelyTyped `ws` declarations
+(`@types/ws` 8.18.1, MIT) and the single source of the public type surface. Only
+the footer is adapted, converting `export =` into ESM type exports so `tsdown`
+can bundle it, and exporting `Server` to match upstream's ESM entry. The header
+records the upstream version.
+
+- `src/index.ts` re-exports the surface with `export type`; the only export not
+  in upstream's ESM entry is `WebSocketEventMap`, a deliberate superset.
+- The file is exempt from oxlint and oxfmt because upstream style violates the
+  project rules; `pnpm typecheck:dist` still checks the bundled output with
+  `skipLibCheck: false`.
+- Attribution ships in `dist/index.d.mts` and is recorded in
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Refresh procedure: re-download `@types/ws` `index.d.ts`, keep the header and
+  footer adaptations, then run `pnpm build` and `pnpm test`.
 
 ## Runtime data flow
 
@@ -250,7 +279,8 @@ the ABI.
 ## Module conventions
 
 - TypeScript files use `kebab-case` and export free functions or const
-  records. No default exports.
+  records. No default exports, except the type-only default re-export in
+  `src/index.ts` that mirrors the `ws` entry point.
 - Zig files use `snake_case`, functions and variables use `snake_case`, and
   types use `PascalCase`.
 - A module owns one responsibility. If a module needs two sections to explain
@@ -261,7 +291,30 @@ the ABI.
 
 ## Current branch state
 
-`refactor/build-orchestrator` splits the build graph into `src/builds/`:
+`feat/add-ws-types` layers the public type surface and the listener registry on
+top of the merged build graph:
+
+- `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` contract (`@types/ws`
+  8.18.1) with an ESM footer; `src/index.ts` re-exports it as type-only
+  exports, including a type-only default so `import type WebSocket from
+"venti-ts"` matches `ws`. No runtime `ws` surface exists yet.
+- `src/types/{pubsub,socket,server}.ts` define the registry types,
+  `SocketState`, `ServerState`, and the Node-style event maps extracted from
+  the vendored contract. `src/compat/pubsub.ts` implements the registry:
+  copy-on-write buckets, dispatch over the array captured at call time, no
+  classes and no `this`. Event handlers receive payloads only; `this` binding,
+  `once`, and the no-listener `error` policy belong to the compat factories.
+- `pnpm typecheck` includes `tests/types`, whose fixtures pin the public
+  consumer surface, every event-map entry, and state-record literals.
+  `tsconfig.dist-types.json` checks `tests/declarations` against the built
+  `dist/index.d.mts` through the package `exports` map with
+  `skipLibCheck: false`; `pnpm build` ends with that check.
+- `tests/pubsub.test.ts` covers duplicate handlers, removal and addition
+  during dispatch, listener counts, exception propagation, and the deliberate
+  no-listener `error` policy.
+
+The build-graph bullets below come from `refactor/build-orchestrator` and
+remain current:
 
 - `build.zig` only calls `orchestrator.inject(b)`. `src/builds/orchestrator.zig`
   resolves the target and optimize mode, wires the addon through
@@ -271,8 +324,8 @@ the ABI.
   vendored C compiler overrides.
 - `package.json` defines the package scripts (`build`, `build:binding`, `dev`,
   `format`, `format:check`, `lint`, `lint:fix`, `test`, `test:watch`,
-  `typecheck`, `release`, `prepublishOnly`) and development dependencies,
-  including the `napi-zig` CLI.
+  `typecheck`, `typecheck:dist`, `release`, `prepublishOnly`) and development
+  dependencies, including the `napi-zig` CLI.
 - `tsdown.config.ts` enables bundled declaration output and copies the host
   `.node` artifact into `dist/`, so `pnpm build` produces a self-contained
   package for the current platform.
@@ -288,8 +341,8 @@ the ABI.
   `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
   not scaffolded over.
 - `src/binding/load.ts` resolves the `.node` from `zig-out/` first and from
-  `dist/` second, returning a typed `VentiAddon` record. No public surface is
-  exported yet.
+  `dist/` second, returning a typed `VentiAddon` record. Runtime values for the
+  public surface land with `src/compat/`.
 - `.oxlintrc.json` and `.oxfmtrc.json` encode
   [CODING_CONVENTION.md](CODING_CONVENTION.md); `lefthook.yml` runs them on
   every commit alongside `zig fmt`, typecheck, and the test suite.
@@ -298,6 +351,6 @@ the ABI.
 - `tests/binding.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
-The `compat/`, `protocol/`, and `types/` trees and the engine modules beside
+The `protocol/` tree, the `compat/` factories, and the engine modules beside
 `src/lib.zig` are the next implementation milestones. The addon currently
-exposes only the engine version; server and socket handles land next.
+exposes only the engine version; socket and server handles land next.

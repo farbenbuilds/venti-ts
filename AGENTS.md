@@ -12,15 +12,22 @@ backpressure.
   `src/lib.zig` exposes `engineVersion()` and `http3Available()`, following the
   `napi-zig` layout: the Zig root module lives in `src/` next to the TypeScript
   sources. `src/binding/load.ts` resolves and loads the built `.node`;
-  `src/index.ts` is still an empty public surface. There is no `compat/`,
-  `protocol/`, or `types/` tree yet.
+  `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` declarations, and
+  `src/index.ts` re-exports that surface as type-only ESM exports.
+  `src/types/{socket,server,pubsub}.ts` hold the internal state records, event
+  maps, and listener-registry types; `src/compat/pubsub.ts` implements the
+  listener registry. There is no `protocol/` tree yet, and no runtime `ws`
+  surface.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
   and code.
 - Documented scripts `test:compat` and `bench` do not exist in `package.json`.
   `build`, `build:binding`, `dev`, `format`, `format:check`, `lint`, `lint:fix`,
-  `test`, `test:watch`, `typecheck`, `release`, and `prepublishOnly` are wired.
+  `test`, `test:watch`, `typecheck`, `typecheck:dist`, `release`, and
+  `prepublishOnly` are wired. `pnpm typecheck` checks `tests/types` alongside
+  `src`; `pnpm build` ends with `typecheck:dist`, which checks the built
+  declarations through the package `exports` map.
 - Git hooks are installed by `lefthook` during `pnpm install` (allowed through
   `pnpm-workspace.yaml`); `pnpm-lock.yaml` is committed.
 
@@ -55,9 +62,11 @@ Every non-Windows target builds the vendor C libraries through the PIC
 wrappers in `scripts/`; on musl hosts `.envrc` selects `.#musl`. Cross-compile
 with `zig build -Dtarget=<triple>` plus a matching `UWEBZOCKETS_ZLIB_PREFIX`.
 
-`pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
-`tests/`, and vitest strips types without checking them. Widen the include
-temporarily or annotate explicitly when test types must be verified.
+`pnpm typecheck` uses `tsconfig.json` `include: ["src", "tests/types"]`, so it
+does not check the vitest suites, and vitest strips types without checking them.
+Widen the include temporarily or annotate explicitly when other test types must
+be verified. `pnpm typecheck:dist` checks `tests/declarations` against the built
+declarations through the package `exports` map; it needs `tsdown` output.
 
 ## Non-negotiable rules
 
