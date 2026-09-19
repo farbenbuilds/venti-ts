@@ -145,6 +145,7 @@ shell. The exact command contract is documented in
 | [CODING_CONVENTION.md](CODING_CONVENTION.md)     | TypeScript and Zig style, anti-OOP rules, naming                   |
 | [CONTRIBUTE.md](CONTRIBUTE.md)                   | Environment setup, checks, testing, pull requests, release         |
 | [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md)           | Workflows, native build matrix, compliance, benchmarks, publishing |
+| [COMPATIBILITY.md](COMPATIBILITY.md)             | ws parity status, surface ownership, and evidence                  |
 | [SECURITY.md](SECURITY.md)                       | Threat model, reporting, supported versions                        |
 | [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) | Runtime and development dependency licenses                        |
 | [SKILL.md](SKILL.md)                             | Agent workflow conventions for this repository                     |

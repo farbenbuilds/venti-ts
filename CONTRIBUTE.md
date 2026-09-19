@@ -81,6 +81,8 @@ pipeline, so replace it as the `ws` surface lands, do not extend it.
 - Add no runtime dependencies beyond `napi-zig` and `uWebZockets`. Tooling
   belongs in `devDependencies`.
 - Keep the public type surface declared once. Never hand-edit `.d.ts` output.
+- Update [COMPATIBILITY.md](COMPATIBILITY.md) in the same pull request whenever
+  a public surface item or its status changes.
 - Copy peer-controlled data into Node-owned buffers before it can be retained
   by JavaScript. Engine slabs never escape a native call.
 - Use `kebab-case` file names and `camelCase` identifiers in TypeScript;
