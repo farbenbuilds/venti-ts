@@ -1,31 +1,22 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const napi_zig = @import("napi_zig");
 
+const EngineManifest = struct {
+    version: []const u8,
+};
+
 pub fn build(b: *std.Build) void {
-    const default_target: std.Target.Query = if (b.graph.environ_map.get("UWEBZOCKETS_DEFAULT_TARGET")) |triple|
-        std.Target.Query.parse(.{ .arch_os_abi = triple }) catch @panic("UWEBZOCKETS_DEFAULT_TARGET is not a valid Zig target")
-    else
-        .{};
-    const target = b.standardTargetOptions(.{ .default_target = default_target });
+    const target = b.standardTargetOptions(.{ .default_target = default_target(b) });
     const optimize = b.standardOptimizeOption(.{});
 
     const napi_dep = b.dependency("napi_zig", .{});
-    const engine_dep = if (target.result.abi.isMusl())
-        // Zig defaults musl C compiles to non-PIC, which cannot link into the
-        // dynamic addon; force PIC for the vendored C libraries.
-        b.dependency("uWebZockets", .{
-            .target = target,
-            .optimize = optimize,
-            .@"c-compiler" = b.pathFromRoot("scripts/zig-cc-pic"),
-            .@"cxx-compiler" = b.pathFromRoot("scripts/zig-cxx-pic"),
-            .@"asm-compiler" = b.pathFromRoot("scripts/zig-cc-pic"),
-        })
-    else
-        b.dependency("uWebZockets", .{ .target = target, .optimize = optimize });
+    const engine_dep = engine_dependency(b, target, optimize);
     const engine = engine_dep.module("uWebZockets");
 
     const build_options = b.addOptions();
-    build_options.addOption([]const u8, "engine_version", read_engine_version(b, engine_dep));
+    build_options.addOption([]const u8, "engine_version", engine_version(b, engine_dep));
+    const options_module = build_options.createModule();
 
     napi_zig.addLib(b, napi_dep, .{
         .name = "venti",
@@ -34,7 +25,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .imports = &.{
             .{ .name = "uWebZockets", .module = engine },
-            .{ .name = "build_options", .module = build_options.createModule() },
+            .{ .name = "build_options", .module = options_module },
         },
     });
 
@@ -46,7 +37,7 @@ pub fn build(b: *std.Build) void {
             .imports = &.{
                 .{ .name = "napi-zig", .module = napi_dep.module("napi") },
                 .{ .name = "uWebZockets", .module = engine },
-                .{ .name = "build_options", .module = build_options.createModule() },
+                .{ .name = "build_options", .module = options_module },
             },
         }),
     });
@@ -55,19 +46,52 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&b.addRunArtifact(module_tests).step);
 }
 
-fn read_engine_version(b: *std.Build, engine_dep: *std.Build.Dependency) []const u8 {
+fn default_target(b: *std.Build) std.Target.Query {
+    const triple = b.graph.environ_map.get("UWEBZOCKETS_DEFAULT_TARGET") orelse return .{};
+    return std.Target.Query.parse(.{ .arch_os_abi = triple }) catch
+        @panic("UWEBZOCKETS_DEFAULT_TARGET is not a valid Zig target");
+}
+
+/// The vendored C libraries link into a shared addon, so they must be
+/// position independent. Zig's C compiler defaults to PIC on glibc and macOS
+/// but not on musl, so pin it with wrappers on every non-Windows target.
+fn engine_dependency(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Dependency {
+    const zlib_prefix: ?[]const u8 = b.graph.environ_map.get("UWEBZOCKETS_ZLIB_PREFIX");
+    if (builtin.os.tag == .windows or target.result.os.tag == .windows) {
+        return b.dependency("uWebZockets", .{
+            .target = target,
+            .optimize = optimize,
+            .@"zlib-prefix" = zlib_prefix,
+        });
+    }
+    return b.dependency("uWebZockets", .{
+        .target = target,
+        .optimize = optimize,
+        .@"zlib-prefix" = zlib_prefix,
+        .@"c-compiler" = b.pathFromRoot("scripts/zig-cc-pic"),
+        .@"cxx-compiler" = b.pathFromRoot("scripts/zig-cxx-pic"),
+        .@"asm-compiler" = b.pathFromRoot("scripts/zig-cc-pic"),
+    });
+}
+
+fn engine_version(b: *std.Build, engine_dep: *std.Build.Dependency) []const u8 {
     const manifest_path = engine_dep.path("build.zig.zon").getPath(b);
-    const manifest = std.Io.Dir.cwd().readFileAlloc(
+    const source = std.Io.Dir.cwd().readFileAlloc(
         b.graph.io,
         manifest_path,
         b.allocator,
         .limited(64 * 1024),
     ) catch @panic("cannot read the uWebZockets manifest");
-    const marker = ".version = \"";
-    const start = std.mem.indexOf(u8, manifest, marker) orelse
-        @panic("the uWebZockets manifest has no version field");
-    const rest = manifest[start + marker.len ..];
-    const end = std.mem.indexOfScalar(u8, rest, '"') orelse
-        @panic("the uWebZockets manifest has an unterminated version field");
-    return rest[0..end];
+    const manifest = std.zon.parse.fromSliceAlloc(
+        EngineManifest,
+        b.allocator,
+        b.allocator.dupeZ(u8, source) catch @panic("out of memory"),
+        null,
+        .{ .ignore_unknown_fields = true },
+    ) catch @panic("cannot parse the uWebZockets manifest");
+    return manifest.version;
 }

@@ -259,8 +259,9 @@ the ABI.
   `TlsContext.init`) is reachable from the addon but not yet exposed to
   TypeScript.
 - The engine's vendored C dependencies build once into
-  `.zig-cache/vendor-build-v4/` through CMake and Ninja; musl targets use the
-  PIC wrappers in `scripts/` because Zig's musl C default is non-PIC.
+  `.zig-cache/vendor-build-v4/` through CMake and Ninja; non-Windows targets
+  use the PIC compiler wrappers in `scripts/` because the vendored static
+  libraries link into the shared addon.
 - `napi-zig` was wired by hand following its manual setup guide, never with
   `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
   not scaffolded over.

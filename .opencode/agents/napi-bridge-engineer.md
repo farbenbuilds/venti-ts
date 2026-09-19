@@ -19,9 +19,9 @@ ownership transfer, and failure mapping are your responsibility.
 - `build.zig` and `build.zig.zon`: pinned `uWebZockets` v1.1.0
   and `napi-zig` v0.2.8 revisions. A pin change is a boundary change.
 - `build.zig` imports the full `uWebZockets` module and passes `target` and
-  `optimize` through; on musl it selects the PIC compiler wrappers in
-  `scripts/`. The engine's TLS (`App.init_https`, `TlsContext`) and QUIC
-  (`App.init_http3`) entry points live behind that module.
+  `optimize` through; on non-Windows targets it selects the PIC compiler
+  wrappers in `scripts/`. The engine's TLS (`App.init_https`, `TlsContext`)
+  and QUIC (`App.init_http3`) entry points live behind that module.
 - Vendor C dependencies build into `.zig-cache/vendor-build-v4/` through
   CMake, Ninja, Perl, and patch. Treat that cache as build output; rebuild it
   from clean after a pin change instead of editing it.

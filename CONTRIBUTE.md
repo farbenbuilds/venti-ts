@@ -31,7 +31,9 @@ The first `pnpm build:binding` compiles the engine's vendored C dependencies
 minutes and about a gigabyte; later builds are incremental. The dev shell
 provides the required CMake, Ninja, Perl, and patch, and pins the default Zig
 target and zlib prefix for the vendor build. Do not delete `.zig-cache` or
-`zig-pkg` casually.
+`zig-pkg` casually. Cross-compiling to another architecture
+(`zig build -Dtarget=<triple>`) additionally needs `UWEBZOCKETS_ZLIB_PREFIX`
+pointing at a zlib built for that target.
 
 ## Script contract
 

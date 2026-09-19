@@ -50,8 +50,9 @@ The first `pnpm build:binding` compiles BoringSSL, lsquic, and libdeflate into
 incremental. `nix develop` provides CMake, Ninja, Perl, and patch, and pins
 `UWEBZOCKETS_DEFAULT_TARGET` and `UWEBZOCKETS_ZLIB_PREFIX` so the vendor build
 finds the right libc and zlib. Do not delete `.zig-cache` or `zig-pkg` casually.
-On musl hosts `.envrc` selects `.#musl`, which builds a musl addon through the
-PIC compiler wrappers in `scripts/`.
+Every non-Windows target builds the vendor C libraries through the PIC
+wrappers in `scripts/`; on musl hosts `.envrc` selects `.#musl`. Cross-compile
+with `zig build -Dtarget=<triple>` plus a matching `UWEBZOCKETS_ZLIB_PREFIX`.
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
 `tests/`, and vitest strips types without checking them. Widen the include
