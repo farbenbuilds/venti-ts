@@ -39,5 +39,12 @@
       }
     }
   ],
-  "ignorePatterns": [".agents/**", "dist/**", "src-zig/**"]
+  "ignorePatterns": [
+    ".agents/**",
+    "dist/**",
+    "zig-out/**",
+    "zig-pkg/**",
+    ".zig-cache/**",
+    "venti-ts.js"
+  ]
 }

@@ -10,7 +10,7 @@ export type VentiAddon = {
 const require = createRequire(import.meta.url)
 
 const candidatePaths = [
-  ['src-zig', 'zig-out', 'lib', 'venti-ts.node'],
+  ['zig-out', 'lib', 'venti-ts.node'],
   ['dist', 'venti-ts.node'],
 ]
 

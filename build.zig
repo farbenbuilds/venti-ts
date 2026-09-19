@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
 
     napi_zig.addLib(b, napi_dep, .{
         .name = "venti-ts",
-        .root = b.path("src/root.zig"),
+        .root = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,
         .imports = &.{
@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
 
     const module_tests = b.addTest(.{
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/root.zig"),
+            .root_source_file = b.path("src/lib.zig"),
             .target = target,
             .optimize = optimize,
             .imports = &.{

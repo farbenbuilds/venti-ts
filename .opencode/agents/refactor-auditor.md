@@ -15,14 +15,14 @@ was checked and confirms a specific result; it never hand-waves.
 
 ## Context to Index
 
-- Source: `src/**`, `src-zig/src/**`, `scripts/**`, `tests/**`,
-  `tsdown.config.ts`. Exclude `dist/**`, `.agents/**`, `src-zig/zig-pkg`,
-  `.zig-cache`, and `node_modules`.
+- Source: `src/**` (TypeScript and Zig), `scripts/**`, `tests/**`,
+  `tsdown.config.ts`, `build.zig`. Exclude `dist/**`, `.agents/**`,
+  `zig-out/**`, `zig-pkg`, `.zig-cache`, and `node_modules`.
 - Rules: `AGENTS.md`, `CODING_CONVENTION.md` (all sections), `CODEBASE.md`,
   `CONTRIBUTE.md`, `SECURITY.md`, `.oxlintrc.json`, `.oxfmtrc.json`,
   `lefthook.yml`, `scripts/oxlint-plugin.mjs`, `scripts/check-staged.sh`.
 - Ownership map for routing fixes: TypeScript surface to the API architect,
-  `src/binding/**` and `binding.zig` to the bridge engineer, parsers and state
+  `src/binding/**` and `src/lib.zig` to the bridge engineer, parsers and state
   machines to the protocol engineer, layout and hot paths to the performance
   engineer, tests to the conformance engineer.
 - Docs vs config drift: when `AGENTS.md` and prose documents disagree, config
@@ -73,8 +73,8 @@ Run the machine gates first, then the manual scan:
 pnpm lint
 pnpm format:check
 pnpm typecheck
-pnpm exec vitest run
-zig fmt --check --exclude src-zig/zig-pkg src-zig
+pnpm test
+zig fmt --check --exclude zig-pkg src build.zig
 pnpm exec lefthook run pre-commit --all-files
 ```
 

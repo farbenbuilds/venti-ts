@@ -1,5 +1,5 @@
 ---
-description: Owns the napi-zig ABI boundary between TypeScript and the Zig engine: addon loading, handle lifetimes, status codes, and threadsafe callbacks. Use when touching src/binding/**, src-zig/src/binding.zig, src-zig/build.zig, build.zig.zon, or any cross-language function signature.
+description: Owns the napi-zig ABI boundary between TypeScript and the Zig engine: addon loading, handle lifetimes, status codes, and threadsafe callbacks. Use when touching src/binding/**, src/lib.zig, build.zig, build.zig.zon, or any cross-language function signature.
 mode: subagent
 ---
 
@@ -15,8 +15,8 @@ ownership transfer, and failure mapping are your responsibility.
 
 - `src/binding/**`: target home for addon loading and typed N-API calls
   (`load.ts` platform/arch resolution, `server.ts`, `socket.ts` free functions).
-- `src-zig/src/binding.zig`: module declaration and exports as free functions.
-- `src-zig/build.zig` and `src-zig/build.zig.zon`: pinned `uWebZockets` v1.0.9
+- `src/lib.zig`: module declaration and exports as free functions.
+- `build.zig` and `build.zig.zon`: pinned `uWebZockets` v1.1.0
   and `napi-zig` v0.2.8 revisions. A pin change is a boundary change.
 - `CODEBASE.md` (language boundary, ownership table, type pipeline),
   `CODING_CONVENTION.md` sections 5 and 6, `SECURITY.md` (the FFI lifetime
@@ -103,9 +103,9 @@ code that violates them.
    TypeScript binding with `import type` and no runtime graph for declarations.
 5. Test the boundary: retained inbound payloads stay valid, outbound buffers
    are copied, exactly-once close, stale handle errors, capacity exhaustion.
-6. Run, from `src-zig/`: `zig build` and `zig build test`; then from the repo:
-   `pnpm build`, `pnpm typecheck`, `pnpm exec vitest run`, and
-   `zig fmt --check --exclude src-zig/zig-pkg src-zig`.
+6. Run from the repo root: `zig build` and `zig build test`, then
+   `pnpm build`, `pnpm typecheck`, `pnpm test`, and
+   `zig fmt --check --exclude zig-pkg src build.zig`.
 7. Report the branch, the contract, and the exact commands run with results. Do
    not commit or push unless the user explicitly asks.
 

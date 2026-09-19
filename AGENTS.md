@@ -7,10 +7,11 @@ backpressure.
 
 ## Current state: docs describe the target, not the tree
 
-- `src-zig/` is a `napi-zig` addon project: `build.zig` calls `napi_zig.addLib`
-  and `src/root.zig` exposes `engineVersion()`. `src/binding/load.ts` resolves
-  and loads the built `.node`; `src/index.ts` is still an empty public surface.
-  There is no `compat/`, `protocol/`, or `types/` tree yet.
+- `build.zig` calls `napi_zig.addLib` and `src/lib.zig` exposes `engineVersion()`,
+  following the `napi-zig` layout: the Zig root module lives in `src/` next to
+  the TypeScript sources. `src/binding/load.ts` resolves and loads the built
+  `.node`; `src/index.ts` is still an empty public surface. There is no
+  `compat/`, `protocol/`, or `types/` tree yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
@@ -40,7 +41,7 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
 | Single test                   | `pnpm exec vitest run tests/binding.test.ts`                                       |
 | Typecheck                     | `pnpm typecheck`                                                                   |
-| Zig formatting                | `zig fmt --check --exclude src-zig/zig-pkg src-zig`                                |
+| Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |
 | Version bump                  | `pnpm release`                                                                     |
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
@@ -89,9 +90,11 @@ temporarily or annotate explicitly when test types must be verified.
   `performance-optimization`, `api-and-interface-design`,
   `observability-and-instrumentation`, `git-workflow-and-versioning`,
   `ci-cd-and-automation`, `documentation-and-adrs`,
-  `deprecation-and-migration`, and `shipping-and-launch`. UI-oriented skills
-  (`frontend-ui-engineering`, `browser-testing-with-devtools`) apply only when
-  a task genuinely needs them; this addon is not a UI project.
+  `deprecation-and-migration`, and `shipping-and-launch`. UI and browser
+  skills are not part of this pack; venti-ts is a Node.js package, not a UI
+  project. `using-agent-skills` and `test-driven-development` carry local edits
+  that strip their browser routing; a `skills update` may restore it, so
+  re-remove any UI guidance it brings back.
 - graphify is installed as a global opencode plugin. When
   `graphify-out/graph.json` exists, treat codebase and architecture questions
   as graph queries first: `graphify query "<question>"`, `graphify path A B`,
@@ -110,5 +113,7 @@ temporarily or annotate explicitly when test types must be verified.
 - `ws` behavior is the compatibility contract. When adding a surface, check
   what `ws` does and test both implementations once the conformance harness
   exists. `ws` may be a devDependency only, never a runtime dependency.
-- `package.json` `files` currently ships only `dist/`. Native addon artifacts
-  must be added to `files` before any real publish.
+- `package.json` `files` ships only `dist/`; `tsdown` copies the host
+  `.node` artifact into `dist/`, so the built package is self-contained for
+  the build platform. Per-platform artifacts must land before any real
+  publish.

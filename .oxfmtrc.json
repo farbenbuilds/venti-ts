@@ -2,5 +2,17 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "semi": false,
   "singleQuote": true,
-  "ignorePatterns": [".agents/**", "flake.lock", "pnpm-lock.yaml", "skills-lock.json", "src-zig/**"]
+  "ignorePatterns": [
+    ".agents/**",
+    "flake.lock",
+    "pnpm-lock.yaml",
+    "skills-lock.json",
+    "zig-out/**",
+    "zig-pkg/**",
+    ".zig-cache/**",
+    "build.zig.zon.json",
+    "build.zig.zon.nix",
+    "build.zig.zon.txt",
+    "venti-ts.js"
+  ]
 }

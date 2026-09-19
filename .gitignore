@@ -8,7 +8,7 @@
 zig-out/
 zig-cache/
 zig-pkg/
-src-zig/venti-ts.js
+venti-ts.js
 
 # node
 node_modules/

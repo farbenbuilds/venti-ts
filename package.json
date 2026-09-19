@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "pnpm run build:binding && tsdown",
-    "build:binding": "pnpm --dir src-zig exec napi-zig build",
+    "build:binding": "napi-zig build",
     "dev": "tsdown --watch",
     "format": "oxfmt",
     "format:check": "oxfmt --check",

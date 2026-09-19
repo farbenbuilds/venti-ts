@@ -15,8 +15,6 @@ pre-commit:
 
     - name: oxfmt
       glob: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,md,mdx,yaml,yml}'
-      exclude:
-        - 'src-zig/**'
       run: pnpm exec oxfmt --write {staged_files}
       stage_fixed: true
 
