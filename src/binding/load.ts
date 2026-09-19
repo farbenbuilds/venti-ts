@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 export type VentiAddon = {
   engineVersion(): string
+  http3Available(): boolean
 }
 
 const require = createRequire(import.meta.url)

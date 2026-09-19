@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Adds -fPIC for targets whose Zig C compiler default is non-PIC (musl).
+uwebzockets_zig=${UWEBZOCKETS_ZIG:-zig}
+if [ -n "${UWEBZOCKETS_TARGET:-}" ]; then
+    exec "$uwebzockets_zig" cc -target "$UWEBZOCKETS_TARGET" -fPIC "$@"
+fi
+exec "$uwebzockets_zig" cc -fPIC "$@"

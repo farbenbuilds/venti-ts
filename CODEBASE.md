@@ -49,7 +49,9 @@ venti-ts/
 ├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
 ├── scripts/
 │   ├── check-staged.sh        # staged-file hygiene checks
-│   └── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
+│   ├── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
+│   ├── zig-cc-pic             # PIC C compiler wrapper for musl vendor builds
+│   └── zig-cxx-pic            # PIC C++ compiler wrapper for musl vendor builds
 ├── src/
 │   ├── index.ts               # public export surface (empty placeholder)
 │   ├── lib.zig                # napi-zig root module declaration and exports
@@ -251,9 +253,14 @@ the ABI.
 - `tsdown.config.ts` enables bundled declaration output and copies the host
   `.node` artifact into `dist/`, so `pnpm build` produces a self-contained
   package for the current platform.
-- `build.zig` builds the addon through `napi_zig.addLib`; `src/lib.zig`
-  declares the module and exposes `engineVersion()` from the pinned
-  uWebZockets release (1.1.0).
+- `build.zig` builds the addon through `napi_zig.addLib` and links the full
+  `uWebZockets` engine module; `src/lib.zig` exposes `engineVersion()` and
+  `http3Available()`. The engine's TLS surface (`App.init_https`,
+  `TlsContext.init`) is reachable from the addon but not yet exposed to
+  TypeScript.
+- The engine's vendored C dependencies build once into
+  `.zig-cache/vendor-build-v4/` through CMake and Ninja; musl targets use the
+  PIC wrappers in `scripts/` because Zig's musl C default is non-PIC.
 - `napi-zig` was wired by hand following its manual setup guide, never with
   `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
   not scaffolded over.

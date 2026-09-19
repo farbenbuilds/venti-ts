@@ -15,10 +15,10 @@ inside Zig while the public surface stays idiomatic TypeScript.
 Pre-alpha. This branch ships the package scaffolding, the TypeScript toolchain
 configuration (`pnpm`, `tsdown`, `oxlint`, `oxfmt`, `vitest`), the native build
 environment (`flake.nix`, Zig 0.16.0), and a working `napi-zig` pipeline: the
-host addon builds, loads, and reports the pinned µWebZockets version. The
-`ws` compatibility layer and the conformance suite are implemented in
-subsequent changes. No npm release exists yet; do not deploy this in
-production.
+host addon links the full µWebZockets engine, builds, loads, and reports the
+pinned engine version and HTTP/3 capability. The `ws` compatibility layer and
+the conformance suite are implemented in subsequent changes. No npm release
+exists yet; do not deploy this in production.
 
 ## Design goals
 
@@ -102,7 +102,7 @@ records; they never use `class`, `this`, or prototype chains. See
 | Surface                                                 | Status               |
 | ------------------------------------------------------- | -------------------- |
 | Package scaffolding and toolchain                       | Scaffolded           |
-| Native binding (`napi-zig` + Zig engine)                | Host build wired     |
+| Native binding (`napi-zig` + Zig engine)                | Engine linked        |
 | `WebSocketServer` construction and options              | Planned              |
 | `connection`, `message`, `ping`, `pong`, `close` events | Planned              |
 | Text, binary, and fragmented messages                   | Planned              |

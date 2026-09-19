@@ -26,6 +26,13 @@ automatically under `direnv`). Without Nix, install Node.js 22 or newer, pnpm,
 and Zig 0.16.0 manually. No other system tooling is required for the
 TypeScript layer; the native binding is built by Zig.
 
+The first `pnpm build:binding` compiles the engine's vendored C dependencies
+(BoringSSL, lsquic, libdeflate) into `.zig-cache/vendor-build-v4/`. That takes
+minutes and about a gigabyte; later builds are incremental. The dev shell
+provides the required CMake, Ninja, Perl, and patch, and pins the default Zig
+target and zlib prefix for the vendor build. Do not delete `.zig-cache` or
+`zig-pkg` casually.
+
 ## Script contract
 
 Run every command through pnpm; do not invoke package binaries directly.

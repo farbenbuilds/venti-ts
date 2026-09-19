@@ -7,7 +7,8 @@ backpressure.
 
 ## Current state: docs describe the target, not the tree
 
-- `build.zig` calls `napi_zig.addLib` and `src/lib.zig` exposes `engineVersion()`,
+- `build.zig` calls `napi_zig.addLib`, imports the full `uWebZockets` engine
+  module, and `src/lib.zig` exposes `engineVersion()` and `http3Available()`,
   following the `napi-zig` layout: the Zig root module lives in `src/` next to
   the TypeScript sources. `src/binding/load.ts` resolves and loads the built
   `.node`; `src/index.ts` is still an empty public surface. There is no
@@ -43,6 +44,14 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | Typecheck                     | `pnpm typecheck`                                                                   |
 | Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |
 | Version bump                  | `pnpm release`                                                                     |
+
+The first `pnpm build:binding` compiles BoringSSL, lsquic, and libdeflate into
+`.zig-cache/vendor-build-v4/` (minutes and roughly a gigabyte); later builds are
+incremental. `nix develop` provides CMake, Ninja, Perl, and patch, and pins
+`UWEBZOCKETS_DEFAULT_TARGET` and `UWEBZOCKETS_ZLIB_PREFIX` so the vendor build
+finds the right libc and zlib. Do not delete `.zig-cache` or `zig-pkg` casually.
+On musl hosts `.envrc` selects `.#musl`, which builds a musl addon through the
+PIC compiler wrappers in `scripts/`.
 
 `pnpm typecheck` uses `tsconfig.json` `include: ["src"]`, so it does not check
 `tests/`, and vitest strips types without checking them. Widen the include

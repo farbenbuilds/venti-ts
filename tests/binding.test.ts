@@ -8,3 +8,7 @@ test('loads the native addon', () => {
 test('reports the pinned uWebZockets release', () => {
   expect(loadAddon().engineVersion()).toBe('1.1.0')
 })
+
+test('reports HTTP/3 support from the linked engine', () => {
+  expect(loadAddon().http3Available()).toBe(true)
+})
