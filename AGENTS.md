@@ -7,12 +7,13 @@ backpressure.
 
 ## Current state: docs describe the target, not the tree
 
-- `build.zig` calls `napi_zig.addLib`, imports the full `uWebZockets` engine
-  module, and `src/lib.zig` exposes `engineVersion()` and `http3Available()`,
-  following the `napi-zig` layout: the Zig root module lives in `src/` next to
-  the TypeScript sources. `src/binding/load.ts` resolves and loads the built
-  `.node`; `src/index.ts` is still an empty public surface. There is no
-  `compat/`, `protocol/`, or `types/` tree yet.
+- `build.zig` delegates to `src/builds/orchestrator.zig`, which wires the addon
+  through `napi_zig.addLib` and imports the full `uWebZockets` engine module;
+  `src/lib.zig` exposes `engineVersion()` and `http3Available()`, following the
+  `napi-zig` layout: the Zig root module lives in `src/` next to the TypeScript
+  sources. `src/binding/load.ts` resolves and loads the built `.node`;
+  `src/index.ts` is still an empty public surface. There is no `compat/`,
+  `protocol/`, or `types/` tree yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config

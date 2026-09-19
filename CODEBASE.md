@@ -45,18 +45,25 @@ venti-ts/
 ├── package.json               # package metadata, scripts, exports
 ├── tsconfig.json              # strict TypeScript configuration
 ├── tsdown.config.ts           # bundle, declaration, and native artifact pipeline
-├── build.zig                  # napi_zig.addLib build graph
+├── build.zig                  # build entry, delegates to src/builds/orchestrator.zig
 ├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
 ├── scripts/
 │   ├── check-staged.sh        # staged-file hygiene checks
 │   ├── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
-│   ├── zig-cc-pic             # PIC C compiler wrapper for musl vendor builds
-│   └── zig-cxx-pic            # PIC C++ compiler wrapper for musl vendor builds
+│   ├── zig-cc-pic             # PIC C compiler wrapper for vendored C builds
+│   └── zig-cxx-pic            # PIC C++ compiler wrapper for vendored C builds
 ├── src/
 │   ├── index.ts               # public export surface (empty placeholder)
 │   ├── lib.zig                # napi-zig root module declaration and exports
-│   └── binding/
-│       └── load.ts            # native addon resolution and typed loading
+│   ├── binding/
+│   │   └── load.ts            # native addon resolution and typed loading
+│   └── builds/
+│       ├── orchestrator.zig   # build entry: addon, build options, tests
+│       ├── vendor.zig         # engine dependency, version, C toolchain
+│       ├── testing.zig        # Zig test module and test step
+│       └── targets/
+│           ├── default.zig    # default build target query
+│           └── native.zig     # vendored C compiler overrides
 ├── tests/
 │   └── binding.test.ts        # native pipeline smoke test
 └── .github/                   # community templates, issue forms, lint workflows
@@ -65,11 +72,18 @@ venti-ts/
 Target layout as the binding lands:
 
 ```text
-build.zig                      # addon build graph, typed dependency edge
+build.zig                      # build entry; delegates to src/builds/orchestrator.zig
 build.zig.zon                  # pinned uWebZockets and napi-zig revisions
 src/
 ├── index.ts                   # thin public re-export surface
 ├── lib.zig                    # napi-zig module declaration and exports
+├── builds/                    # Zig build graph helpers, one concern per file
+│   ├── orchestrator.zig       # build entry and wiring
+│   ├── vendor.zig             # engine dependency and vendored C toolchain
+│   ├── testing.zig            # Zig test module and test step
+│   └── targets/               # target-specific build settings
+│       ├── default.zig        # default build target query
+│       └── native.zig         # vendored C compiler overrides
 ├── binding/                   # native addon loading and typed N-API calls
 │   ├── load.ts                # platform/arch addon resolution, one error type
 │   ├── server.ts              # server handle create/listen/close free functions
@@ -93,8 +107,11 @@ Zig and TypeScript share `src/`. `napi-zig` expects the addon root module at
 `src/lib.zig`, `tsdown` expects the package entry at `src/index.ts`, and the
 file extensions keep the two languages apart. `build.zig` and `build.zig.zon`
 stay at the repository root so the `napi-zig` CLI runs there without a
-working-directory flag. Future Zig modules live beside the TypeScript files in
-`src/` or in a dedicated subdirectory split by responsibility.
+working-directory flag. The build graph itself lives in `src/builds/`:
+`build.zig` only delegates to the orchestrator, which wires the vendor
+dependency, the build metadata, and the tests. Future Zig modules live beside
+the TypeScript files in `src/` or in a dedicated subdirectory split by
+responsibility.
 
 Test and tooling directories:
 
@@ -244,8 +261,14 @@ the ABI.
 
 ## Current branch state
 
-`feat/napi-zig-binding` wires the native pipeline end to end:
+`refactor/build-orchestrator` splits the build graph into `src/builds/`:
 
+- `build.zig` only calls `orchestrator.inject(b)`. `src/builds/orchestrator.zig`
+  resolves the target and optimize mode, wires the addon through
+  `napi_zig.addLib`, and hands the test wiring to `src/builds/testing.zig`.
+- `src/builds/vendor.zig` configures the uWebZockets dependency and reads its
+  pinned version; `src/builds/targets/` holds the default target query and the
+  vendored C compiler overrides.
 - `package.json` defines the package scripts (`build`, `build:binding`, `dev`,
   `format`, `format:check`, `lint`, `lint:fix`, `test`, `test:watch`,
   `typecheck`, `release`, `prepublishOnly`) and development dependencies,
@@ -253,11 +276,10 @@ the ABI.
 - `tsdown.config.ts` enables bundled declaration output and copies the host
   `.node` artifact into `dist/`, so `pnpm build` produces a self-contained
   package for the current platform.
-- `build.zig` builds the addon through `napi_zig.addLib` and links the full
-  `uWebZockets` engine module; `src/lib.zig` exposes `engineVersion()` and
-  `http3Available()`. The engine's TLS surface (`App.init_https`,
-  `TlsContext.init`) is reachable from the addon but not yet exposed to
-  TypeScript.
+- The addon links the full `uWebZockets` engine module; `src/lib.zig` exposes
+  `engineVersion()` and `http3Available()`. The engine's TLS surface
+  (`App.init_https`, `TlsContext.init`) is reachable from the addon but not yet
+  exposed to TypeScript.
 - The engine's vendored C dependencies build once into
   `.zig-cache/vendor-build-v4/` through CMake and Ninja; non-Windows targets
   use the PIC compiler wrappers in `scripts/` because the vendored static

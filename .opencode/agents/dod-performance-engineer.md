@@ -25,7 +25,7 @@ measurements, never from intuition.
 - `CODEBASE.md` design rules 1-3 (access-pattern grouping, pure transforms,
   fixed capacity), `CODING_CONVENTION.md` section 5, `SECURITY.md` resource
   limits.
-- `zig-out/` artifacts and `build.zig` optimization flags; cross-target
+- `zig-out/` artifacts and `src/builds/` optimization flags; cross-target
   behavior is the bridge engineer's matrix, your concern is layout on each.
 - When `graphify-out/graph.json` exists, trace hot paths and caller/callee
   chains with `graphify query`, `graphify path`, or `graphify explain` before

@@ -15,8 +15,8 @@ was checked and confirms a specific result; it never hand-waves.
 
 ## Context to Index
 
-- Source: `src/**` (TypeScript and Zig), `scripts/**`, `tests/**`,
-  `tsdown.config.ts`, `build.zig`. Exclude `dist/**`, `.agents/**`,
+- Source: `src/**` (TypeScript and Zig, including `src/builds/`), `scripts/**`,
+  `tests/**`, `tsdown.config.ts`, `build.zig`. Exclude `dist/**`, `.agents/**`,
   `zig-out/**`, `zig-pkg`, `.zig-cache`, and `node_modules`.
 - Rules: `AGENTS.md`, `CODING_CONVENTION.md` (all sections), `CODEBASE.md`,
   `CONTRIBUTE.md`, `SECURITY.md`, `.oxlintrc.json`, `.oxfmtrc.json`,
