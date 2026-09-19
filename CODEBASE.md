@@ -62,9 +62,12 @@ venti-ts/
 │   │   └── events.ts          # listener registry replacing EventEmitter
 │   ├── types/
 │   │   ├── ws.d.ts            # vendored DefinitelyTyped ws contract, ESM footer
+│   │   ├── close.ts           # ready-state and close-code unions
+│   │   ├── errors.ts          # stable error codes and coded-error shape
 │   │   ├── events.ts          # event-map, handler, and registry types
+│   │   ├── server.ts          # ServerState and the server event map
 │   │   ├── socket.ts          # SocketState and the socket event map
-│   │   └── server.ts          # ServerState and the server event map
+│   │   └── status.ts          # engine status to error-code mapping types
 │   └── builds/
 │       ├── orchestrator.zig   # build entry: addon, build options, tests
 │       ├── vendor.zig         # engine dependency, version, C toolchain
@@ -300,7 +303,9 @@ top of the merged build graph:
 "venti-ts"` matches `ws`. No runtime `ws` surface exists yet.
 - `src/types/{events,socket,server}.ts` define the registry types,
   `SocketState`, `ServerState`, and the Node-style event maps extracted from
-  the vendored contract. `src/compat/events.ts` implements the registry:
+  the vendored contract; `src/types/{close,errors,status}.ts` define the
+  ready-state and close-code unions, the stable error codes, and the engine
+  status to error-code mapping. `src/compat/events.ts` implements the registry:
   copy-on-write buckets, dispatch over the array captured at call time, no
   classes and no `this`. Event handlers receive payloads only; `this` binding,
   `once`, and the no-listener `error` policy belong to the compat factories.
