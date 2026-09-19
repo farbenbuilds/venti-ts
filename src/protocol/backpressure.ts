@@ -15,5 +15,6 @@ export function shouldPauseWrites(bufferedAmount: number, highWaterMark: number)
 }
 
 export function shouldResumeWrites(bufferedAmount: number, lowWaterMark: number): boolean {
+  if (!(lowWaterMark >= 0)) return true
   return bufferedAmount <= lowWaterMark
 }

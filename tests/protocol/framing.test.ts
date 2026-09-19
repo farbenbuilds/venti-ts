@@ -6,22 +6,28 @@ import {
   isValidPayloadLength,
 } from "../../src/protocol/framing"
 
-test("computes the frame header length for every length class", () => {
-  expect(frameHeaderLength(0, false)).toBe(2)
-  expect(frameHeaderLength(125, false)).toBe(2)
-  expect(frameHeaderLength(126, false)).toBe(4)
-  expect(frameHeaderLength(65_535, false)).toBe(4)
-  expect(frameHeaderLength(65_536, false)).toBe(10)
-  expect(frameHeaderLength(126, true)).toBe(8)
-  expect(frameHeaderLength(65_536, true)).toBe(14)
+test.each([
+  [0, false, 2],
+  [125, false, 2],
+  [126, false, 4],
+  [65_535, false, 4],
+  [65_536, false, 10],
+  [0, true, 6],
+  [125, true, 6],
+  [126, true, 8],
+  [65_535, true, 8],
+  [65_536, true, 14],
+] as const)("computes header length for %i masked=%s as %i", (length, masked, expected) => {
+  expect(frameHeaderLength(length, masked)).toBe(expected)
 })
 
-test("reports invalid payload lengths", () => {
-  expect(isValidPayloadLength(-1)).toBe(false)
-  expect(isValidPayloadLength(1.5)).toBe(false)
-  expect(isValidPayloadLength(Number.MAX_SAFE_INTEGER + 1)).toBe(false)
-  expect(frameHeaderLength(-1, false)).toBeUndefined()
-})
+test.each([-1, 1.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1] as const)(
+  "rejects invalid payload length %s",
+  (length) => {
+    expect(isValidPayloadLength(length)).toBe(false)
+    expect(frameHeaderLength(length, false)).toBeUndefined()
+  },
+)
 
 test("applies and reverses the mask in place", () => {
   const bytes = Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7])
@@ -31,6 +37,13 @@ test("applies and reverses the mask in place", () => {
   expect([...bytes]).toEqual([0x12, 0x35, 0x54, 0x7b, 0x16, 0x31, 0x50, 0x7f])
   expect(applyMask(bytes, mask, bytes)).toBe(true)
   expect([...bytes]).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+})
+
+test("wraps the mask every four bytes", () => {
+  const source = Uint8Array.from([1, 2, 3, 4, 5])
+  const target = new Uint8Array(5)
+  expect(applyMask(source, Uint8Array.from([0xff, 0, 0, 0]), target)).toBe(true)
+  expect([...target]).toEqual([254, 2, 3, 4, 250])
 })
 
 test("writes into a caller-owned target and rejects invalid arguments", () => {
