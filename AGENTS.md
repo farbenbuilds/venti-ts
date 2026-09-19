@@ -15,10 +15,13 @@ will own parsing, buffers, and backpressure.
   `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` declarations, and
   `src/index.ts` re-exports that surface as type-only ESM exports.
   `src/types/{events,socket,server}.ts` hold the internal state records, event
-  maps, and listener-registry types; `src/types/{close,errors,status}.ts` hold
-  the ready-state, close-code, error-code, and engine-status unions, and
-  `src/compat/events.ts` implements the listener registry. There is no `protocol/` tree yet, and no runtime `ws`
-  surface.
+  maps, and listener-registry types; `src/types/{close,errors,status,options}.ts`
+  hold the ready-state, close-code, error-code, engine-status, and normalized
+  option types. `src/compat/events.ts` implements the listener registry,
+  `src/compat/{options,server-options,client-options,errors}.ts` normalize
+  options and build coded errors, and `src/protocol/` holds the pure close
+  code, framing, and backpressure helpers. There is no runtime `ws` surface
+  yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config

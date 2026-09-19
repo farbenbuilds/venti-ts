@@ -59,12 +59,21 @@ venti-ts/
 │   ├── binding/
 │   │   └── load.ts            # native addon resolution and typed loading
 │   ├── compat/
-│   │   └── events.ts          # listener registry replacing EventEmitter
+│   │   ├── client-options.ts  # client option normalization and defaults
+│   │   ├── errors.ts          # coded error factories and status mapping
+│   │   ├── events.ts          # listener registry replacing EventEmitter
+│   │   ├── options.ts         # shared normalization helpers and constants
+│   │   └── server-options.ts  # server option normalization and defaults
+│   ├── protocol/
+│   │   ├── backpressure.ts    # bufferedAmount math and water marks
+│   │   ├── close-codes.ts     # RFC 6455 close codes and predicates
+│   │   └── framing.ts         # frame header math and masking
 │   ├── types/
 │   │   ├── ws.d.ts            # vendored DefinitelyTyped ws contract, ESM footer
 │   │   ├── close.ts           # ready-state and close-code unions
 │   │   ├── errors.ts          # stable error codes and coded-error shape
 │   │   ├── events.ts          # event-map, handler, and registry types
+│   │   ├── options.ts         # normalized client and server option records
 │   │   ├── server.ts          # ServerState and the server event map
 │   │   ├── socket.ts          # SocketState and the socket event map
 │   │   └── status.ts          # engine status to error-code mapping types
@@ -77,7 +86,9 @@ venti-ts/
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
 │   ├── binding.test.ts        # native pipeline smoke test
+│   ├── compat/                # option normalization and error factory tests
 │   ├── events.test.ts         # listener registry behavior
+│   ├── protocol/              # close code, framing, and backpressure tests
 │   ├── types/                 # fixtures checked by pnpm typecheck
 │   └── declarations/          # fixtures checked by pnpm typecheck:dist
 └── .github/                   # community templates, issue forms, lint workflows
@@ -106,7 +117,10 @@ src/
 │   ├── server.ts              # WebSocketServer constructor-shaped factory
 │   ├── socket.ts              # WebSocket constructor-shaped factory
 │   ├── events.ts              # explicit listener registry and dispatch
-│   └── options.ts             # option validation and normalization
+│   ├── options.ts             # shared option normalization helpers
+│   ├── server-options.ts      # server option validation and normalization
+│   ├── client-options.ts      # client option validation and normalization
+│   └── errors.ts              # coded error factories and status mapping
 ├── protocol/                  # pure TypeScript helpers
 │   ├── close-codes.ts         # RFC 6455 close code constants and predicates
 │   ├── framing.ts             # length and mask helpers used by tests

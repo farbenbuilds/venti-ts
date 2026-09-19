@@ -95,6 +95,8 @@ of venti-ts.
 | ----------------------- | ------------------------------------------------------------------------------ | ------ |
 | `tests/binding.test.ts` | Native build, addon load, engine version round-trip                            | done   |
 | `tests/events.test.ts`  | Listener registry semantics                                                    | done   |
+| `tests/protocol/**`     | Close code, framing, and backpressure helpers                                  | done   |
+| `tests/compat/**`       | Option normalization and coded error factories                                 | done   |
 | `tests/types/**`        | Compile-time public surface, every event-map entry, state records              | done   |
 | `tests/declarations/**` | Built declarations through the package `exports` map                           | done   |
 | `tests/conformance/**`  | The same scenario run against `ws` and venti-ts, comparing observable behavior | todo   |
