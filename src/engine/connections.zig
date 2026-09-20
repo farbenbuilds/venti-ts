@@ -45,6 +45,7 @@ fn on_open(slot: usize, ws: *uwz.WebSocket) void {
     }
     const index = connection_index(server, ws) orelse return;
     const handle = server.slab.acquire(index) catch return;
+    server.sockets.open(index, handle.generation);
     _ = server.channel.emit(.{
         .kind = .connection_open,
         .server = server.handle.toInt(),
@@ -56,6 +57,7 @@ fn on_open(slot: usize, ws: *uwz.WebSocket) void {
 fn on_close(slot: usize, ws: *uwz.WebSocket) void {
     const server = instance.lookup_slot(@intCast(slot)) orelse return;
     const index = connection_index(server, ws) orelse return;
+    if (!server.sockets.finish(index)) return;
     const handle = server.slab.release(index) orelse return;
     _ = server.channel.emit(.{
         .kind = .connection_close,
