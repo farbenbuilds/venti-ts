@@ -40,6 +40,6 @@ test "busy slots and out-of-range indices are rejected" {
 
 test "handle integers pack index and generation" {
     const handle = handles.Handle{ .index = 0xDEADBEEF, .generation = 0x01020304 };
-    try std.testing.expectEqual(@as(u64, 0x01020304DEADBEEF), handle.toInt());
-    try std.testing.expectEqual(handle, handles.Handle.fromInt(handle.toInt()));
+    try std.testing.expectEqual(@as(u64, 0x01020304DEADBEEF), handle.to_int());
+    try std.testing.expectEqual(handle, handles.Handle.from_int(handle.to_int()));
 }

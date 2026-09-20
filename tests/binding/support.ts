@@ -1,4 +1,3 @@
-import { createServer as createNetServer } from "node:net";
 import type { EngineEvent, EngineEventKind, NativeServerConfig } from "../../src/binding/native";
 import { closeServer, createServer, finalizeServer, listenServer } from "../../src/binding/server";
 
@@ -58,6 +57,39 @@ function waitUntil(
   });
 }
 
+/// Resolves once the event list has not grown for three consecutive polls, so
+/// a late duplicate terminal event cannot pass an exactly-once assertion.
+function settleEvents(events: EngineEvent[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let lastLength = events.length;
+    let stable = 0;
+    const deadline = Date.now() + EVENT_TIMEOUT_MS;
+    function poll(): void {
+      const failure = engineFailure(events);
+      if (failure !== undefined) {
+        reject(failure);
+        return;
+      }
+      if (events.length === lastLength) {
+        stable += 1;
+      } else {
+        stable = 0;
+        lastLength = events.length;
+      }
+      if (stable >= 3) {
+        resolve();
+        return;
+      }
+      if (Date.now() >= deadline) {
+        reject(new Error("timed out waiting for the event stream to settle"));
+        return;
+      }
+      setTimeout(poll, POLL_INTERVAL_MS);
+    }
+    poll();
+  });
+}
+
 export function fixture(config: NativeServerConfig): ServerFixture {
   const events: EngineEvent[] = [];
   const handle = createServer(config, (event) => {
@@ -75,7 +107,7 @@ export function fixture(config: NativeServerConfig): ServerFixture {
       }),
     waitForCount: (kind, count) =>
       waitUntil(events, (seen) => countOf(seen, kind) >= count, `${count} x ${kind}`),
-    settle: () => delay(POLL_INTERVAL_MS * 5),
+    settle: () => settleEvents(events),
     async dispose() {
       try {
         closeServer(handle);
@@ -115,29 +147,4 @@ export async function startAndWait(
   const server = start(config);
   const listening = await server.waitFor("listening");
   return { server, port: listening.code };
-}
-
-function probePort(): Promise<number | undefined> {
-  return new Promise((resolve, reject) => {
-    const probe = createNetServer();
-    probe.once("error", reject);
-    probe.listen(0, "127.0.0.1", () => {
-      const address = probe.address();
-      if (address === null || typeof address === "string") {
-        probe.close();
-        resolve(undefined);
-        return;
-      }
-      const port = address.port;
-      probe.close(() => resolve(port));
-    });
-  });
-}
-
-export async function freePort(): Promise<number> {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const port = await probePort();
-    if (port !== undefined) return port;
-  }
-  throw new Error("failed to probe a free port");
 }

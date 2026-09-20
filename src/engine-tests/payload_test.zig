@@ -66,3 +66,22 @@ test "a zero length record round trips" {
     try std.testing.expectEqual(@as(usize, 0), view.bytes.len);
     try std.testing.expectEqual(payload.Kind.ping, view.kind);
 }
+
+test "a recycled slot refreshes every record field" {
+    var ring = payload.payload_ring(2, 4){};
+
+    try ring.stage(.text, 1, 1, "aaaa");
+    try ring.stage(.binary, 2, 2, "bb");
+    const first = ring.peek().?;
+    ring.release(first);
+    const second = ring.peek().?;
+    ring.release(second);
+
+    try ring.stage(.ping, 9, 7, "c");
+    const refreshed = ring.peek().?;
+    try std.testing.expectEqual(payload.Kind.ping, refreshed.kind);
+    try std.testing.expectEqual(@as(u32, 9), refreshed.index);
+    try std.testing.expectEqual(@as(u32, 7), refreshed.generation);
+    try std.testing.expectEqualStrings("c", refreshed.bytes);
+    try std.testing.expectEqual(@as(usize, 1), ring.pending());
+}

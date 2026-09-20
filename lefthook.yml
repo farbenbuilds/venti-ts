@@ -27,6 +27,9 @@ pre-commit:
       glob: "**/build.zig.zon"
       run: scripts/zon2nix.sh
 
+    - name: conventions
+      run: node scripts/check-conventions.mjs
+
     - name: hygiene
       exclude:
         - ".agents/**"

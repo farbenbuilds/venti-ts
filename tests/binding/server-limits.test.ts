@@ -1,24 +1,7 @@
-import { createServer as createNetServer } from "node:net";
 import { expect, test } from "vitest";
 import { listenServer } from "../../src/binding/server";
-import { fixture, freePort, start, startAndWait, TEST_TIMEOUT_MS } from "./support";
-
-type Blocker = { close: () => Promise<void> };
-
-function occupy(port: number): Promise<Blocker> {
-  return new Promise((resolve, reject) => {
-    const server = createNetServer();
-    server.once("error", reject);
-    server.listen(port, "127.0.0.1", () => {
-      resolve({
-        close: () =>
-          new Promise((done) => {
-            server.close(() => done());
-          }),
-      });
-    });
-  });
-}
+import { occupyPort } from "./port-support";
+import { fixture, start, startAndWait, TEST_TIMEOUT_MS } from "./support";
 
 test("maxConnections caps accepted peers", { timeout: TEST_TIMEOUT_MS }, async () => {
   const { server, port } = await startAndWait({ host: "127.0.0.1", port: 0, maxConnections: 1 });
@@ -49,9 +32,8 @@ test(
     timeout: TEST_TIMEOUT_MS,
   },
   async () => {
-    const port = await freePort();
-    const blocker = await occupy(port);
-    const server = fixture({ host: "127.0.0.1", port });
+    const blocker = await occupyPort();
+    const server = fixture({ host: "127.0.0.1", port: blocker.port });
     try {
       expect(() => listenServer(server.handle)).toThrow(/AddressInUse/);
     } finally {
@@ -59,7 +41,7 @@ test(
       await server.dispose();
     }
 
-    const replacement = start({ host: "127.0.0.1", port });
+    const replacement = start({ host: "127.0.0.1", port: blocker.port });
     try {
       await replacement.waitFor("listening");
     } finally {

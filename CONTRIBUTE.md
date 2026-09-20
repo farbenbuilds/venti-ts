@@ -158,9 +158,9 @@ Runtime dependencies are pinned exactly and updated deliberately:
 
 1. Bump the version with `pnpm release` (`bumpp`) and confirm all versioned
    surfaces agree.
-2. Update `CHANGELOG.md` with a dated section that lists breaking changes and
-   known limitations. Do not leave an `Unreleased` heading in a release
-   commit.
+2. Add `CHANGELOG.md` with a dated section that lists breaking changes and
+   known limitations before the first tagged release. Do not leave an
+   `Unreleased` heading in a release commit.
 3. Verify [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) against the shipped
    native artifacts.
 4. Pass lint, format, typecheck, unit, compatibility, and Autobahn checks on

@@ -46,7 +46,7 @@ observing identical behavior.
 | `src/protocol/` | Pure TS helpers (close codes, framing, backpressure policy)       | Allocate per call                        |
 | `src/types/`    | Public and internal type-only modules                             | Duplicate a type that exists elsewhere   |
 | `src/lib.zig`   | `napi-zig` module declaration and exports as free functions       | Call into JavaScript from engine threads |
-| `src/*.zig`     | Parsers, framing, SIMD transforms, bounded queues                 | Allocate on hot paths                    |
+| `src/engine/`   | Parsers, framing, SIMD transforms, bounded queues                 | Allocate on hot paths                    |
 | `src/builds/`   | Zig build graph: orchestrator, vendor, tests, targets             | Put runtime logic here                   |
 
 ## Boundary contract

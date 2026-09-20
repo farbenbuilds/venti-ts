@@ -33,7 +33,9 @@ pub const View = struct {
 /// the sequence word, so a producer never observes a partially written record.
 pub fn payload_ring(comptime slots: usize, comptime slot_bytes: usize) type {
     if (slots == 0) @compileError("payload ring needs at least one slot");
+    if (!std.math.isPowerOfTwo(slots)) @compileError("payload ring slot count must be a power of two");
     if (slot_bytes == 0) @compileError("payload slot capacity must be greater than zero");
+    if (slot_bytes > std.math.maxInt(u32)) @compileError("payload slot capacity must fit a u32 length");
 
     return struct {
         const Self = @This();
@@ -46,7 +48,7 @@ pub fn payload_ring(comptime slots: usize, comptime slot_bytes: usize) type {
         indices: [slots]u32 = .{0} ** slots,
         generations: [slots]u32 = .{0} ** slots,
         lengths: [slots]u32 = .{0} ** slots,
-        sequences: [slots]std.atomic.Value(usize) = initial_sequences(),
+        sequences: [slots]std.atomic.Value(usize) align(std.atomic.cache_line) = initial_sequences(),
         dropped: std.atomic.Value(u64) = .init(0),
         enqueue_pos: std.atomic.Value(usize) align(cache_line) = .init(0),
         dequeue_pos: std.atomic.Value(usize) align(cache_line) = .init(0),
@@ -59,7 +61,9 @@ pub fn payload_ring(comptime slots: usize, comptime slot_bytes: usize) type {
 
         /// Copies `data` into the next free slot. The source is read only for
         /// the duration of this call, and the record is published with a
-        /// release store so the consumer sees it whole.
+        /// release store so the consumer sees it whole. The CAS loop
+        /// terminates because a failed swap reloads the producer position and
+        /// a success either returns `QueueFull` or claims the sequence.
         pub fn stage(
             ring: *Self,
             kind: Kind,

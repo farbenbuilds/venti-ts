@@ -61,6 +61,9 @@ test(
     const server = fixture({ port: 0 });
     try {
       expect(server.handle).toBeGreaterThanOrEqual(0);
+      // The invalid attempts must not have claimed a registry slot, so the
+      // first valid server still lands in slot 0.
+      expect(server.handle & 0xff).toBe(0);
     } finally {
       await server.dispose();
     }

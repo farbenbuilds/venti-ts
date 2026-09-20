@@ -12,6 +12,12 @@ export type ConnectedSocket = {
 export async function connectedSocket(): Promise<ConnectedSocket> {
   const { server, port } = await startAndWait({ host: "127.0.0.1", port: 0 });
   const socket = new WebSocket(`ws://127.0.0.1:${port}/`);
-  const open = await server.waitFor("connectionOpen");
-  return { server, connection: packConnectionHandle(open.index, open.generation), socket };
+  try {
+    const open = await server.waitFor("connectionOpen");
+    return { server, connection: packConnectionHandle(open.index, open.generation), socket };
+  } catch (error) {
+    socket.close();
+    await server.dispose();
+    throw error;
+  }
 }

@@ -15,11 +15,11 @@ pub const Handle = struct {
     slot: u8,
     generation: u32,
 
-    pub fn toInt(handle: Handle) u40 {
+    pub fn to_int(handle: Handle) u40 {
         return (@as(u40, handle.generation) << 8) | @as(u40, handle.slot);
     }
 
-    pub fn fromInt(raw: u40) Handle {
+    pub fn from_int(raw: u40) Handle {
         return .{ .slot = @truncate(raw), .generation = @truncate(raw >> 8) };
     }
 };

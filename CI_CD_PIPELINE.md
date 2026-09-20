@@ -48,11 +48,11 @@ and no import of a runtime dependency outside `napi-zig` and `uWebZockets`.
 strict configuration in `tsconfig.json`; weakening a compiler option is a
 review-blocking change. `zig fmt` is authoritative for all `.zig` files.
 
-A convention scanner complements the linters: it rejects source files above
-the 150-line module budget, rejects `camelCase` Zig functions and variables,
-rejects `PascalCase` TypeScript file names, and rejects emoji code points in
-tracked text files. Vendored sources, generated declarations, and lockfiles are
-excluded from the scanner.
+`scripts/check-conventions.mjs` complements the linters (it runs inside
+`pnpm lint` and as a `lefthook` job): it rejects `src/` and `tests/` files above
+the 150-line module budget, rejects `camelCase` Zig function names, rejects
+non-kebab-case TypeScript file names, and rejects emoji code points. The
+vendored `src/types/ws.d.ts` and non-text files are excluded.
 
 ## Unit and build verification
 

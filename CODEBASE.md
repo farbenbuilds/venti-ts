@@ -185,7 +185,7 @@ Test and tooling directories:
 
 ```text
 tests/          # vitest unit, integration, and boundary tests
-bench/          # benchmark harness that runs ventijs and ws side by side
+bench/          # planned: benchmark harness that runs ventijs and ws side by side
 ```
 
 ## Language boundary and ownership
@@ -358,8 +358,10 @@ the ABI.
 
 `feat/native-foundation` added the native memory foundation, the server
 lifecycle, and the only threadsafe path from an engine thread to JavaScript.
-`feat/socket-io` adds the per-connection state machine, the bounded outbound
-staging ring, and the socket FFI on top of it:
+`feat/socket-io` added the per-connection state machine, the bounded outbound
+staging ring, and the socket FFI. `refactor/quality-hardening` closes the races
+and lifetime gaps the audit found, optimizes the build, and adds the gates that
+keep the rules enforced:
 
 - `src/engine/handles.zig` holds the generation-checked connection slab. One slot maps
   one-to-one onto an engine pool slot; `acquire` bumps the generation and
@@ -430,6 +432,29 @@ staging ring, and the socket FFI on top of it:
   through the addon against a live connection. The engine-thread drain that
   turns staged records into frames is the next milestone: the ring and the
   per-connection accounting are in place, but nothing consumes them yet.
+- `src/engine/handles.zig` packs state and generation into one atomic word, so
+  `resolve` answers both checks with a single acquire load and can never pair a
+  fresh generation with a stale state. `src/engine/socket.zig` gives every
+  record a spin lock; `open`, `finish`, and the FFI operations serialize on it,
+  and each operation re-checks the generation it resolved against, so a
+  recycled slot can never receive a stale send, close, or pause.
+- `src/engine/socket_ops.zig` holds the outbound transitions; close stages its
+  frame and enters `closing` under the lock, so two concurrent closes stage
+  exactly one frame, and the close frame is counted in `bufferedAmount`.
+- `src/engine/ring.zig` reserves the last `connection_capacity + 2` slots for
+  terminal events, so a burst of regular events can never drop a close or
+  `server_closed`. A dropped reservation is counted, never silently retired.
+- `src/engine/callbacks.zig` latches a closing state before the engine thread
+  is joined, uses a stack-buffer arena for rendering, and `server_cleanup.zig`
+  registers an environment cleanup hook that stops the engine thread and frees
+  a server a worker never finalized. `server_io.zig` keeps the N-API wrappers
+  separate from the lifecycle, mirroring `socket_io.zig`.
+- `pnpm build:binding` builds in ReleaseSafe: the addon drops from ~98 MB to
+  ~9 MB and the engine's startup temporary no longer overflows a worker's
+  default stack. `scripts/check-conventions.mjs` enforces the 150-line budget,
+  Zig naming, filename case, and the emoji ban through `pnpm lint` and a
+  `lefthook` job; CI also runs `typecheck:dist` after the addon build and the
+  test job discovers new pure suites instead of enumerating directories.
 
 The build-graph bullets below come from `refactor/build-orchestrator` and
 remain current:

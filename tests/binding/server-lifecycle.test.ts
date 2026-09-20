@@ -67,4 +67,5 @@ test("a handle from a finalized server is rejected", { timeout: TEST_TIMEOUT_MS 
   await server.dispose();
   expect(() => listenServer(stale)).toThrow(/UnknownServer/);
   expect(() => closeServer(stale)).toThrow(/UnknownServer/);
+  expect(() => finalizeServer(stale)).toThrow(/UnknownServer/);
 });

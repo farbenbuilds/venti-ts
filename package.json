@@ -23,11 +23,11 @@
   },
   "scripts": {
     "build": "pnpm run build:binding && tsdown && pnpm run typecheck:dist",
-    "build:binding": "napi-zig build",
+    "build:binding": "napi-zig build --optimize safe",
     "dev": "tsdown --watch",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "lint": "oxlint",
+    "lint": "oxlint && node scripts/check-conventions.mjs",
     "lint:fix": "oxlint --fix",
     "test": "pnpm run build:binding && vitest run",
     "test:watch": "pnpm run build:binding && vitest",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@types/ws": "8.18.1",
     "bumpp": "^11.1.0",
     "lefthook": "^2.1.14",
     "napi-zig": "^0.2.8",
@@ -45,6 +46,7 @@
     "oxlint": "^1.83.0",
     "tsdown": "^0.22.5",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "ws": "8.18.1"
   }
 }

@@ -48,7 +48,7 @@ fn on_open(slot: usize, ws: *uwz.WebSocket) void {
     server.sockets.open(index, handle.generation);
     _ = server.channel.emit(.{
         .kind = .connection_open,
-        .server = server.handle.toInt(),
+        .server = server.handle.to_int(),
         .index = handle.index,
         .generation = handle.generation,
     });
@@ -59,9 +59,9 @@ fn on_close(slot: usize, ws: *uwz.WebSocket) void {
     const index = connection_index(server, ws) orelse return;
     if (!server.sockets.finish(index)) return;
     const handle = server.slab.release(index) orelse return;
-    _ = server.channel.emit(.{
+    _ = server.channel.emit_terminal(.{
         .kind = .connection_close,
-        .server = server.handle.toInt(),
+        .server = server.handle.to_int(),
         .index = handle.index,
         .generation = handle.generation,
     });

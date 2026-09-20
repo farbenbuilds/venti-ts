@@ -79,13 +79,12 @@ maps `ws` options onto engine capacities:
 
 - `maxPayload` bounds a single message. Oversized input closes the connection
   with code `1009`; it does not allocate a fallback buffer.
-- Outbound queues are bounded. When a queue reaches its high-water mark, `send`
-  returns `false` and `bufferedAmount` reflects the queued bytes, matching `ws`
-  semantics. Producers that ignore backpressure cannot grow memory without
-  bound.
-- Idle connections are swept by a configurable timeout. Set an explicit value
-  appropriate for the deployment; disabling the sweep is permitted but shifts
-  full liveness responsibility to the application.
+- Outbound queues are bounded. When a queue reaches its high-water mark, the
+  engine reports backpressure and `bufferedAmount` reflects the queued bytes;
+  `send` returns no value, matching `ws`. Producers that ignore backpressure
+  cannot grow memory without bound.
+- Planned: idle connections swept by a configurable timeout. Until that option
+  lands, deployments must rely on their own liveness checks.
 - Per-message deflate is opt-in. Negotiation requires no-context-takeover, and
   decompression is capped by the negotiated `maxPayload`, so a compressed
   expansion bomb cannot exceed the configured message capacity.

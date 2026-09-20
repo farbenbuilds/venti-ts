@@ -2,9 +2,10 @@
 
 ventijs targets 1:1 observable behavior and types with `ws` plus `@types/ws`
 8.18.1, which is the compatibility contract vendored at
-[`src/types/ws.d.ts`](src/types/ws.d.ts). This file is the parity tracker: every
-public surface item, the module that owns it, its status, and the test that
-proves it.
+[`src/types/ws.d.ts`](src/types/ws.d.ts); the pinned packages are
+devDependencies so the conformance suite can run both implementations side by
+side. This file is the parity tracker: every public surface item, the module
+that owns it, its status, and the test that proves it.
 
 Update the relevant row in the same pull request that implements or changes a
 surface. A row is only `done` when its evidence test exists and passes.
@@ -58,24 +59,24 @@ of ventijs.
 
 ## WebSocketServer
 
-| Surface                         | Contract                                                                                                                                                                                                                 | Owner                                           | Status  | Evidence                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------- | ------------------------------ |
-| Constructor and listen callback | `new WebSocketServer(options?, callback?)`                                                                                                                                                                               | `src/compat/server.ts`                          | todo    | -                              |
-| Options                         | `host`, `port`, `backlog`, `server`, `noServer`, `path`, `clientTracking`, `verifyClient`, `handleProtocols`, `perMessageDeflate`, `maxPayload`, `skipUTF8Validation`, `allowSynchronousEvents`, `autoPong`, `WebSocket` | `src/compat/{options,server-options}.ts`        | partial | `tests/compat/options.test.ts` |
-| Observable properties           | `options`, `path`, `clients`                                                                                                                                                                                             | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                              |
-| Methods                         | `address()`, `close(cb?)`, `handleUpgrade()`, `shouldHandle()`                                                                                                                                                           | `src/compat/server.ts`, `src/compat/upgrade.ts` | todo    | -                              |
-| Events                          | `connection`, `error`, `headers`, `close`, `listening`, `wsClientError`                                                                                                                                                  | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                              |
-| HTTP server integration         | `noServer` routing, `server` option, `upgrade` wiring with the Node `http.Server`                                                                                                                                        | `src/compat/upgrade.ts`                         | todo    | -                              |
-| Handshake policy                | `verifyClient` sync/async, `handleProtocols`, origin/path checks                                                                                                                                                         | `src/compat/upgrade.ts`                         | todo    | -                              |
-| Rejections                      | `wsClientError` for handshake failures, destroy semantics                                                                                                                                                                | `src/compat/upgrade.ts`                         | todo    | -                              |
+| Surface                         | Contract                                                                                                                                                                                                                 | Owner                                           | Status  | Evidence                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------------- |
+| Constructor and listen callback | `new WebSocketServer(options?, callback?)`                                                                                                                                                                               | `src/compat/server.ts`                          | todo    | -                                                                               |
+| Options                         | `host`, `port`, `backlog`, `server`, `noServer`, `path`, `clientTracking`, `verifyClient`, `handleProtocols`, `perMessageDeflate`, `maxPayload`, `skipUTF8Validation`, `allowSynchronousEvents`, `autoPong`, `WebSocket` | `src/compat/{options,server-options}.ts`        | partial | `tests/compat/options.test.ts`, `tests/conformance/options.conformance.test.ts` |
+| Observable properties           | `options`, `path`, `clients`                                                                                                                                                                                             | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                                                                               |
+| Methods                         | `address()`, `close(cb?)`, `handleUpgrade()`, `shouldHandle()`                                                                                                                                                           | `src/compat/server.ts`, `src/compat/upgrade.ts` | todo    | -                                                                               |
+| Events                          | `connection`, `error`, `headers`, `close`, `listening`, `wsClientError`                                                                                                                                                  | `src/compat/server.ts`, `src/types/server.ts`   | todo    | -                                                                               |
+| HTTP server integration         | `noServer` routing, `server` option, `upgrade` wiring with the Node `http.Server`                                                                                                                                        | `src/compat/upgrade.ts`                         | todo    | -                                                                               |
+| Handshake policy                | `verifyClient` sync/async, `handleProtocols`, origin/path checks                                                                                                                                                         | `src/compat/upgrade.ts`                         | todo    | -                                                                               |
+| Rejections                      | `wsClientError` for handshake failures, destroy semantics                                                                                                                                                                | `src/compat/upgrade.ts`                         | todo    | -                                                                               |
 
 ## Stream and client
 
-| Surface                 | Contract                                                                                      | Owner                          | Status   | Evidence                       |
-| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------ | -------- | ------------------------------ |
-| `createWebSocketStream` | Duplex stream over an open socket                                                             | `src/compat/stream.ts`         | todo     | -                              |
-| Client construction     | `new WebSocket(address, protocols?, options?)`, redirects, `unexpected-response`              | `src/compat/client.ts`         | deferred | -                              |
-| Client options          | `followRedirects`, `maxRedirects`, `origin`, `headers`, `agent`, TLS options, `finishRequest` | `src/compat/client-options.ts` | partial  | `tests/compat/options.test.ts` |
+| Surface                 | Contract                                                                                      | Owner                          | Status   | Evidence                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------- |
+| `createWebSocketStream` | Duplex stream over an open socket                                                             | `src/compat/stream.ts`         | todo     | -                                                                               |
+| Client construction     | `new WebSocket(address, protocols?, options?)`, redirects, `unexpected-response`              | `src/compat/client.ts`         | deferred | -                                                                               |
+| Client options          | `followRedirects`, `maxRedirects`, `origin`, `headers`, `agent`, TLS options, `finishRequest` | `src/compat/client-options.ts` | partial  | `tests/compat/options.test.ts`, `tests/conformance/options.conformance.test.ts` |
 
 ## Boundary and lifetime invariants
 
@@ -101,15 +102,15 @@ every thrown error with tests as they land.
 
 ## Verification surface
 
-| Suite                   | Purpose                                                                       | Status |
-| ----------------------- | ----------------------------------------------------------------------------- | ------ |
-| `tests/binding.test.ts` | Native build, addon load, engine version round-trip                           | done   |
-| `tests/binding/**`      | Lifecycle, connection slab, and socket operation boundaries                   | done   |
-| `tests/events.test.ts`  | Listener registry semantics                                                   | done   |
-| `tests/protocol/**`     | Close code, framing, and backpressure helpers                                 | done   |
-| `tests/compat/**`       | Option normalization and coded error factories                                | done   |
-| `tests/types/**`        | Compile-time public surface, every event-map entry, state records             | done   |
-| `tests/declarations/**` | Built declarations through the package `exports` map                          | done   |
-| `tests/conformance/**`  | The same scenario run against `ws` and ventijs, comparing observable behavior | todo   |
-| `bench/**`              | Measured throughput and latency against `ws` on the same host                 | todo   |
-| Autobahn (RFC 6455)     | Protocol conformance report through the CI target                             | todo   |
+| Suite                   | Purpose                                                                       | Status  |
+| ----------------------- | ----------------------------------------------------------------------------- | ------- |
+| `tests/binding.test.ts` | Native build, addon load, engine version round-trip                           | done    |
+| `tests/binding/**`      | Lifecycle, connection slab, and socket operation boundaries                   | done    |
+| `tests/events.test.ts`  | Listener registry semantics                                                   | done    |
+| `tests/protocol/**`     | Close code, framing, and backpressure helpers                                 | done    |
+| `tests/compat/**`       | Option normalization and coded error factories                                | done    |
+| `tests/types/**`        | Compile-time public surface, every event-map entry, state records             | done    |
+| `tests/declarations/**` | Built declarations through the package `exports` map                          | done    |
+| `tests/conformance/**`  | The same scenario run against `ws` and ventijs, comparing observable behavior | partial |
+| `bench/**`              | Measured throughput and latency against `ws` on the same host                 | todo    |
+| Autobahn (RFC 6455)     | Protocol conformance report through the CI target                             | todo    |

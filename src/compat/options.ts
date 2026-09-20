@@ -15,26 +15,32 @@ export function invalidOption(message: string, constructor: ErrorConstructor = T
 
 export function normalizeProtocols(protocols: string | string[] | undefined): readonly string[] {
   if (protocols === undefined) return [];
+  // ws wraps a non-array value into a one-element list and validates it, so an
+  // out-of-type number or null reports the SyntaxError below instead of an
+  // uncoded TypeError.
   const list = typeof protocols === "string" ? [protocols] : protocols;
+  const candidates: readonly unknown[] = Array.isArray(list) ? list : [list];
   const seen = new Set<string>();
-  let index = 0;
-  while (index < list.length) {
-    const protocol = list[index];
+  const result: string[] = [];
+  for (const protocol of candidates) {
     if (typeof protocol !== "string" || !SUBPROTOCOL_PATTERN.test(protocol) || seen.has(protocol)) {
       invalidOption("An invalid or duplicated subprotocol was specified", SyntaxError);
     }
     seen.add(protocol);
-    index += 1;
+    result.push(protocol);
   }
-  return [...list];
+  return result;
 }
 
 export function normalizePerMessageDeflate(
   value: boolean | PerMessageDeflateOptions | undefined,
   fallback: boolean,
 ): false | NormalizedPerMessageDeflate {
+  // ws gates on truthiness: an out-of-type falsy value disables the
+  // extension instead of falling back to the default.
+  if (value !== undefined && !value) return false;
   const resolved = value ?? fallback;
-  if (resolved === false) return false;
+  if (!resolved) return false;
   const options: PerMessageDeflateOptions = resolved === true ? {} : resolved;
   return {
     serverNoContextTakeover: options.serverNoContextTakeover,

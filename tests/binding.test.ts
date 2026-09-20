@@ -28,4 +28,5 @@ test("exposes the per-connection socket surface", () => {
   expect(typeof addon.pauseSocket).toBe("function");
   expect(typeof addon.resumeSocket).toBe("function");
   expect(typeof addon.socketBufferedAmount).toBe("function");
+  expect(typeof addon.serverDroppedEvents).toBe("function");
 });

@@ -67,7 +67,7 @@ pub const Instance = struct {
 /// Node.js environment (worker thread), so one isolate cannot drive another's
 /// server.
 pub fn lookup(env: napi.Env, raw: u40) ?*Instance {
-    const target = servers.lookup(Handle.fromInt(raw)) orelse return null;
+    const target = servers.lookup(Handle.from_int(raw)) orelse return null;
     if (target.env != env.handle) return null;
     return target;
 }

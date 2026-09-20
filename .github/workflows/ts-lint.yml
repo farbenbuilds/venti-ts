@@ -49,7 +49,6 @@ on:
 
 permissions:
   contents: read
-  deployments: write
 
 concurrency:
   group: ts-lint-${{ github.ref }}

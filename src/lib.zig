@@ -1,7 +1,7 @@
 const napi = @import("napi-zig");
 const uwz = @import("uWebZockets");
 const build_options = @import("build_options");
-const server = @import("engine/server.zig");
+const server_io = @import("engine/server_io.zig");
 const socket_io = @import("engine/socket_io.zig");
 
 comptime {
@@ -20,21 +20,23 @@ pub fn http3_available() bool {
 
 /// Validates an untrusted configuration, builds an engine server around a
 /// dispatch function, and returns a generation-checked server handle.
-pub const create_server = server.create_server;
+pub const create_server = server_io.create_server;
 /// Binds the listener and starts the engine thread for a server handle.
-pub const listen_server = server.listen_server;
+pub const listen_server = server_io.listen_server;
 /// Requests shutdown of a listening server.
-pub const close_server = server.close_server;
+pub const close_server = server_io.close_server;
 /// Releases the native resources of a closed server after `serverClosed`.
-pub const finalize_server = server.finalize_server;
+pub const finalize_server = server_io.finalize_server;
+/// Events the server channel could not queue because its ring was full.
+pub const server_dropped_events = server_io.server_dropped_events;
 
 /// Stages one outbound text or binary message behind a connection handle.
 pub const send_socket = socket_io.send_socket;
 /// Validates and stages the close frame behind a connection handle.
 pub const close_socket = socket_io.close_socket;
-/// Suspends outbound writes behind a connection handle.
+/// Suspends inbound message dispatch behind a connection handle.
 pub const pause_socket = socket_io.pause_socket;
-/// Resumes outbound writes behind a connection handle.
+/// Resumes inbound message dispatch behind a connection handle.
 pub const resume_socket = socket_io.resume_socket;
 /// Bytes staged behind a connection handle and not yet drained.
 pub const socket_buffered_amount = socket_io.socket_buffered_amount;

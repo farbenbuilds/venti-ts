@@ -39,7 +39,6 @@ on:
 
 permissions:
   contents: read
-  deployments: write
 
 concurrency:
   group: ts-test-${{ github.ref }}
@@ -66,4 +65,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Unit tests
-        run: pnpm exec vitest run tests/protocol tests/compat tests/events.test.ts tests/oxlint-plugin.test.ts
+        run: pnpm exec vitest run --exclude 'tests/binding/**' --exclude 'tests/binding.test.ts'

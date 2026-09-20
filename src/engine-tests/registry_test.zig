@@ -66,6 +66,20 @@ test "a full 32-slot table exhausts exactly once" {
 
 test "handle integers keep generation above the slot byte" {
     const handle = registry.Handle{ .slot = 0x0000_00AB, .generation = 0x1234_5678 };
-    try std.testing.expectEqual(@as(u40, 0x1234_5678_AB), handle.toInt());
-    try std.testing.expectEqual(handle, registry.Handle.fromInt(handle.toInt()));
+    try std.testing.expectEqual(@as(u40, 0x1234_5678_AB), handle.to_int());
+    try std.testing.expectEqual(handle, registry.Handle.from_int(handle.to_int()));
+}
+
+test "retiring a stale generation leaves the live slot alone" {
+    var table = registry.slot_table(2, u8){};
+    var value: u8 = 1;
+    const handle = try table.claim();
+    table.publish(handle, &value);
+
+    const stale = registry.Handle{ .slot = handle.slot, .generation = handle.generation +% 1 };
+    table.retire(stale);
+    try std.testing.expectEqual(@as(?*u8, &value), table.lookup(handle));
+
+    table.retire(handle);
+    try std.testing.expectEqual(@as(?*u8, null), table.lookup(handle));
 }
