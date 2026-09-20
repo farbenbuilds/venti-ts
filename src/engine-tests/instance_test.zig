@@ -1,8 +1,8 @@
-//! Unit tests for `src/instance.zig`.
+//! Unit tests for `src/engine/instance.zig`.
 
 const std = @import("std");
-const instance = @import("../instance.zig");
-const registry = @import("../registry.zig");
+const instance = @import("../engine/instance.zig");
+const registry = @import("../engine/registry.zig");
 
 test "engine lookup rejects out-of-range trampoline slots" {
     const out_of_range: u32 = @intCast(instance.server_capacity);

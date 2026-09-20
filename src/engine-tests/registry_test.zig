@@ -1,7 +1,7 @@
-//! Unit tests for `src/registry.zig`.
+//! Unit tests for `src/engine/registry.zig`.
 
 const std = @import("std");
-const registry = @import("../registry.zig");
+const registry = @import("../engine/registry.zig");
 
 test "slot table hands out, publishes, and recycles slots" {
     const Table = registry.slot_table(4, u8);

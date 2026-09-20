@@ -56,16 +56,17 @@ venti-ts/
 ├── src/
 │   ├── index.ts               # public export surface (type-only re-exports)
 │   ├── lib.zig                # napi-zig root module declaration and exports
-│   ├── handles.zig            # generation-checked connection slot slab
-│   ├── options.zig            # trusted listen configuration structs
-│   ├── registry.zig           # bounded slot table for server instances
-│   ├── events.zig             # engine event vocabulary
-│   ├── ring.zig               # bounded SPSC event ring
-│   ├── callbacks.zig          # threadsafe channel rendering events to JS
-│   ├── instance.zig           # live server record and instance table
-│   ├── connections.zig        # engine WebSocket route trampolines
-│   ├── server.zig             # server lifecycle free functions
 │   ├── engine_tests.zig       # Zig unit test entry point
+│   ├── engine/                # native engine modules
+│   │   ├── handles.zig        # generation-checked connection slot slab
+│   │   ├── options.zig        # trusted listen configuration structs
+│   │   ├── registry.zig       # bounded slot table for server instances
+│   │   ├── events.zig         # engine event vocabulary
+│   │   ├── ring.zig           # bounded SPSC event ring
+│   │   ├── callbacks.zig      # threadsafe channel rendering events to JS
+│   │   ├── instance.zig       # live server record and instance table
+│   │   ├── connections.zig    # engine WebSocket route trampolines
+│   │   └── server.zig         # server lifecycle free functions
 │   ├── engine-tests/          # one Zig unit suite per testable module
 │   │   ├── root.zig           # suite aggregator
 │   │   ├── lib_test.zig
@@ -152,9 +153,11 @@ src/
 ├── types/                     # public and internal type-only modules
 ├── engine_tests.zig           # Zig unit test entry point
 ├── engine-tests/              # per-module Zig unit suites, one file each
-├── server.zig                 # engine lifecycle as free functions
-├── socket.zig                 # per-connection handles and state transitions
-└── ...                        # further Zig modules split by one responsibility
+├── engine/                    # native engine modules, one responsibility each
+│   ├── server.zig             # engine lifecycle as free functions
+│   ├── socket.zig             # per-connection handles and state transitions
+│   └── ...                    # further Zig modules split by one responsibility
+└── ...                        # further entry points and build wiring
 ```
 
 Zig and TypeScript share `src/`. `napi-zig` expects the addon root module at
@@ -339,24 +342,24 @@ lifecycle, and the only threadsafe path from an engine thread to JavaScript, on
 top of the merged type surface, listener registry, and protocol and compat
 leaves:
 
-- `src/handles.zig` holds the generation-checked connection slab. One slot maps
+- `src/engine/handles.zig` holds the generation-checked connection slab. One slot maps
   one-to-one onto an engine pool slot; `acquire` bumps the generation and
   `resolve` rejects a stale handle, so a call against a closed connection
   surfaces as a typed error instead of a use-after-free.
-- `src/options.zig` trusts the JavaScript configuration once: it validates the
+- `src/engine/options.zig` trusts the JavaScript configuration once: it validates the
   host, port, backlog, route path, and per-route limits against the compiled
   capacities, reads every integer at the 53-bit safe width, and copies them
   into fixed-capacity `ListenConfig`, `Limits`, and `ServerConfig` records;
   `maxConnections` is enforced when a peer opens.
-- `src/registry.zig` is a fixed-capacity atomic slot table; `src/instance.zig`
+- `src/engine/registry.zig` is a fixed-capacity atomic slot table; `src/engine/instance.zig`
   holds the live `Instance` record and the bounded table that binds engine
-  callbacks to server state; `src/connections.zig` registers the comptime
+  callbacks to server state; `src/engine/connections.zig` registers the comptime
   WebSocket trampolines that acquire and release slab slots.
-- `src/events.zig` defines the fixed-size event vocabulary and
-  `src/callbacks.zig` is the only bridge an engine thread may use to reach
+- `src/engine/events.zig` defines the fixed-size event vocabulary and
+  `src/engine/callbacks.zig` is the only bridge an engine thread may use to reach
   JavaScript: a bounded ring travels through one threadsafe function and is
   rendered on the Node main thread, allocating nothing on the engine thread.
-- `src/server.zig` exposes create/listen/close/finalize. Create builds the
+- `src/engine/server.zig` exposes create/listen/close/finalize. Create builds the
   engine application through `AppType.cluster(1)`; listen binds the listener
   and starts the engine thread; close routes through the cluster wakeup; the
   `server_closed` event proves the loop has drained before finalize joins the

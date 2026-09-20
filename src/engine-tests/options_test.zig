@@ -1,7 +1,7 @@
-//! Unit tests for `src/options.zig`.
+//! Unit tests for `src/engine/options.zig`.
 
 const std = @import("std");
-const options = @import("../options.zig");
+const options = @import("../engine/options.zig");
 
 test "trust copies a valid configuration" {
     const config = try options.trust(.{ .host = "::1", .port = 8080, .path = "/ws" });

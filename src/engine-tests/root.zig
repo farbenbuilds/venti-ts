@@ -1,6 +1,6 @@
 //! Zig unit test root.
 //!
-//! Every testable source module in `src/` has a matching `<module>_test.zig`
+//! Every testable module in `src/engine/` has a matching `<module>_test.zig`
 //! beside this file. `src/builds/testing.zig` compiles this root, so adding a
 //! suite means adding one import below. The engine-coupled modules (`server`,
 //! `connections`) keep their coverage in the binding tests instead, because

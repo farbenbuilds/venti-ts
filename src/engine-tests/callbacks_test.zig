@@ -1,7 +1,7 @@
-//! Unit tests for `src/callbacks.zig`.
+//! Unit tests for `src/engine/callbacks.zig`.
 
 const std = @import("std");
-const callbacks = @import("../callbacks.zig");
+const callbacks = @import("../engine/callbacks.zig");
 
 test "a fresh channel has no pending events" {
     var channel = callbacks.Channel{};
@@ -9,6 +9,6 @@ test "a fresh channel has no pending events" {
 }
 
 test "the ring depth leaves lifecycle headroom above the connections" {
-    try std.testing.expect(callbacks.capacity > 2 * @import("../options.zig").connection_capacity);
+    try std.testing.expect(callbacks.capacity > 2 * @import("../engine/options.zig").connection_capacity);
     try std.testing.expect(std.math.isPowerOfTwo(callbacks.capacity));
 }

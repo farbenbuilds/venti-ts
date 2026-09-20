@@ -121,7 +121,7 @@ receiver-style functions that silently mutate captured state.
   it is (`state`, `conn`, `server`), never `self`.
 - No module-level mutable variables. Compile-time constants are fine. The one
   sanctioned exception is the bounded server-instance table in
-  `src/instance.zig`: the engine callback ABI carries no user context, so that
+  `src/engine/instance.zig`: the engine callback ABI carries no user context, so that
   table is the explicit binding between context-free callbacks and state. It is
   written only by create/finalize on the Node main thread, read by engine
   callbacks through comptime slots, and reached from JavaScript only through
