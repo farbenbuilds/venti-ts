@@ -16,13 +16,17 @@ export function packConnectionHandle(index: number, generation: number): Connect
   return (BigInt(generation) << 32n) | BigInt(index);
 }
 
+export function assertConnectionHandle(handle: ConnectionHandle): void {
+  if (typeof handle !== "bigint" || handle < 0n || handle > MAX_HANDLE_BIG) {
+    throw new RangeError(`ventijs: connection handle out of range: ${String(handle)}`);
+  }
+}
+
 export function unpackConnectionHandle(handle: ConnectionHandle): {
   readonly index: number;
   readonly generation: number;
 } {
-  if (handle < 0n || handle > MAX_HANDLE_BIG) {
-    throw new RangeError(`ventijs: connection handle out of range: ${handle}`);
-  }
+  assertConnectionHandle(handle);
   return {
     index: Number(handle & MAX_UINT32_BIG),
     generation: Number((handle >> 32n) & MAX_UINT32_BIG),
