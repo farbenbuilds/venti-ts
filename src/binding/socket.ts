@@ -62,14 +62,14 @@ export function closeSocket(
   return ENGINE_STATUS_BY_NATIVE[loadAddon().closeSocket(server, connection, code, reason)];
 }
 
-/// Suspends outbound writes for the connection.
+/// Suspends inbound message dispatch for the connection, matching `ws.pause()`.
 export function pauseSocket(server: ServerHandle, connection: ConnectionHandle): EngineStatus {
   assertServerHandle(server);
   assertConnectionHandle(connection);
   return ENGINE_STATUS_BY_NATIVE[loadAddon().pauseSocket(server, connection)];
 }
 
-/// Resumes outbound writes for the connection.
+/// Resumes inbound message dispatch for the connection.
 export function resumeSocket(server: ServerHandle, connection: ConnectionHandle): EngineStatus {
   assertServerHandle(server);
   assertConnectionHandle(connection);

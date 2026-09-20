@@ -40,14 +40,14 @@ pub fn close_socket(
     return target.sockets.close(index, code, reason);
 }
 
-/// Suspends outbound writes for a connection handle.
+/// Suspends inbound message dispatch for a connection handle.
 pub fn pause_socket(env: napi.Env, server: u40, connection: u64) !Status {
     const target = instance.lookup(env, server) orelse return error.UnknownServer;
     const index = connection_index(target, connection) orelse return .invalid_handle;
     return target.sockets.pause_dispatch(index);
 }
 
-/// Resumes outbound writes for a connection handle.
+/// Resumes inbound message dispatch for a connection handle.
 pub fn resume_socket(env: napi.Env, server: u40, connection: u64) !Status {
     const target = instance.lookup(env, server) orelse return error.UnknownServer;
     const index = connection_index(target, connection) orelse return .invalid_handle;
