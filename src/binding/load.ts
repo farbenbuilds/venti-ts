@@ -9,8 +9,8 @@ export type { VentiAddon } from "./native";
 const require = createRequire(import.meta.url);
 
 const candidatePaths = [
-  ["zig-out", "lib", "venti.node"],
-  ["dist", "venti.node"],
+  ["zig-out", "lib", "ventijs.node"],
+  ["dist", "ventijs.node"],
 ];
 
 function findPackageRoot(start: string): string | undefined {

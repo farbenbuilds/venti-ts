@@ -54,7 +54,7 @@
           # The uWebZockets vendor build wants one prefix holding both zlib.h
           # and libz.a; nixpkgs splits those across the dev and static outputs.
           zlibPrefix = packagePkgs.symlinkJoin {
-            name = "venti-zlib";
+            name = "ventijs-zlib";
             paths = [
               packagePkgs.zlib.dev
               packagePkgs.zlib.static
