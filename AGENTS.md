@@ -141,6 +141,9 @@ declarations through the package `exports` map; it needs `tsdown` output.
 - Commits follow Conventional Commits (`.github/COMMIT_CONVENTION.md`).
   Scopes in use: `compat`, `napi`/`binding`, `types`, `protocol`, `engine`,
   `build`, `deps`, `docs`, `ci`.
+- Before every commit, run `pnpm lint`, `pnpm format:check`, and
+  `pnpm exec lefthook run pre-commit --all-files`; fix violations with
+  `pnpm lint:fix` and `pnpm format`. Never bypass hooks with `--no-verify`.
 - `ws` behavior is the compatibility contract. When adding a surface, check
   what `ws` does and test both implementations once the conformance harness
   exists. `ws` may be a devDependency only, never a runtime dependency.

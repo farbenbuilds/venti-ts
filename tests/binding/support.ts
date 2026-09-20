@@ -1,34 +1,34 @@
-import { createServer as createNetServer } from "node:net"
-import type { EngineEvent, EngineEventKind, NativeServerConfig } from "../../src/binding/native"
-import { closeServer, createServer, finalizeServer, listenServer } from "../../src/binding/server"
+import { createServer as createNetServer } from "node:net";
+import type { EngineEvent, EngineEventKind, NativeServerConfig } from "../../src/binding/native";
+import { closeServer, createServer, finalizeServer, listenServer } from "../../src/binding/server";
 
-export const EVENT_TIMEOUT_MS = 8_000
-export const TEST_TIMEOUT_MS = 20_000
+export const EVENT_TIMEOUT_MS = 8_000;
+export const TEST_TIMEOUT_MS = 20_000;
 
-const FINALIZE_ATTEMPTS = 200
-const POLL_INTERVAL_MS = 5
+const FINALIZE_ATTEMPTS = 200;
+const POLL_INTERVAL_MS = 5;
 
 export type ServerFixture = {
-  readonly handle: number
-  readonly events: EngineEvent[]
-  waitFor(kind: EngineEventKind): Promise<EngineEvent>
-  waitForCount(kind: EngineEventKind, count: number): Promise<void>
-  settle(): Promise<void>
-  dispose(): Promise<void>
-}
+  readonly handle: number;
+  readonly events: EngineEvent[];
+  waitFor(kind: EngineEventKind): Promise<EngineEvent>;
+  waitForCount(kind: EngineEventKind, count: number): Promise<void>;
+  settle(): Promise<void>;
+  dispose(): Promise<void>;
+};
 
 function engineFailure(events: EngineEvent[]): Error | undefined {
-  const event = events.find((candidate) => candidate.kind === "engineError")
-  if (event === undefined) return undefined
-  return new Error(`engineError received (code ${event.code})`)
+  const event = events.find((candidate) => candidate.kind === "engineError");
+  if (event === undefined) return undefined;
+  return new Error(`engineError received (code ${event.code})`);
 }
 
 function countOf(events: EngineEvent[], kind: EngineEventKind): number {
-  return events.filter((event) => event.kind === kind).length
+  return events.filter((event) => event.kind === kind).length;
 }
 
 function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function waitUntil(
@@ -37,74 +37,74 @@ function waitUntil(
   describe: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const deadline = Date.now() + EVENT_TIMEOUT_MS
+    const deadline = Date.now() + EVENT_TIMEOUT_MS;
     function poll(): void {
-      const failure = engineFailure(events)
+      const failure = engineFailure(events);
       if (failure !== undefined) {
-        reject(failure)
-        return
+        reject(failure);
+        return;
       }
       if (ready(events)) {
-        resolve()
-        return
+        resolve();
+        return;
       }
       if (Date.now() >= deadline) {
-        reject(new Error(`timed out waiting for ${describe}`))
-        return
+        reject(new Error(`timed out waiting for ${describe}`));
+        return;
       }
-      setTimeout(poll, POLL_INTERVAL_MS)
+      setTimeout(poll, POLL_INTERVAL_MS);
     }
-    poll()
-  })
+    poll();
+  });
 }
 
 export function fixture(config: NativeServerConfig): ServerFixture {
-  const events: EngineEvent[] = []
+  const events: EngineEvent[] = [];
   const handle = createServer(config, (event) => {
-    events.push(event)
-  })
+    events.push(event);
+  });
 
   return {
     handle,
     events,
     waitFor: (kind) =>
       waitUntil(events, (seen) => countOf(seen, kind) > 0, kind).then(() => {
-        const found = events.find((event) => event.kind === kind)
-        if (found === undefined) throw new Error(`missing ${kind} after wait`)
-        return found
+        const found = events.find((event) => event.kind === kind);
+        if (found === undefined) throw new Error(`missing ${kind} after wait`);
+        return found;
       }),
     waitForCount: (kind, count) =>
       waitUntil(events, (seen) => countOf(seen, kind) >= count, `${count} x ${kind}`),
     settle: () => delay(POLL_INTERVAL_MS * 5),
     async dispose() {
       try {
-        closeServer(handle)
+        closeServer(handle);
       } catch {
         // Already closing, closed, or finalized; the loop below settles it.
       }
       for (let attempt = 0; attempt < FINALIZE_ATTEMPTS; attempt += 1) {
         try {
-          finalizeServer(handle)
-          return
+          finalizeServer(handle);
+          return;
         } catch (error) {
-          if (!(error instanceof Error)) throw error
-          if (error.message === "UnknownServer") return
+          if (!(error instanceof Error)) throw error;
+          if (error.message === "UnknownServer") return;
           if (error.message === "EventsPending" || error.message === "ServerNotClosed") {
-            await delay(POLL_INTERVAL_MS)
-            continue
+            await delay(POLL_INTERVAL_MS);
+            continue;
           }
-          throw error
+          throw error;
         }
       }
-      throw new Error("server did not drain before finalize")
+      throw new Error("server did not drain before finalize");
     },
-  }
+  };
 }
 
 export function start(config: NativeServerConfig): ServerFixture {
-  const server = fixture(config)
-  listenServer(server.handle)
-  return server
+  const server = fixture(config);
+  listenServer(server.handle);
+  return server;
 }
 
 /// Starts a server and resolves its bound port from the `listening` event, so
@@ -112,32 +112,32 @@ export function start(config: NativeServerConfig): ServerFixture {
 export async function startAndWait(
   config: NativeServerConfig,
 ): Promise<{ readonly server: ServerFixture; readonly port: number }> {
-  const server = start(config)
-  const listening = await server.waitFor("listening")
-  return { server, port: listening.code }
+  const server = start(config);
+  const listening = await server.waitFor("listening");
+  return { server, port: listening.code };
 }
 
 function probePort(): Promise<number | undefined> {
   return new Promise((resolve, reject) => {
-    const probe = createNetServer()
-    probe.once("error", reject)
+    const probe = createNetServer();
+    probe.once("error", reject);
     probe.listen(0, "127.0.0.1", () => {
-      const address = probe.address()
+      const address = probe.address();
       if (address === null || typeof address === "string") {
-        probe.close()
-        resolve(undefined)
-        return
+        probe.close();
+        resolve(undefined);
+        return;
       }
-      const port = address.port
-      probe.close(() => resolve(port))
-    })
-  })
+      const port = address.port;
+      probe.close(() => resolve(port));
+    });
+  });
 }
 
 export async function freePort(): Promise<number> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const port = await probePort()
-    if (port !== undefined) return port
+    const port = await probePort();
+    if (port !== undefined) return port;
   }
-  throw new Error("failed to probe a free port")
+  throw new Error("failed to probe a free port");
 }

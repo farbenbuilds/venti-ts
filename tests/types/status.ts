@@ -1,5 +1,5 @@
-import type { ErrorCode } from "../../src/types/errors"
-import type { EngineStatus, ErrorStatus, StatusErrorMap } from "../../src/types/status"
+import type { ErrorCode } from "../../src/types/errors";
+import type { EngineStatus, ErrorStatus, StatusErrorMap } from "../../src/types/status";
 
 export const engineStatuses: readonly EngineStatus[] = [
   "ok",
@@ -10,7 +10,7 @@ export const engineStatuses: readonly EngineStatus[] = [
   "payload-too-large",
   "protocol-error",
   "policy-violation",
-]
+];
 
 export const statusErrors: StatusErrorMap = {
   closed: "ERR_SOCKET_CLOSED",
@@ -18,8 +18,8 @@ export const statusErrors: StatusErrorMap = {
   "payload-too-large": "ERR_MAX_PAYLOAD",
   "protocol-error": "ERR_PROTOCOL",
   "policy-violation": "ERR_POLICY_VIOLATION",
-}
+};
 
 export function codeForStatus(status: ErrorStatus): ErrorCode {
-  return statusErrors[status]
+  return statusErrors[status];
 }

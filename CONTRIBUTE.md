@@ -59,6 +59,10 @@ Run every command through pnpm; do not invoke package binaries directly.
 the whole tree with `pnpm exec lefthook run pre-commit --all-files`; a normal
 `git commit` runs them against the staged files.
 
+Before every commit, run `pnpm lint`, `pnpm format:check`, and
+`pnpm exec lefthook run pre-commit --all-files`. Apply fixes with
+`pnpm lint:fix` and `pnpm format`. Never bypass the hooks with `--no-verify`.
+
 `pnpm build` and `pnpm test` rebuild the native binding first, so a clean
 checkout needs nothing beyond `nix develop` and `pnpm install`. `src/index.ts`
 re-exports the vendored `ws` type surface and gains value exports as the

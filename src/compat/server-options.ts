@@ -1,16 +1,16 @@
-import type { NormalizedServerOptions } from "../types/options"
-import type { ServerOptions } from "../types/ws"
-import { DEFAULT_MAX_PAYLOAD, invalidOption, normalizePerMessageDeflate } from "./options"
+import type { NormalizedServerOptions } from "../types/options";
+import type { ServerOptions } from "../types/ws";
+import { DEFAULT_MAX_PAYLOAD, invalidOption, normalizePerMessageDeflate } from "./options";
 
 export function normalizeServerOptions(options?: ServerOptions): NormalizedServerOptions {
-  const source = options ?? {}
-  const port = source.port ?? null
-  const server = source.server ?? null
-  const noServer = source.noServer ?? false
+  const source = options ?? {};
+  const port = source.port ?? null;
+  const server = source.server ?? null;
+  const noServer = source.noServer ?? false;
   if (isAmbiguousListenTarget(port, server, noServer)) {
     invalidOption(
       'One and only one of the "port", "server", or "noServer" options must be specified',
-    )
+    );
   }
   return {
     host: source.host ?? null,
@@ -28,7 +28,7 @@ export function normalizeServerOptions(options?: ServerOptions): NormalizedServe
     verifyClient: source.verifyClient ?? null,
     handleProtocols: source.handleProtocols ?? null,
     WebSocket: source.WebSocket,
-  }
+  };
 }
 
 function isAmbiguousListenTarget(
@@ -36,9 +36,9 @@ function isAmbiguousListenTarget(
   server: ServerOptions["server"] | null,
   noServer: boolean,
 ): boolean {
-  const hasPort = port !== null
-  const hasServer = server !== null
-  if (hasPort && (hasServer || noServer)) return true
-  if (hasServer && noServer) return true
-  return !hasPort && !hasServer && !noServer
+  const hasPort = port !== null;
+  const hasServer = server !== null;
+  if (hasPort && (hasServer || noServer)) return true;
+  if (hasServer && noServer) return true;
+  return !hasPort && !hasServer && !noServer;
 }

@@ -27,9 +27,10 @@ Describe the change and why it belongs in venti-ts. Link the issue it closes.
 - [ ] Every touched source file stays near or below 150 lines.
 - [ ] Control flow uses guard clauses; no nested `if`/`else` ladders.
 - [ ] `pnpm lint` passes.
-- [ ] `pnpm format --check` passes.
+- [ ] `pnpm format:check` passes.
 - [ ] `pnpm typecheck` passes.
 - [ ] `pnpm test` passes.
+- [ ] `pnpm exec lefthook run pre-commit --all-files` passes.
 - [ ] `pnpm build` produces the bundle and declarations.
 - [ ] `zig fmt --check --exclude zig-pkg src build.zig` passes for Zig changes.
 - [ ] Boundary changes cover payload retention, buffer copying, exactly-once

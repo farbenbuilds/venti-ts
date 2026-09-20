@@ -1,20 +1,20 @@
-import type { NormalizedClientOptions } from "../types/options"
-import type { ClientOptions } from "../types/ws"
+import type { NormalizedClientOptions } from "../types/options";
+import type { ClientOptions } from "../types/ws";
 import {
   DEFAULT_MAX_PAYLOAD,
   DEFAULT_MAX_REDIRECTS,
   invalidOption,
   normalizePerMessageDeflate,
-} from "./options"
+} from "./options";
 
 export function normalizeClientOptions(options?: ClientOptions): NormalizedClientOptions {
-  const source = options ?? {}
-  const protocolVersion = source.protocolVersion ?? 13
+  const source = options ?? {};
+  const protocolVersion = source.protocolVersion ?? 13;
   if (protocolVersion !== 8 && protocolVersion !== 13) {
     invalidOption(
       `Unsupported protocol version: ${protocolVersion} (supported versions: 8, 13)`,
       RangeError,
-    )
+    );
   }
   return {
     protocolVersion,
@@ -28,5 +28,5 @@ export function normalizeClientOptions(options?: ClientOptions): NormalizedClien
     perMessageDeflate: normalizePerMessageDeflate(source.perMessageDeflate, true),
     origin: source.origin,
     headers: source.headers === undefined ? undefined : { ...source.headers },
-  }
+  };
 }

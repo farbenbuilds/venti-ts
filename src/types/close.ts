@@ -1,6 +1,6 @@
-import type { WebSocket } from "./ws"
+import type { WebSocket } from "./ws";
 
-export type ReadyState = WebSocket["readyState"]
+export type ReadyState = WebSocket["readyState"];
 
 export type ProtocolCloseCode =
   | 1000
@@ -18,6 +18,6 @@ export type ProtocolCloseCode =
   | 1012
   | 1013
   | 1014
-  | 1015
+  | 1015;
 
-export type CloseReason = Buffer
+export type CloseReason = Buffer;
