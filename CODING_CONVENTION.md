@@ -208,6 +208,12 @@ mutation, enums, and emoji; native rules cover `max-lines`, `no-else-return`,
 `typescript/no-non-null-assertion`, `import/no-default-export`, and
 `unicorn/filename-case`. `lefthook.yml` runs the checks before every commit.
 
+Run `pnpm lint`, `pnpm format:check`, and
+`pnpm exec lefthook run pre-commit --all-files` before every commit. Apply
+fixes with `pnpm lint:fix` and `pnpm format` instead of hand-editing around the
+tools. The hooks are a local convenience, not the gate: CI runs the same
+commands, and `--no-verify` is never allowed.
+
 A pull request is not ready while any of these fail. Do not add inline
 suppressions without a comment that states why the rule cannot apply.
 
