@@ -119,7 +119,13 @@ receiver-style functions that silently mutate captured state.
 
 - Pass the state pointer explicitly as the first parameter and name it for what
   it is (`state`, `conn`, `server`), never `self`.
-- No module-level mutable variables. Compile-time constants are fine.
+- No module-level mutable variables. Compile-time constants are fine. The one
+  sanctioned exception is the bounded server-instance table in
+  `src/instance.zig`: the engine callback ABI carries no user context, so that
+  table is the explicit binding between context-free callbacks and state. It is
+  written only by create/finalize on the Node main thread, read by engine
+  callbacks through comptime slots, and reached from JavaScript only through
+  generation-checked handles.
 - No allocator stored inside the state it allocates for.
 
 ## 4. TypeScript conventions

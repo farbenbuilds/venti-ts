@@ -56,8 +56,31 @@ venti-ts/
 ├── src/
 │   ├── index.ts               # public export surface (type-only re-exports)
 │   ├── lib.zig                # napi-zig root module declaration and exports
+│   ├── handles.zig            # generation-checked connection slot slab
+│   ├── options.zig            # trusted listen configuration structs
+│   ├── registry.zig           # bounded slot table for server instances
+│   ├── events.zig             # engine event vocabulary
+│   ├── ring.zig               # bounded SPSC event ring
+│   ├── callbacks.zig          # threadsafe channel rendering events to JS
+│   ├── instance.zig           # live server record and instance table
+│   ├── connections.zig        # engine WebSocket route trampolines
+│   ├── server.zig             # server lifecycle free functions
+│   ├── engine_tests.zig       # Zig unit test entry point
+│   ├── engine-tests/          # one Zig unit suite per testable module
+│   │   ├── root.zig           # suite aggregator
+│   │   ├── lib_test.zig
+│   │   ├── handles_test.zig
+│   │   ├── options_test.zig
+│   │   ├── registry_test.zig
+│   │   ├── events_test.zig
+│   │   ├── ring_test.zig
+│   │   ├── callbacks_test.zig
+│   │   └── instance_test.zig
 │   ├── binding/
-│   │   └── load.ts            # native addon resolution and typed loading
+│   │   ├── load.ts            # native addon resolution and typed loading
+│   │   ├── native.ts          # addon ABI types and engine event records
+│   │   ├── handle.ts          # connection handle pack and unpack helpers
+│   │   └── server.ts          # server create/listen/close/finalize wrappers
 │   ├── compat/
 │   │   ├── client-options.ts  # client option normalization and defaults
 │   │   ├── errors.ts          # coded error factories and status mapping
@@ -80,18 +103,19 @@ venti-ts/
 │   └── builds/
 │       ├── orchestrator.zig   # build entry: addon, build options, tests
 │       ├── vendor.zig         # engine dependency, version, C toolchain
-│       ├── testing.zig        # Zig test module and test step
+│       ├── testing.zig        # Zig unit test module and test step
 │       └── targets/
 │           ├── default.zig    # default build target query
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
 │   ├── binding.test.ts        # native pipeline smoke test
+│   ├── binding/               # binding lifecycle and handle tests
 │   ├── compat/                # option normalization and error factory tests
 │   ├── events.test.ts         # listener registry behavior
 │   ├── protocol/              # close code, framing, and backpressure tests
 │   ├── types/                 # fixtures checked by pnpm typecheck
 │   └── declarations/          # fixtures checked by pnpm typecheck:dist
-└── .github/                   # community templates, issue forms, lint workflows
+└── .github/                   # community templates, issue forms, CI workflows
 ```
 
 Target layout as the binding lands:
@@ -126,6 +150,8 @@ src/
 │   ├── framing.ts             # length and mask helpers used by tests
 │   └── backpressure.ts        # bufferedAmount and high-water policy
 ├── types/                     # public and internal type-only modules
+├── engine_tests.zig           # Zig unit test entry point
+├── engine-tests/              # per-module Zig unit suites, one file each
 ├── server.zig                 # engine lifecycle as free functions
 ├── socket.zig                 # per-connection handles and state transitions
 └── ...                        # further Zig modules split by one responsibility
@@ -308,37 +334,48 @@ the ABI.
 
 ## Current branch state
 
-`feat/protocol-compat-leaves` adds the pure leaf modules on top of the merged
-type surface and listener registry:
+`feat/native-foundation` adds the native memory foundation, the server
+lifecycle, and the only threadsafe path from an engine thread to JavaScript, on
+top of the merged type surface, listener registry, and protocol and compat
+leaves:
 
-- `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` contract (`@types/ws`
-  8.18.1) with an ESM footer; `src/index.ts` re-exports it as type-only
-  exports, including a type-only default so `import type WebSocket from
-"venti-ts"` matches `ws`. No runtime `ws` surface exists yet.
-- `src/types/{events,socket,server}.ts` define the registry types,
-  `SocketState`, `ServerState`, and the Node-style event maps extracted from
-  the vendored contract; `src/types/{close,errors,status,options}.ts` define the
-  ready-state and close-code unions, the stable error codes, the engine status
-  to error-code mapping, and the normalized option records. `src/compat/events.ts`
-  implements the registry: copy-on-write buckets, dispatch over the array
-  captured at call time, no classes and no `this`. Event handlers receive
-  payloads only; `this` binding, `once`, and the no-listener `error` policy
-  belong to the compat factories.
-- `src/protocol/{close-codes,framing,backpressure}.ts` hold the RFC 6455 close
-  code predicates (mirroring `ws`), frame header and mask math, and the
-  bufferedAmount water-mark policy. `src/compat/{options,server-options,
-client-options,errors}.ts` normalize server and client options with the `ws`
-  defaults, including per-message deflate, and build coded errors;
-  `tests/protocol` and `tests/compat` cover them.
-- `pnpm typecheck` includes `tests/types`, whose fixtures pin the public
-  consumer surface, every event-map entry, state-record literals, and the
-  protocol close-code set. `tsconfig.dist-types.json` checks
-  `tests/declarations` against the built `dist/index.d.mts` through the package
-  `exports` map with `skipLibCheck: false`; `pnpm build` ends with that check.
-- `tests/events.test.ts` covers duplicate handlers, removal and addition
-  during dispatch, listener counts, exception propagation, and the deliberate
-  no-listener `error` policy. `pnpm exec vitest run tests/protocol tests/compat`
-  runs the pure leaf suites without a native build.
+- `src/handles.zig` holds the generation-checked connection slab. One slot maps
+  one-to-one onto an engine pool slot; `acquire` bumps the generation and
+  `resolve` rejects a stale handle, so a call against a closed connection
+  surfaces as a typed error instead of a use-after-free.
+- `src/options.zig` trusts the JavaScript configuration once: it validates the
+  host, port, backlog, route path, and per-route limits against the compiled
+  capacities, reads every integer at the 53-bit safe width, and copies them
+  into fixed-capacity `ListenConfig`, `Limits`, and `ServerConfig` records;
+  `maxConnections` is enforced when a peer opens.
+- `src/registry.zig` is a fixed-capacity atomic slot table; `src/instance.zig`
+  holds the live `Instance` record and the bounded table that binds engine
+  callbacks to server state; `src/connections.zig` registers the comptime
+  WebSocket trampolines that acquire and release slab slots.
+- `src/events.zig` defines the fixed-size event vocabulary and
+  `src/callbacks.zig` is the only bridge an engine thread may use to reach
+  JavaScript: a bounded ring travels through one threadsafe function and is
+  rendered on the Node main thread, allocating nothing on the engine thread.
+- `src/server.zig` exposes create/listen/close/finalize. Create builds the
+  engine application through `AppType.cluster(1)`; listen binds the listener
+  and starts the engine thread; close routes through the cluster wakeup; the
+  `server_closed` event proves the loop has drained before finalize joins the
+  thread and frees every resource. Finalize refuses to free while events are
+  still queued (`EventsPending`), and every server handle carries a generation
+  and a Node environment owner, so stale handles and cross-worker calls are
+  typed errors.
+- `src/engine-tests/` holds one unit suite per testable module, aggregated by
+  `root.zig` and entered through `src/engine_tests.zig`; `src/builds/testing.zig`
+  compiles that entry for `zig build test`, and the `zig-test.yml` workflow runs
+  it plus the addon-backed binding suite. `server` and `connections` are
+  engine-coupled and are covered there instead of in the unit binary.
+- `src/binding/{native,handle,server}.ts` declare the addon ABI, pack and
+  unpack the 64-bit connection handle, and wrap the lifecycle calls;
+  `src/binding/load.ts` keeps resolving the `.node` and now types the full
+  `VentiAddon` record.
+- `tests/binding.test.ts` proves the Zig build, addon load, version round-trip,
+  and lifecycle surface; `tests/binding/` drives create, listen, a live
+  WebSocket connection through the slab, close, and finalize.
 
 The build-graph bullets below come from `refactor/build-orchestrator` and
 remain current:
@@ -357,9 +394,9 @@ remain current:
   `.node` artifact into `dist/`, so `pnpm build` produces a self-contained
   package for the current platform.
 - The addon links the full `uWebZockets` engine module; `src/lib.zig` exposes
-  `engineVersion()` and `http3Available()`. The engine's TLS surface
-  (`App.init_https`, `TlsContext.init`) is reachable from the addon but not yet
-  exposed to TypeScript.
+  `engineVersion()`, `http3Available()`, and the server lifecycle functions.
+  The engine's TLS surface (`App.init_https`, `TlsContext.init`) is reachable
+  from the addon but not yet exposed to TypeScript.
 - The engine's vendored C dependencies build once into
   `.zig-cache/vendor-build-v4/` through CMake and Ninja; non-Windows targets
   use the PIC compiler wrappers in `scripts/` because the vendored static
@@ -368,8 +405,8 @@ remain current:
   `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
   not scaffolded over.
 - `src/binding/load.ts` resolves the `.node` from `zig-out/` first and from
-  `dist/` second, returning a typed `VentiAddon` record. Runtime values for the
-  public surface land with `src/compat/`.
+  `dist/` second, returning the typed `VentiAddon` record declared in
+  `src/binding/native.ts`.
 - `.oxlintrc.json` and `.oxfmtrc.json` encode
   [CODING_CONVENTION.md](CODING_CONVENTION.md); `lefthook.yml` runs them on
   every commit alongside `zig fmt`, typecheck, and the test suite.
@@ -378,6 +415,7 @@ remain current:
 - `tests/binding.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
-The `compat/` factories, the `binding/` handles, and the engine modules beside
-`src/lib.zig` are the next implementation milestones. The addon currently
-exposes only the engine version; socket and server handles land next.
+The `compat/` factories, the socket handles, and the message path are the next
+implementation milestones. The addon currently exposes the engine version and
+the server lifecycle; per-connection send/close/ping and the `ws` runtime
+surface land next.

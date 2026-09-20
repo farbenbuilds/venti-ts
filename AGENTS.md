@@ -9,19 +9,24 @@ will own parsing, buffers, and backpressure.
 
 - `build.zig` delegates to `src/builds/orchestrator.zig`, which wires the addon
   through `napi_zig.addLib` and imports the full `uWebZockets` engine module;
-  `src/lib.zig` exposes `engineVersion()` and `http3Available()`, following the
-  `napi-zig` layout: the Zig root module lives in `src/` next to the TypeScript
-  sources. `src/binding/load.ts` resolves and loads the built `.node`;
-  `src/types/ws.d.ts` vendors the DefinitelyTyped `ws` declarations, and
-  `src/index.ts` re-exports that surface as type-only ESM exports.
-  `src/types/{events,socket,server}.ts` hold the internal state records, event
-  maps, and listener-registry types; `src/types/{close,errors,status,options}.ts`
-  hold the ready-state, close-code, error-code, engine-status, and normalized
-  option types. `src/compat/events.ts` implements the listener registry,
+  `src/lib.zig` exposes `engineVersion()`, `http3Available()`, and the server
+  lifecycle functions, following the `napi-zig` layout: the Zig root module
+  lives in `src/` next to the TypeScript sources. `src/binding/load.ts` resolves
+  and loads the built `.node`; `src/types/ws.d.ts` vendors the DefinitelyTyped
+  `ws` declarations, and `src/index.ts` re-exports that surface as type-only ESM
+  exports. `src/types/{events,socket,server}.ts` hold the internal state records,
+  event maps, and listener-registry types;
+  `src/types/{close,errors,status,options}.ts` hold the ready-state, close-code,
+  error-code, engine-status, and normalized option types. `src/compat/events.ts`
+  implements the listener registry,
   `src/compat/{options,server-options,client-options,errors}.ts` normalize
   options and build coded errors, and `src/protocol/` holds the pure close
-  code, framing, and backpressure helpers. There is no runtime `ws` surface
-  yet.
+  code, framing, and backpressure helpers.
+  `src/{handles,options,registry,events,ring,callbacks,instance,connections,server}.zig`
+  hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
+  testable module, entered through `src/engine_tests.zig`; the engine-coupled
+  `server`/`connections` modules are covered by the addon-backed tests. There is no runtime `ws`
+  surface yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
@@ -54,6 +59,7 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
 | Single test                   | `pnpm exec vitest run tests/binding.test.ts`                                       |
 | Typecheck                     | `pnpm typecheck`                                                                   |
+| Zig unit tests                | `zig build test` (runs `src/engine-tests/`)                                        |
 | Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |
 | Version bump                  | `pnpm release`                                                                     |
 

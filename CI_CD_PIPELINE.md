@@ -8,9 +8,10 @@ not a proof that all memory or security defects are absent.
 ## Current state
 
 The pipeline is implemented incrementally. `ts-lint.yml`, `zig-lint.yml`,
-`nix-lint.yml`, and `ts-test.yml` are wired; the workflows marked planned below
-are the contract for the remaining changes. Until they land, contributors run
-the same commands locally as described in [CONTRIBUTE.md](CONTRIBUTE.md).
+`nix-lint.yml`, `ts-test.yml`, and `zig-test.yml` are wired; the workflows marked
+planned below are the contract for the remaining changes. Until they land,
+contributors run the same commands locally as described in
+[CONTRIBUTE.md](CONTRIBUTE.md).
 
 ## Workflows
 
@@ -18,6 +19,7 @@ the same commands locally as described in [CONTRIBUTE.md](CONTRIBUTE.md).
 | --------------- | ----------- | ---------------------------------------------------- | ------------------------------------------------------------- |
 | `ts-lint.yml`   | Implemented | pushes and pull requests to `main`, manual           | oxlint, oxfmt, typecheck                                      |
 | `zig-lint.yml`  | Implemented | pushes and pull requests to `main`, manual           | `zig fmt` and the Zig build graph                             |
+| `zig-test.yml`  | Implemented | pushes and pull requests to `main`, manual           | `zig build test` units and the binding lifecycle suite        |
 | `nix-lint.yml`  | Implemented | pushes and pull requests to `main`, manual           | Nix formatting and flake checks                               |
 | `ts-test.yml`   | Implemented | pushes and pull requests to `main`, manual           | vitest unit, boundary, and registry tests without the addon   |
 | `native.yml`    | Planned     | pushes and pull requests to `main`, manual, reusable | Build and test the `napi-zig` addon on the native matrix      |
@@ -35,7 +37,7 @@ shared between the candidate and baseline benchmark jobs.
 pnpm lint
 pnpm format:check
 pnpm typecheck
-zig fmt --check zig src
+zig fmt --check --exclude zig-pkg src build.zig
 nix fmt --check
 ```
 
@@ -71,6 +73,13 @@ reviewers can inspect the published type surface without building locally.
 `tests/events.test.ts`, `tests/oxlint-plugin.test.ts`) without the native
 toolchain. `tests/binding.test.ts` and the addon-backed suites run through
 `pnpm test` in the planned native workflow.
+
+`zig-test.yml` runs two jobs with the same vendor toolchain and cache: units
+(`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
+under `src/engine-tests/`) and the addon-backed lifecycle suite
+(`pnpm build:binding` then `vitest tests/binding.test.ts tests/binding`). Both
+install CMake, Ninja, Perl, patch, and a zlib static prefix for the vendored C
+dependencies, then cache `.zig-cache` and `zig-pkg` between runs.
 
 ## Native addon matrix
 

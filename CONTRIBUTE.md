@@ -115,6 +115,11 @@ pipeline, so replace it as the `ws` surface lands, do not extend it.
   dependency only; never ship it.
 - Protocol changes must run the RFC 6455 Autobahn suite through the CI target
   described in [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md).
+- Zig unit tests live in `src/engine-tests/`, one `<module>_test.zig` per
+  testable source module, aggregated by `root.zig` and entered through
+  `src/engine_tests.zig`. Run them with `zig build test`; `zig-test.yml` runs
+  that command and the addon-backed binding tests in CI on every Zig or binding
+  change, reporting through the `Zig Test` and `Binding Test` environments.
 - Zig unit tests use caller-owned fixed storage for hot paths. When the unit
   under test allocates, use a leak-detecting allocator and prove every success
   and error path releases ownership.
