@@ -46,15 +46,15 @@ of ventijs.
 
 ## Socket API (server-side connection)
 
-| Surface                   | Contract                                                                                  | Owner                                                             | Status   | Evidence |
-| ------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------- | -------- |
-| Observable properties     | `binaryType`, `bufferedAmount`, `extensions`, `isPaused`, `protocol`, `readyState`, `url` | `src/compat/socket.ts`, `src/binding/socket.ts`, `src/socket.zig` | todo     | -        |
-| Ready-state constants     | `CONNECTING`/`OPEN`/`CLOSING`/`CLOSED` on the constructor and the instance                | `src/compat/socket.ts`                                            | todo     | -        |
-| Send and frame methods    | `send(data, options?, cb?)`, `ping`, `pong`, `close`, `terminate`, `pause`, `resume`      | `src/compat/socket.ts`, `src/binding/socket.ts`, `src/socket.zig` | todo     | -        |
-| Node events               | `open`, `message`, `close`, `error`, `ping`, `pong`                                       | `src/compat/socket.ts`, `src/types/socket.ts`                     | todo     | -        |
-| Client-only socket events | `upgrade`, `redirect`, `unexpected-response`                                              | deferred (client scope, ADR)                                      | deferred | -        |
-| DOM handlers              | `onopen`/`onerror`/`onclose`/`onmessage`, `addEventListener`, `removeEventListener`       | `src/compat/socket.ts`                                            | todo     | -        |
-| Pause gating              | `pause()` stops event emission until `resume()`                                           | `src/compat/socket.ts`, `src/socket.zig`                          | todo     | -        |
+| Surface                   | Contract                                                                                  | Owner                                                                       | Status   | Evidence                       |
+| ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------- | ------------------------------ |
+| Observable properties     | `binaryType`, `bufferedAmount`, `extensions`, `isPaused`, `protocol`, `readyState`, `url` | `src/compat/socket.ts`, `src/binding/socket.ts`, `src/engine/socket.zig`    | partial  | `tests/binding/socket.test.ts` |
+| Ready-state constants     | `CONNECTING`/`OPEN`/`CLOSING`/`CLOSED` on the constructor and the instance                | `src/compat/socket.ts`                                                      | todo     | -                              |
+| Send and frame methods    | `send(data, options?, cb?)`, `ping`, `pong`, `close`, `terminate`, `pause`, `resume`      | `src/compat/socket.ts`, `src/binding/socket.ts`, `src/engine/socket_io.zig` | partial  | `tests/binding/socket.test.ts` |
+| Node events               | `open`, `message`, `close`, `error`, `ping`, `pong`                                       | `src/compat/socket.ts`, `src/types/socket.ts`                               | todo     | -                              |
+| Client-only socket events | `upgrade`, `redirect`, `unexpected-response`                                              | deferred (client scope, ADR)                                                | deferred | -                              |
+| DOM handlers              | `onopen`/`onerror`/`onclose`/`onmessage`, `addEventListener`, `removeEventListener`       | `src/compat/socket.ts`                                                      | todo     | -                              |
+| Pause gating              | `pause()` stops event emission until `resume()`                                           | `src/compat/socket.ts`, `src/engine/socket.zig`                             | partial  | `tests/binding/socket.test.ts` |
 
 ## WebSocketServer
 
@@ -79,15 +79,15 @@ of ventijs.
 
 ## Boundary and lifetime invariants
 
-| Invariant                  | Contract                                                                                            | Owner                                                                     | Status  | Evidence                              |
-| -------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------- | ------------------------------------- |
-| Retained inbound payloads  | Frames are copied into Node-owned buffers before handlers run                                       | `src/binding/socket.ts`, `src/socket.zig`                                 | todo    | -                                     |
-| Borrowed outbound buffers  | Buffers live only for the native call, then land in the bounded queue                               | `src/binding/socket.ts`, `src/socket.zig`                                 | todo    | -                                     |
-| Generation-checked handles | Stale handles produce typed errors, never crashes or use-after-free                                 | `src/binding/errors.ts`, `src/engine/handles.zig`                         | todo    | -                                     |
-| Exactly-once close         | Terminal state is latched before `close` dispatch                                                   | `src/compat/close.ts`, `src/socket.zig`                                   | todo    | -                                     |
-| Backpressure               | `bufferedAmount` growth plus send callbacks, bounded queues; `send` returns no value, matching `ws` | `src/protocol/backpressure.ts`, `src/binding/socket.ts`                   | partial | `tests/protocol/backpressure.test.ts` |
-| Close code mapping         | `maxPayload` 1009, protocol errors 1002, policy rejections 1008                                     | `src/protocol/close-codes.ts`, `src/socket.zig`                           | partial | `tests/protocol/close-codes.test.ts`  |
-| Per-message deflate        | Option normalization in TS, codec in the engine                                                     | `src/compat/{options,server-options,client-options}.ts`, `src/socket.zig` | partial | `tests/compat/options.test.ts`        |
+| Invariant                  | Contract                                                                                            | Owner                                                                             | Status  | Evidence                                                                          |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------- |
+| Retained inbound payloads  | Frames are copied into Node-owned buffers before handlers run                                       | `src/binding/socket.ts`, `src/engine/socket_io.zig`                               | todo    | -                                                                                 |
+| Borrowed outbound buffers  | Buffers live only for the native call, then land in the bounded queue                               | `src/binding/socket.ts`, `src/engine/{payload,socket}.zig`                        | partial | `tests/binding/socket.test.ts`                                                    |
+| Generation-checked handles | Stale handles produce typed errors, never crashes or use-after-free                                 | `src/binding/{handle,server,socket}.ts`, `src/engine/handles.zig`                 | partial | `tests/binding/server-lifecycle.test.ts`, `tests/binding/socket-boundary.test.ts` |
+| Exactly-once close         | Terminal state is latched before `close` dispatch                                                   | `src/compat/close.ts`, `src/engine/socket.zig`                                    | partial | `tests/binding/socket-boundary.test.ts`                                           |
+| Backpressure               | `bufferedAmount` growth plus send callbacks, bounded queues; `send` returns no value, matching `ws` | `src/protocol/backpressure.ts`, `src/binding/socket.ts`, `src/engine/payload.zig` | partial | `tests/binding/socket.test.ts`                                                    |
+| Close code mapping         | `maxPayload` 1009, protocol errors 1002, policy rejections 1008                                     | `src/protocol/close-codes.ts`, `src/engine/{status,socket}.zig`                   | partial | `tests/protocol/close-codes.test.ts`                                              |
+| Per-message deflate        | Option normalization in TS, codec in the engine                                                     | `src/compat/{options,server-options,client-options}.ts`, `src/engine/socket.zig`  | partial | `tests/compat/options.test.ts`                                                    |
 
 ## Error shape policy
 
@@ -104,6 +104,7 @@ every thrown error with tests as they land.
 | Suite                   | Purpose                                                                       | Status |
 | ----------------------- | ----------------------------------------------------------------------------- | ------ |
 | `tests/binding.test.ts` | Native build, addon load, engine version round-trip                           | done   |
+| `tests/binding/**`      | Lifecycle, connection slab, and socket operation boundaries                   | done   |
 | `tests/events.test.ts`  | Listener registry semantics                                                   | done   |
 | `tests/protocol/**`     | Close code, framing, and backpressure helpers                                 | done   |
 | `tests/compat/**`       | Option normalization and coded error factories                                | done   |

@@ -9,10 +9,12 @@ will own parsing, buffers, and backpressure.
 
 - `build.zig` delegates to `src/builds/orchestrator.zig`, which wires the addon
   through `napi_zig.addLib` and imports the full `uWebZockets` engine module;
-  `src/lib.zig` exposes `engineVersion()`, `http3Available()`, and the server
-  lifecycle functions, following the `napi-zig` layout: the Zig root module
-  lives in `src/` next to the TypeScript sources. `src/binding/load.ts` resolves
-  and loads the built `.node`; `src/types/ws.d.ts` vendors the DefinitelyTyped
+  `src/lib.zig` exposes `engineVersion()`, `http3Available()`, the server
+  lifecycle functions, and the per-connection socket operations, following the
+  `napi-zig` layout: the Zig root module lives in `src/` next to the TypeScript
+  sources. `src/binding/load.ts` resolves and loads the built `.node`;
+  `src/binding/{native,handle,server,socket}.ts` declare the addon ABI and wrap
+  the lifecycle and socket calls; `src/types/ws.d.ts` vendors the DefinitelyTyped
   `ws` declarations, and `src/index.ts` re-exports that surface as type-only ESM
   exports. `src/types/{events,socket,server}.ts` hold the internal state records,
   event maps, and listener-registry types;
@@ -22,11 +24,13 @@ will own parsing, buffers, and backpressure.
   `src/compat/{options,server-options,client-options,errors}.ts` normalize
   options and build coded errors, and `src/protocol/` holds the pure close
   code, framing, and backpressure helpers.
-  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server}.zig`
+  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server,payload,status,socket,socket_io}.zig`
   hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
   testable module, entered through `src/engine_tests.zig`; the engine-coupled
-  `server`/`connections` modules are covered by the addon-backed tests. There is no runtime `ws`
-  surface yet.
+  `server`/`connections` modules are covered by the addon-backed tests. Socket
+  ops stage into a bounded ring and return typed statuses; the engine-thread
+  drain that frames and writes them is still missing, so there is no runtime
+  `ws` surface yet.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
