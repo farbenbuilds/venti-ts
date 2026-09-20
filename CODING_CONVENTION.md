@@ -137,10 +137,12 @@ receiver-style functions that silently mutate captured state.
   `as const` objects for groups.
 - **Imports:** `import type` for type-only imports. `verbatimModuleSyntax`
   enforces this; the build fails otherwise.
-- **Exports:** named exports only. No default exports. The one exception is
-  `src/index.ts`, which mirrors `ws` with a type-only default re-export so that
-  `import type WebSocket from "ventijs"` stays drop-in; the runtime default
-  arrives with the compatibility layer.
+- **Exports:** named exports only. No default exports. Exceptions: `src/index.ts`
+  mirrors `ws` with a type-only default re-export so
+  `import type WebSocket from "ventijs"` stays drop-in (the runtime default
+  arrives with the compatibility layer); `tsdown.config.ts` and
+  `scripts/oxlint-plugin.mjs` are tooling entry points, exempted by the oxlint
+  overrides.
 - **Types over interfaces** unless declaration merging is required.
 - **Semicolons:** every statement and type member ends with `;`. `oxfmt`
   enforces this, including code samples embedded in Markdown.

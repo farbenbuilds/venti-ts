@@ -24,13 +24,17 @@ will own parsing, buffers, and backpressure.
   `src/compat/{options,server-options,client-options,errors}.ts` normalize
   options and build coded errors, and `src/protocol/` holds the pure close
   code, framing, and backpressure helpers.
-  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server,payload,status,socket,socket_io}.zig`
+  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server,server_io,server_cleanup,payload,status,socket,socket_ops,socket_io}.zig`
   hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
   testable module, entered through `src/engine_tests.zig`; the engine-coupled
   `server`/`connections` modules are covered by the addon-backed tests. Socket
   ops stage into a bounded ring and return typed statuses; the engine-thread
   drain that frames and writes them is still missing, so there is no runtime
-  `ws` surface yet.
+  `ws` surface yet. `pnpm build:binding` builds the addon in ReleaseSafe, and
+  `scripts/check-conventions.mjs` (run by `pnpm lint` and a `lefthook` job)
+  enforces the line budget, Zig naming, filename case, and the emoji ban. The
+  pinned `ws`/`@types/ws` devDependencies back the first conformance leg in
+  `tests/conformance/`.
 - Root documents (`CODEBASE.md`, `CONTRIBUTE.md`, `CI_CD_PIPELINE.md`,
   `SKILL.md`) specify the intended architecture. When they disagree with
   `package.json`, `tsconfig.json`, `flake.nix`, or `src/`, trust the config
