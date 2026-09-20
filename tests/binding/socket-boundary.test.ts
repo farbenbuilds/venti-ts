@@ -50,24 +50,20 @@ test(
   },
 );
 
-test(
-  "rejects malformed arguments before the native call",
-  { timeout: TEST_TIMEOUT_MS },
-  async () => {
-    const { server, connection, socket } = await connectedSocket();
-    try {
-      expect(() => sendSocket(server.handle, connection, "text" as unknown as Uint8Array)).toThrow(
-        /Uint8Array/,
-      );
-      expect(() => closeSocket(server.handle, connection, 70_000, new Uint8Array())).toThrow(
-        /uint16/,
-      );
-      expect(() => sendSocket(server.handle + 1, connection, new Uint8Array())).toThrow(
-        /UnknownServer/,
-      );
-    } finally {
-      socket.close();
-      await server.dispose();
-    }
-  },
-);
+test("rejects malformed arguments and unknown servers", { timeout: TEST_TIMEOUT_MS }, async () => {
+  const { server, connection, socket } = await connectedSocket();
+  try {
+    expect(() => sendSocket(server.handle, connection, "text" as unknown as Uint8Array)).toThrow(
+      /Uint8Array/,
+    );
+    expect(() => closeSocket(server.handle, connection, 70_000, new Uint8Array())).toThrow(
+      /uint16/,
+    );
+    expect(() => sendSocket(server.handle + 1, connection, new Uint8Array())).toThrow(
+      /UnknownServer/,
+    );
+  } finally {
+    socket.close();
+    await server.dispose();
+  }
+});

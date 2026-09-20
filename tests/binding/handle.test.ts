@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { packConnectionHandle, unpackConnectionHandle } from "../../src/binding/handle";
+import {
+  assertConnectionHandle,
+  packConnectionHandle,
+  unpackConnectionHandle,
+} from "../../src/binding/handle";
 
 const MAX_UINT32 = 0xffff_ffff;
 
@@ -19,6 +23,14 @@ test("round trips the maximum handle", () => {
     index: MAX_UINT32,
     generation: MAX_UINT32,
   });
+});
+
+test("asserts connection handles before a native call", () => {
+  expect(() => assertConnectionHandle(1 as unknown as bigint)).toThrow(RangeError);
+  expect(() => assertConnectionHandle(-1n)).toThrow(RangeError);
+  expect(() => assertConnectionHandle(1n << 64n)).toThrow(RangeError);
+  expect(() => assertConnectionHandle(0n)).not.toThrow();
+  expect(() => assertConnectionHandle((1n << 64n) - 1n)).not.toThrow();
 });
 
 test("rejects out-of-range handle parts", () => {

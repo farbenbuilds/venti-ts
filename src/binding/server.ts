@@ -1,4 +1,5 @@
 import type { EngineDispatch, NativeServerConfig } from "./native";
+import { callNative } from "./errors";
 import { loadAddon } from "./load";
 
 export type ServerHandle = number;
@@ -13,19 +14,22 @@ export function assertServerHandle(handle: ServerHandle): void {
 }
 
 export function createServer(config: NativeServerConfig, dispatch: EngineDispatch): ServerHandle {
-  const handle = loadAddon().createServer(config, dispatch);
+  const addon = loadAddon();
+  const handle = callNative(() => addon.createServer(config, dispatch));
   assertServerHandle(handle);
   return handle;
 }
 
 export function listenServer(handle: ServerHandle): void {
   assertServerHandle(handle);
-  loadAddon().listenServer(handle);
+  const addon = loadAddon();
+  callNative(() => addon.listenServer(handle));
 }
 
 export function closeServer(handle: ServerHandle): void {
   assertServerHandle(handle);
-  loadAddon().closeServer(handle);
+  const addon = loadAddon();
+  callNative(() => addon.closeServer(handle));
 }
 
 /// Releases native resources. Must run after `serverClosed` has been
@@ -33,5 +37,15 @@ export function closeServer(handle: ServerHandle): void {
 /// instead of freeing memory a callback still references.
 export function finalizeServer(handle: ServerHandle): void {
   assertServerHandle(handle);
-  loadAddon().finalizeServer(handle);
+  const addon = loadAddon();
+  callNative(() => addon.finalizeServer(handle));
+}
+
+/// Events the server channel could not queue because its ring was full. A
+/// non-zero count means a dispatch was lost to a stalled consumer; the
+/// terminal reserve keeps close and shutdown events out of that set.
+export function serverDroppedEvents(handle: ServerHandle): bigint {
+  assertServerHandle(handle);
+  const addon = loadAddon();
+  return callNative(() => addon.serverDroppedEvents(handle));
 }

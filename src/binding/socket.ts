@@ -1,6 +1,7 @@
 import type { EngineStatus } from "../types/status";
 import type { ConnectionHandle } from "./handle";
-import type { NativeSocketStatus } from "./native";
+import { NATIVE_SOCKET_STATUSES, type NativeSocketStatus } from "./native";
+import { callNative } from "./errors";
 import { assertConnectionHandle } from "./handle";
 import { loadAddon } from "./load";
 import { assertServerHandle, type ServerHandle } from "./server";
@@ -26,6 +27,16 @@ function assertPayload(data: Uint8Array): void {
   }
 }
 
+/// Decodes the ABI ordinal into a status. An ordinal outside the table is an
+/// ABI mismatch between the loaded addon and this binding.
+function statusFromOrdinal(ordinal: number): EngineStatus {
+  const status = NATIVE_SOCKET_STATUSES[ordinal];
+  if (status === undefined) {
+    throw new RangeError(`ventijs: unknown native socket status ${ordinal}`);
+  }
+  return ENGINE_STATUS_BY_NATIVE[status];
+}
+
 function assertCloseCode(code: number): void {
   if (!Number.isInteger(code) || code < 0 || code > MAX_UINT16) {
     throw new RangeError(`ventijs: close code must be a uint16, got ${code}`);
@@ -44,7 +55,8 @@ export function sendSocket(
   assertServerHandle(server);
   assertConnectionHandle(connection);
   assertPayload(data);
-  return ENGINE_STATUS_BY_NATIVE[loadAddon().sendSocket(server, connection, data, binary)];
+  const addon = loadAddon();
+  return statusFromOrdinal(callNative(() => addon.sendSocket(server, connection, data, binary)));
 }
 
 /// Validates the close code and reason, stages the close frame, and enters the
@@ -59,21 +71,24 @@ export function closeSocket(
   assertConnectionHandle(connection);
   assertCloseCode(code);
   assertPayload(reason);
-  return ENGINE_STATUS_BY_NATIVE[loadAddon().closeSocket(server, connection, code, reason)];
+  const addon = loadAddon();
+  return statusFromOrdinal(callNative(() => addon.closeSocket(server, connection, code, reason)));
 }
 
 /// Suspends inbound message dispatch for the connection, matching `ws.pause()`.
 export function pauseSocket(server: ServerHandle, connection: ConnectionHandle): EngineStatus {
   assertServerHandle(server);
   assertConnectionHandle(connection);
-  return ENGINE_STATUS_BY_NATIVE[loadAddon().pauseSocket(server, connection)];
+  const addon = loadAddon();
+  return statusFromOrdinal(callNative(() => addon.pauseSocket(server, connection)));
 }
 
 /// Resumes inbound message dispatch for the connection.
 export function resumeSocket(server: ServerHandle, connection: ConnectionHandle): EngineStatus {
   assertServerHandle(server);
   assertConnectionHandle(connection);
-  return ENGINE_STATUS_BY_NATIVE[loadAddon().resumeSocket(server, connection)];
+  const addon = loadAddon();
+  return statusFromOrdinal(callNative(() => addon.resumeSocket(server, connection)));
 }
 
 /// Bytes staged for the connection and not yet drained. A stale handle reads
@@ -81,5 +96,6 @@ export function resumeSocket(server: ServerHandle, connection: ConnectionHandle)
 export function socketBufferedAmount(server: ServerHandle, connection: ConnectionHandle): number {
   assertServerHandle(server);
   assertConnectionHandle(connection);
-  return loadAddon().socketBufferedAmount(server, connection);
+  const addon = loadAddon();
+  return callNative(() => addon.socketBufferedAmount(server, connection));
 }

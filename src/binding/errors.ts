@@ -1,0 +1,38 @@
+import type { CodedError, ErrorCode } from "../types/errors";
+
+/// Native error names mapped to the stable public codes. The napi-zig bridge
+/// throws `Error` with the Zig error name as the message, so the name is the
+/// only discriminator the binding has.
+const NATIVE_ERROR_CODES: Readonly<Record<string, ErrorCode>> = {
+  UnknownServer: "ERR_INVALID_HANDLE",
+  InvalidServerState: "ERR_INVALID_STATE",
+  ServerNotClosed: "ERR_INVALID_STATE",
+  EventsPending: "ERR_INVALID_STATE",
+  EnvCleanupUnavailable: "ERR_INVALID_STATE",
+  InvalidHost: "ERR_INVALID_OPTION",
+  InvalidPort: "ERR_INVALID_OPTION",
+  InvalidBacklog: "ERR_INVALID_OPTION",
+  InvalidPath: "ERR_INVALID_OPTION",
+  InvalidConnectionCapacity: "ERR_INVALID_OPTION",
+  InvalidMessageCapacity: "ERR_INVALID_OPTION",
+  InvalidFrameCapacity: "ERR_INVALID_OPTION",
+  ThreadsafeFunctionUnavailable: "ERR_PROTOCOL",
+};
+
+/// Wraps a native addon failure in a coded `Error`. The native name stays the
+/// message so existing diagnostics keep working; an unknown name is an ABI
+/// mismatch and reports `ERR_PROTOCOL`.
+export function nativeError(error: unknown): CodedError {
+  const name = error instanceof Error ? error.message : String(error);
+  const code = NATIVE_ERROR_CODES[name] ?? "ERR_PROTOCOL";
+  return Object.assign(new Error(name), { code });
+}
+
+/// Runs a native call, converting a native failure into a coded `Error`.
+export function callNative<T>(call: () => T): T {
+  try {
+    return call();
+  } catch (error) {
+    throw nativeError(error);
+  }
+}

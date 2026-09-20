@@ -29,7 +29,8 @@ export type NativeServerConfig = {
 export type EngineDispatch = (event: EngineEvent) => void;
 
 /// Per-connection operation results mirrored from `socket.Status` in
-/// `src/engine/socket.zig`. The ABI carries enum names as camelCase strings.
+/// `src/engine/status.zig`. The ABI carries the enum ordinal; this array is
+/// the ordinal-to-name table and must keep the Zig declaration order.
 export const NATIVE_SOCKET_STATUSES = [
   "ok",
   "closing",
@@ -52,19 +53,13 @@ export type VentiAddon = {
   listenServer(server: number): void;
   closeServer(server: number): void;
   finalizeServer(server: number): void;
-  sendSocket(
-    server: number,
-    connection: bigint,
-    data: Uint8Array,
-    binary: boolean,
-  ): NativeSocketStatus;
-  closeSocket(
-    server: number,
-    connection: bigint,
-    code: number,
-    reason: Uint8Array,
-  ): NativeSocketStatus;
-  pauseSocket(server: number, connection: bigint): NativeSocketStatus;
-  resumeSocket(server: number, connection: bigint): NativeSocketStatus;
+  /// Returns an ordinal into `NATIVE_SOCKET_STATUSES`; ordinals keep the
+  /// per-message path free of string allocation.
+  sendSocket(server: number, connection: bigint, data: Uint8Array, binary: boolean): number;
+  closeSocket(server: number, connection: bigint, code: number, reason: Uint8Array): number;
+  pauseSocket(server: number, connection: bigint): number;
+  resumeSocket(server: number, connection: bigint): number;
   socketBufferedAmount(server: number, connection: bigint): number;
+  /// Events the channel could not queue because its ring was full.
+  serverDroppedEvents(server: number): bigint;
 };
