@@ -57,9 +57,9 @@ jobs:
           path: |
             .zig-cache
             zig-pkg
-          key: zig-0.16.0-${{ runner.os }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
+          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
           restore-keys: |
-            zig-0.16.0-${{ runner.os }}-
+            zig-0.16.0-${{ runner.os }}-${{ github.repository }}-
 
       - name: Install vendor build tools
         run: |
@@ -105,9 +105,9 @@ jobs:
           path: |
             .zig-cache
             zig-pkg
-          key: zig-0.16.0-${{ runner.os }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
+          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
           restore-keys: |
-            zig-0.16.0-${{ runner.os }}-
+            zig-0.16.0-${{ runner.os }}-${{ github.repository }}-
 
       - name: Install vendor build tools
         run: |
