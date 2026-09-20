@@ -1,4 +1,4 @@
-//! Unit tests for `src/engine/socket.zig`.
+//! Unit tests for the `src/engine/socket.zig` state machine.
 
 const std = @import("std");
 const payload = @import("../engine/payload.zig");
@@ -7,70 +7,60 @@ const socket = @import("../engine/socket.zig");
 const Ring = payload.payload_ring(4, 16);
 const Slab = socket.socket_slab(4, Ring);
 
-test "send stages a record and accounts the buffered amount" {
-    var slab = Slab{};
-    slab.open(1, 42);
-
-    try std.testing.expectEqual(socket.Status.ok, slab.send(1, .text, "hello"));
-    try std.testing.expectEqual(@as(u32, 5), slab.buffered(1));
-
-    const view = slab.ring.peek().?;
-    try std.testing.expectEqual(@as(u32, 1), view.index);
-    try std.testing.expectEqual(@as(u32, 42), view.generation);
-    try std.testing.expectEqualStrings("hello", view.bytes);
-}
-
-test "send rejects oversized payloads and unknown slots" {
-    var slab = Slab{};
-    slab.open(0, 1);
-
-    try std.testing.expectEqual(socket.Status.payload_too_large, slab.send(0, .binary, "0123456789abcdefg"));
-    try std.testing.expectEqual(socket.Status.invalid_handle, slab.send(4, .binary, "x"));
-    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
-}
-
-test "close validates the code and reason" {
-    var slab = Slab{};
-    slab.open(0, 1);
-
-    try std.testing.expectEqual(socket.Status.invalid_close_code, slab.close(0, 1005, ""));
-    try std.testing.expectEqual(socket.Status.invalid_close_code, slab.close(0, 999, ""));
-    try std.testing.expectEqual(socket.Status.invalid_close_reason, slab.close(0, 1000, "x" ** 124));
-    try std.testing.expectEqual(socket.Status.invalid_close_reason, slab.close(0, 1000, "\xff\xfe"));
-    try std.testing.expectEqual(socket.Status.ok, slab.close(0, 3001, "bye"));
-    try std.testing.expectEqual(socket.Status.closing, slab.close(0, 1000, ""));
-
-    const view = slab.ring.peek().?;
-    try std.testing.expectEqual(payload.Kind.close, view.kind);
-    try std.testing.expectEqualSlices(u8, &.{ 0x0b, 0xb9, 'b', 'y', 'e' }, view.bytes);
-}
-
 test "send is refused once closing and closed" {
     var slab = Slab{};
     slab.open(2, 7);
 
-    try std.testing.expectEqual(socket.Status.ok, slab.close(2, 1000, ""));
-    try std.testing.expectEqual(socket.Status.closing, slab.send(2, .text, "late"));
+    try std.testing.expectEqual(socket.Status.ok, slab.close(2, 7, 1000, ""));
+    try std.testing.expectEqual(socket.Status.closing, slab.send(2, 7, .text, "late"));
     try std.testing.expect(slab.finish(2));
-    try std.testing.expectEqual(socket.Status.closed, slab.send(2, .text, "late"));
-    try std.testing.expectEqual(socket.Status.closed, slab.close(2, 1000, ""));
+    try std.testing.expectEqual(socket.Status.closed, slab.send(2, 7, .text, "late"));
+    try std.testing.expectEqual(socket.Status.closed, slab.close(2, 7, 1000, ""));
     try std.testing.expectEqual(@as(?socket.State, .closed), slab.state_of(2));
+}
+
+test "a stale generation is rejected on every operation" {
+    var slab = Slab{};
+    slab.open(0, 4);
+
+    try std.testing.expectEqual(socket.Status.invalid_handle, slab.send(0, 3, .text, "old"));
+    try std.testing.expectEqual(socket.Status.invalid_handle, slab.close(0, 3, 1000, ""));
+    try std.testing.expectEqual(socket.Status.invalid_handle, slab.pause_dispatch(0, 3));
+    try std.testing.expectEqual(socket.Status.invalid_handle, slab.resume_dispatch(0, 3));
+    try std.testing.expectEqual(@as(usize, 0), slab.ring.pending());
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+}
+
+test "open resets the record for a recycled generation" {
+    var slab = Slab{};
+    slab.open(0, 1);
+    _ = slab.send(0, 1, .binary, "abcd");
+    _ = slab.pause_dispatch(0, 1);
+    try std.testing.expect(slab.finish(0));
+
+    slab.open(0, 2);
+    try std.testing.expectEqual(@as(?socket.State, .open), slab.state_of(0));
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+    try std.testing.expect(!slab.is_paused(0));
+    try std.testing.expect(slab.latch_terminal(0));
 }
 
 test "pause and resume dispatch are idempotent while open" {
     var slab = Slab{};
     slab.open(0, 1);
 
-    try std.testing.expectEqual(socket.Status.ok, slab.pause_dispatch(0));
-    try std.testing.expectEqual(socket.Status.ok, slab.pause_dispatch(0));
+    try std.testing.expectEqual(socket.Status.ok, slab.pause_dispatch(0, 1));
+    try std.testing.expectEqual(socket.Status.ok, slab.pause_dispatch(0, 1));
     try std.testing.expect(slab.is_paused(0));
-    try std.testing.expectEqual(socket.Status.ok, slab.resume_dispatch(0));
-    try std.testing.expectEqual(socket.Status.ok, slab.resume_dispatch(0));
+    // ws pauses inbound dispatch only; outbound sends keep working.
+    try std.testing.expectEqual(socket.Status.ok, slab.send(0, 1, .text, "while-paused"));
+    try std.testing.expectEqual(socket.Status.ok, slab.resume_dispatch(0, 1));
+    try std.testing.expectEqual(socket.Status.ok, slab.resume_dispatch(0, 1));
     try std.testing.expect(!slab.is_paused(0));
 
-    try std.testing.expectEqual(socket.Status.ok, slab.close(0, 1000, ""));
-    try std.testing.expectEqual(socket.Status.closing, slab.pause_dispatch(0));
-    try std.testing.expectEqual(socket.Status.closing, slab.resume_dispatch(0));
+    try std.testing.expectEqual(socket.Status.ok, slab.close(0, 1, 1000, ""));
+    try std.testing.expectEqual(socket.Status.closing, slab.pause_dispatch(0, 1));
+    try std.testing.expectEqual(socket.Status.closing, slab.resume_dispatch(0, 1));
 }
 
 test "the terminal latch flips exactly once per generation" {
@@ -108,7 +98,7 @@ test "draining saturates the buffered amount at zero" {
     var slab = Slab{};
     slab.open(0, 1);
 
-    _ = slab.send(0, .binary, "abcd");
+    _ = slab.send(0, 1, .binary, "abcd");
     slab.note_drained(0, 2);
     try std.testing.expectEqual(@as(u32, 2), slab.buffered(0));
     slab.note_drained(0, 9);

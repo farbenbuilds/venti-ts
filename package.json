@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "pnpm run build:binding && tsdown && pnpm run typecheck:dist",
-    "build:binding": "napi-zig build",
+    "build:binding": "napi-zig build --optimize safe",
     "dev": "tsdown --watch",
     "format": "oxfmt",
     "format:check": "oxfmt --check",

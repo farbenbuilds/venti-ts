@@ -18,4 +18,5 @@ test {
     _ = @import("instance_test.zig");
     _ = @import("payload_test.zig");
     _ = @import("socket_test.zig");
+    _ = @import("socket_ops_test.zig");
 }

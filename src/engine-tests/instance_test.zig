@@ -15,6 +15,6 @@ test "engine lookup reports unpopulated slots as null" {
 
 test "packed server handles keep generation above the slot byte" {
     const handle = registry.Handle{ .slot = 7, .generation = 42 };
-    try std.testing.expectEqual(handle, registry.Handle.fromInt(handle.toInt()));
-    try std.testing.expectEqual(@as(u40, 42 * 256 + 7), handle.toInt());
+    try std.testing.expectEqual(handle, registry.Handle.from_int(handle.to_int()));
+    try std.testing.expectEqual(@as(u40, 42 * 256 + 7), handle.to_int());
 }

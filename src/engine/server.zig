@@ -5,11 +5,14 @@
 //! is stopped through the cluster's threadsafe wakeup. The last event an
 //! engine thread emits is `server_closed`; finalize joins that thread and
 //! refuses to free anything while events are still queued, so a dispatch
-//! callback can never touch freed memory.
+//! callback can never touch freed memory. An environment cleanup hook frees
+//! servers a worker never finalized, so terminating a worker cannot leak the
+//! engine thread or the instance.
 
 const std = @import("std");
 const builtin = @import("builtin");
 const napi = @import("napi-zig");
+const cleanup = @import("server_cleanup.zig");
 const connections = @import("connections.zig");
 const instance = @import("instance.zig");
 const options = @import("options.zig");
@@ -32,6 +35,9 @@ pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.E
     try target.channel.open(env, dispatch);
     errdefer target.channel.close();
 
+    try cleanup.register(env, target);
+    errdefer cleanup.remove(target);
+
     target.cluster = try instance.ClusterType.init_with_options(
         std.heap.smp_allocator,
         target.io.io(),
@@ -41,7 +47,7 @@ pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.E
 
     try connections.attach_route(target);
     instance.servers.publish(handle, target);
-    return handle.toInt();
+    return handle.to_int();
 }
 
 /// Binds the listener and starts the engine thread. The engine thread emits
@@ -53,6 +59,7 @@ pub fn listen(target: *instance.Instance) !void {
     target.bound_port = bound_port(target);
     target.state.store(.listening, .release);
     target.runner = std.Thread.spawn(.{}, run_engine, .{target}) catch |err| {
+        cleanup.remove(target);
         target.channel.close();
         target.cluster.deinit();
         instance.servers.retire(target.handle);
@@ -68,9 +75,9 @@ pub fn close(target: *instance.Instance) !void {
             if (target.state.cmpxchgStrong(.created, .closed, .acq_rel, .acquire) != null) {
                 return error.InvalidServerState;
             }
-            _ = target.channel.emit(.{
+            _ = target.channel.emit_terminal(.{
                 .kind = .server_closed,
-                .server = target.handle.toInt(),
+                .server = target.handle.to_int(),
             });
         },
         .listening => {
@@ -98,6 +105,7 @@ pub fn finalize(target: *instance.Instance) !void {
     }
     if (target.channel.pending() != 0) return error.EventsPending;
 
+    cleanup.remove(target);
     target.channel.close();
     target.cluster.deinit();
     instance.servers.retire(target.handle);
@@ -105,49 +113,26 @@ pub fn finalize(target: *instance.Instance) !void {
 }
 
 fn run_engine(target: *instance.Instance) void {
-    target.channel.acquire();
+    const acquired = target.channel.acquire();
     _ = target.channel.emit(.{
         .kind = .listening,
-        .server = target.handle.toInt(),
+        .server = target.handle.to_int(),
         .code = target.bound_port,
     });
     target.cluster.run() catch {
-        _ = target.channel.emit(.{ .kind = .engine_error, .server = target.handle.toInt() });
+        _ = target.channel.emit_terminal(.{ .kind = .engine_error, .server = target.handle.to_int() });
     };
     target.state.store(.closed, .release);
-    _ = target.channel.emit(.{ .kind = .server_closed, .server = target.handle.toInt() });
-    target.channel.release();
+    _ = target.channel.emit_terminal(.{ .kind = .server_closed, .server = target.handle.to_int() });
+    if (acquired) target.channel.release();
 }
 
 /// Best-effort local port of the bound listener. POSIX reads it back from the
 /// socket so `port: 0` reports the ephemeral port; Windows keeps the requested
 /// port because its listener is not a POSIX descriptor.
 fn bound_port(target: *instance.Instance) u16 {
-    if (builtin.os.tag == .windows) {
-        return target.config.listen.port;
-    } else {
-        const app = target.cluster.worker(0) orelse return target.config.listen.port;
-        const server = app.server orelse return target.config.listen.port;
-        return ports.bound_port(server.listener.fd) orelse target.config.listen.port;
-    }
-}
-
-pub fn create_server(env: napi.Env, raw: options.RawConfig, dispatch: napi.Callback) !u40 {
-    const config = try options.trust(raw);
-    return create(config, dispatch, env);
-}
-
-pub fn listen_server(env: napi.Env, raw: u40) !void {
-    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
-    try listen(target);
-}
-
-pub fn close_server(env: napi.Env, raw: u40) !void {
-    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
-    try close(target);
-}
-
-pub fn finalize_server(env: napi.Env, raw: u40) !void {
-    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
-    try finalize(target);
+    if (builtin.os.tag == .windows) return target.config.listen.port;
+    const app = target.cluster.worker(0) orelse return target.config.listen.port;
+    const server = app.server orelse return target.config.listen.port;
+    return ports.bound_port(server.listener.fd) orelse target.config.listen.port;
 }
