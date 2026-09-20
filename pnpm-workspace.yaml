@@ -1,2 +1,7 @@
 allowBuilds:
   lefthook: true
+
+# The pre-commit hooks run several pnpm commands in parallel, so pnpm's
+# automatic dependency check must not start an install mid-run and race module
+# resolution. CI installs explicitly with --frozen-lockfile.
+verifyDepsBeforeRun: false

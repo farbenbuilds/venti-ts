@@ -27,7 +27,7 @@
     "dev": "tsdown --watch",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "lint": "oxlint",
+    "lint": "oxlint && node scripts/check-conventions.mjs",
     "lint:fix": "oxlint --fix",
     "test": "pnpm run build:binding && vitest run",
     "test:watch": "pnpm run build:binding && vitest",

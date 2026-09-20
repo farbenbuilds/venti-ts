@@ -11,6 +11,7 @@ on:
       - "scripts/**"
       - "src/binding/**"
       - "tests/binding/**"
+      - "tests/binding.test.ts"
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/zig-test.yml"
@@ -24,6 +25,7 @@ on:
       - "scripts/**"
       - "src/binding/**"
       - "tests/binding/**"
+      - "tests/binding.test.ts"
       - "package.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/zig-test.yml"
@@ -31,7 +33,6 @@ on:
 
 permissions:
   contents: read
-  deployments: write
 
 concurrency:
   group: zig-test-${{ github.ref }}
@@ -58,7 +59,7 @@ jobs:
           path: |
             .zig-cache
             zig-pkg
-          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
+          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig', 'build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
           restore-keys: |
             zig-0.16.0-${{ runner.os }}-${{ github.repository }}-
 
@@ -107,7 +108,7 @@ jobs:
           path: |
             .zig-cache
             zig-pkg
-          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
+          key: zig-0.16.0-${{ runner.os }}-${{ github.repository }}-${{ hashFiles('build.zig', 'build.zig.zon', 'scripts/zig-cc-pic', 'scripts/zig-cxx-pic') }}
           restore-keys: |
             zig-0.16.0-${{ runner.os }}-${{ github.repository }}-
 
@@ -131,6 +132,9 @@ jobs:
 
       - name: Build the native addon
         run: pnpm build:binding
+
+      - name: Check the built declarations
+        run: pnpm exec tsdown && pnpm run typecheck:dist
 
       - name: Run binding lifecycle tests
         run: pnpm exec vitest run tests/binding.test.ts tests/binding

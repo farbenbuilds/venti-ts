@@ -21,7 +21,6 @@ on:
 
 permissions:
   contents: read
-  deployments: write
 
 concurrency:
   group: zig-lint-${{ github.ref }}
