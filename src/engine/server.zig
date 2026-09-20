@@ -1,0 +1,153 @@
+//! Native server lifecycle: create, listen, close, finalize.
+//!
+//! Create and finalize run on the Node main thread and own every allocation.
+//! The engine event loop runs on its own thread, is started by `listen`, and
+//! is stopped through the cluster's threadsafe wakeup. The last event an
+//! engine thread emits is `server_closed`; finalize joins that thread and
+//! refuses to free anything while events are still queued, so a dispatch
+//! callback can never touch freed memory.
+
+const std = @import("std");
+const builtin = @import("builtin");
+const napi = @import("napi-zig");
+const connections = @import("connections.zig");
+const instance = @import("instance.zig");
+const options = @import("options.zig");
+const ports = @import("ports.zig");
+
+/// Builds the engine application around an already-trusted configuration.
+pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.Env) !u40 {
+    const handle = try instance.servers.claim();
+    errdefer instance.servers.retire(handle);
+
+    const target = try std.heap.smp_allocator.create(instance.Instance);
+    errdefer std.heap.smp_allocator.destroy(target);
+
+    target.* = .{
+        .config = config,
+        .cluster = undefined,
+        .handle = handle,
+        .env = env.handle,
+    };
+    try target.channel.open(env, dispatch);
+    errdefer target.channel.close();
+
+    target.cluster = try instance.ClusterType.init_with_options(
+        std.heap.smp_allocator,
+        target.io.io(),
+        .{ .cpu_affinity = false },
+    );
+    errdefer target.cluster.deinit();
+
+    try connections.attach_route(target);
+    instance.servers.publish(handle, target);
+    return handle.toInt();
+}
+
+/// Binds the listener and starts the engine thread. The engine thread emits
+/// `listening` after it owns the tsfn, so `listening` always precedes any
+/// connection event.
+pub fn listen(target: *instance.Instance) !void {
+    if (target.state.load(.acquire) != .created) return error.InvalidServerState;
+    try target.cluster.listen(target.config.listen.host_slice(), target.config.listen.port);
+    target.bound_port = bound_port(target);
+    target.state.store(.listening, .release);
+    target.runner = std.Thread.spawn(.{}, run_engine, .{target}) catch |err| {
+        target.channel.close();
+        target.cluster.deinit();
+        instance.servers.retire(target.handle);
+        std.heap.smp_allocator.destroy(target);
+        return err;
+    };
+}
+
+/// Requests shutdown. Completion arrives as a `server_closed` event.
+pub fn close(target: *instance.Instance) !void {
+    switch (target.state.load(.acquire)) {
+        .created => {
+            if (target.state.cmpxchgStrong(.created, .closed, .acq_rel, .acquire) != null) {
+                return error.InvalidServerState;
+            }
+            _ = target.channel.emit(.{
+                .kind = .server_closed,
+                .server = target.handle.toInt(),
+            });
+        },
+        .listening => {
+            if (target.state.cmpxchgStrong(.listening, .closing, .acq_rel, .acquire) != null) {
+                return error.InvalidServerState;
+            }
+            target.cluster.request_shutdown();
+        },
+        .closing, .closed => return error.InvalidServerState,
+    }
+}
+
+/// Joins the engine thread and releases every native resource.
+///
+/// The join happens before the pending check: once the engine thread is gone
+/// no new event can be reserved, so `pending == 0` proves every queued
+/// dispatch has already run. JavaScript must wait for `server_closed` before
+/// calling finalize; finalizing early returns `EventsPending` instead of
+/// freeing memory a queued callback still references.
+pub fn finalize(target: *instance.Instance) !void {
+    if (target.state.load(.acquire) != .closed) return error.ServerNotClosed;
+    if (target.runner) |runner| {
+        runner.join();
+        target.runner = null;
+    }
+    if (target.channel.pending() != 0) return error.EventsPending;
+
+    target.channel.close();
+    target.cluster.deinit();
+    instance.servers.retire(target.handle);
+    std.heap.smp_allocator.destroy(target);
+}
+
+fn run_engine(target: *instance.Instance) void {
+    target.channel.acquire();
+    _ = target.channel.emit(.{
+        .kind = .listening,
+        .server = target.handle.toInt(),
+        .code = target.bound_port,
+    });
+    target.cluster.run() catch {
+        _ = target.channel.emit(.{ .kind = .engine_error, .server = target.handle.toInt() });
+    };
+    target.state.store(.closed, .release);
+    _ = target.channel.emit(.{ .kind = .server_closed, .server = target.handle.toInt() });
+    target.channel.release();
+}
+
+/// Best-effort local port of the bound listener. POSIX reads it back from the
+/// socket so `port: 0` reports the ephemeral port; Windows keeps the requested
+/// port because its listener is not a POSIX descriptor.
+fn bound_port(target: *instance.Instance) u16 {
+    if (builtin.os.tag == .windows) {
+        return target.config.listen.port;
+    } else {
+        const app = target.cluster.worker(0) orelse return target.config.listen.port;
+        const server = app.server orelse return target.config.listen.port;
+        return ports.bound_port(server.listener.fd) orelse target.config.listen.port;
+    }
+}
+
+pub fn create_server(env: napi.Env, raw: options.RawConfig, dispatch: napi.Callback) !u40 {
+    const config = try options.trust(raw);
+    return create(config, dispatch, env);
+}
+
+pub fn listen_server(env: napi.Env, raw: u40) !void {
+    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
+    try listen(target);
+}
+
+pub fn close_server(env: napi.Env, raw: u40) !void {
+    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
+    try close(target);
+}
+
+pub fn finalize_server(env: napi.Env, raw: u40) !void {
+    const target = instance.lookup(env, raw) orelse return error.UnknownServer;
+    try finalize(target);
+}

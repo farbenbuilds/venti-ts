@@ -8,12 +8,12 @@ pub const Input = struct {
     optimize: std.builtin.OptimizeMode,
 };
 
-/// Builds src/lib.zig as a test root with the same imports as the addon and
-/// registers the `zig build test` step.
+/// Builds the Zig unit test entry as a test root with the same imports as the
+/// addon and registers the `zig build test` step.
 pub fn inject(b: *std.Build, input: Input) void {
     const module_tests = b.addTest(.{
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/lib.zig"),
+            .root_source_file = b.path("src/engine_tests.zig"),
             .target = input.target,
             .optimize = input.optimize,
             .imports = &.{

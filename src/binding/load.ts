@@ -2,11 +2,9 @@ import { existsSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import type { VentiAddon } from "./native"
 
-export type VentiAddon = {
-  engineVersion(): string
-  http3Available(): boolean
-}
+export type { VentiAddon } from "./native"
 
 const require = createRequire(import.meta.url)
 
