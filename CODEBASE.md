@@ -67,7 +67,11 @@ ventijs/
 │   │   ├── callbacks.zig      # threadsafe channel rendering events to JS
 │   │   ├── instance.zig       # live server record and instance table
 │   │   ├── connections.zig    # engine WebSocket route trampolines
-│   │   └── server.zig         # server lifecycle free functions
+│   │   ├── server.zig         # server lifecycle free functions
+│   │   ├── payload.zig        # bounded outbound payload staging ring
+│   │   ├── status.zig         # connection state and operation vocabulary
+│   │   ├── socket.zig         # per-connection ops and terminal latch
+│   │   └── socket_io.zig      # handle-resolving socket FFI free functions
 │   ├── engine-tests/          # one Zig unit suite per testable module
 │   │   ├── root.zig           # suite aggregator
 │   │   ├── lib_test.zig
@@ -78,12 +82,15 @@ ventijs/
 │   │   ├── ring_test.zig
 │   │   ├── ports_test.zig
 │   │   ├── callbacks_test.zig
-│   │   └── instance_test.zig
+│   │   ├── instance_test.zig
+│   │   ├── payload_test.zig
+│   │   └── socket_test.zig
 │   ├── binding/
 │   │   ├── load.ts            # native addon resolution and typed loading
 │   │   ├── native.ts          # addon ABI types and engine event records
 │   │   ├── handle.ts          # connection handle pack and unpack helpers
-│   │   └── server.ts          # server create/listen/close/finalize wrappers
+│   │   ├── server.ts          # server create/listen/close/finalize wrappers
+│   │   └── socket.ts          # socket send/close/pause/resume wrappers
 │   ├── compat/
 │   │   ├── client-options.ts  # client option normalization and defaults
 │   │   ├── errors.ts          # coded error factories and status mapping
@@ -158,6 +165,8 @@ src/
 ├── engine/                    # native engine modules, one responsibility each
 │   ├── server.zig             # engine lifecycle as free functions
 │   ├── socket.zig             # per-connection handles and state transitions
+│   ├── payload.zig            # bounded outbound payload staging
+│   ├── status.zig             # connection state and operation vocabulary
 │   └── ...                    # further Zig modules split by one responsibility
 └── ...                        # further entry points and build wiring
 ```
@@ -285,11 +294,19 @@ JS: socket.send(data, options)
 compat/socket.ts: validate data and options
       |
       v
-binding/socket.ts: send(handle, slice, opcode, fin) ----> Zig outbound ring
-                                                               |
-                                                      bounded write queue
-                                                               |
-                                                      libxev non-blocking write
+binding/socket.ts: sendSocket(server, connection, data, binary)
+      |
+      v
+engine/socket_io.zig: resolve server and connection handles
+      |
+      v
+engine/socket.zig: state transition ----> engine/payload.zig: copy into the
+                                                   bounded staging ring
+                                                          |
+                                                  (engine-thread drain lands
+                                                   with the message pump)
+                                                          |
+                                                   libxev non-blocking write
 ```
 
 Backpressure flows the other way: when the outbound ring exceeds its
@@ -339,10 +356,10 @@ the ABI.
 
 ## Current branch state
 
-`feat/native-foundation` adds the native memory foundation, the server
-lifecycle, and the only threadsafe path from an engine thread to JavaScript, on
-top of the merged type surface, listener registry, and protocol and compat
-leaves:
+`feat/native-foundation` added the native memory foundation, the server
+lifecycle, and the only threadsafe path from an engine thread to JavaScript.
+`feat/socket-io` adds the per-connection state machine, the bounded outbound
+staging ring, and the socket FFI on top of it:
 
 - `src/engine/handles.zig` holds the generation-checked connection slab. One slot maps
   one-to-one onto an engine pool slot; `acquire` bumps the generation and
@@ -382,6 +399,37 @@ leaves:
 - `tests/binding.test.ts` proves the Zig build, addon load, version round-trip,
   and lifecycle surface; `tests/binding/` drives create, listen, a live
   WebSocket connection through the slab, close, and finalize.
+- `src/engine/payload.zig` is the outbound boundary. `stage` copies JavaScript
+  bytes into a fixed-capacity structure-of-arrays ring before the call returns
+  and publishes each record with a release store, so JavaScript memory is never
+  retained and the engine thread only ever observes whole records. An
+  oversized payload is rejected before any copy, and a full ring reports
+  backpressure instead of allocating.
+- `src/engine/status.zig` holds the connection lifecycle and operation
+  vocabulary, including the `ws` close-code acceptance rule.
+- `src/engine/socket.zig` is the per-connection slab: one record per engine
+  pool slot, mirroring the handle index, with the bounded ring attached.
+  `send`, `close`, `pause_dispatch`, and `resume_dispatch` are explicit
+  transitions over that record; `finish` flips the terminal latch with one
+  atomic compare-exchange per connection generation, so a close race can never
+  emit two terminal events. `connections.zig` opens the record when a peer
+  arrives and only emits `connectionClose` for the latch winner.
+- `src/engine/socket_io.zig` is the FFI seam: every entry point resolves the
+  server through the instance table and the connection through the
+  generation-checked slab first, so a call against a closed connection returns
+  `invalid-handle` instead of dereferencing a stale slot.
+- `src/binding/socket.ts` mirrors that surface for TypeScript: `sendSocket`,
+  `closeSocket`, `pauseSocket`, `resumeSocket`, and `socketBufferedAmount`
+  validate handles, payloads, and close codes before the native call and map
+  the camelCase ABI statuses onto `EngineStatus`. `EngineStatus` gained
+  `invalid-close-code` and `invalid-close-reason`, and the coded-error map
+  covers both.
+- `src/engine-tests/{payload,socket}_test.zig` cover copy semantics, capacity
+  limits, close validation, dispatch pause, buffered accounting, and the
+  concurrent terminal latch; `tests/binding/socket*.test.ts` drive the ops
+  through the addon against a live connection. The engine-thread drain that
+  turns staged records into frames is the next milestone: the ring and the
+  per-connection accounting are in place, but nothing consumes them yet.
 
 The build-graph bullets below come from `refactor/build-orchestrator` and
 remain current:
@@ -421,7 +469,7 @@ remain current:
 - `tests/binding.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
-The `compat/` factories, the socket handles, and the message path are the next
-implementation milestones. The addon currently exposes the engine version and
-the server lifecycle; per-connection send/close/ping and the `ws` runtime
-surface land next.
+The `compat/` factories, the engine-thread drain that flushes the staging ring,
+and the message path are the next implementation milestones. The addon exposes
+the engine version, the server lifecycle, and the per-connection socket
+operations; the `ws` runtime surface lands on top of them.

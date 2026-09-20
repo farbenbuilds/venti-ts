@@ -11,7 +11,9 @@ const uwz = @import("uWebZockets");
 const callbacks = @import("callbacks.zig");
 const handles = @import("handles.zig");
 const options = @import("options.zig");
+const payload = @import("payload.zig");
 const registry = @import("registry.zig");
+const socket = @import("socket.zig");
 
 const c = napi.c;
 
@@ -31,6 +33,12 @@ pub const Slab = handles.connection_slab(options.connection_capacity);
 pub const Table = registry.slot_table(server_capacity, Instance);
 pub const Handle = registry.Handle;
 
+/// Outbound payload slots staged per server. Slot bytes equal the trusted
+/// message cap, so every accepted message fits exactly one record.
+pub const payload_slots: usize = 8;
+pub const PayloadRing = payload.payload_ring(payload_slots, @as(usize, options.message_capacity));
+pub const Sockets = socket.socket_slab(options.connection_capacity, PayloadRing);
+
 /// Mutable process-wide binding table. This is the one module-level variable
 /// in the addon: the engine callback ABI carries no user context, so the
 /// bounded table is how a callback finds its server. It is only written by
@@ -40,6 +48,7 @@ pub var servers: Table = .{};
 
 /// One live engine server. Fields are ordered largest first.
 pub const Instance = struct {
+    sockets: Sockets = .{},
     channel: callbacks.Channel = .{},
     slab: Slab = .{},
     config: options.ServerConfig,

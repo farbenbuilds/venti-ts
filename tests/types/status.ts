@@ -8,6 +8,8 @@ export const engineStatuses: readonly EngineStatus[] = [
   "backpressure",
   "invalid-handle",
   "payload-too-large",
+  "invalid-close-code",
+  "invalid-close-reason",
   "protocol-error",
   "policy-violation",
 ];
@@ -16,6 +18,8 @@ export const statusErrors: StatusErrorMap = {
   closed: "ERR_SOCKET_CLOSED",
   "invalid-handle": "ERR_INVALID_HANDLE",
   "payload-too-large": "ERR_MAX_PAYLOAD",
+  "invalid-close-code": "ERR_INVALID_CLOSE_CODE",
+  "invalid-close-reason": "ERR_INVALID_CLOSE_REASON",
   "protocol-error": "ERR_PROTOCOL",
   "policy-violation": "ERR_POLICY_VIOLATION",
 };

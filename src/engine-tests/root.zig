@@ -16,4 +16,6 @@ test {
     _ = @import("ports_test.zig");
     _ = @import("callbacks_test.zig");
     _ = @import("instance_test.zig");
+    _ = @import("payload_test.zig");
+    _ = @import("socket_test.zig");
 }

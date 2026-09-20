@@ -7,6 +7,8 @@ export type EngineStatus =
   | "backpressure"
   | "invalid-handle"
   | "payload-too-large"
+  | "invalid-close-code"
+  | "invalid-close-reason"
   | "protocol-error"
   | "policy-violation";
 

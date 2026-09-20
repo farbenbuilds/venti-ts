@@ -20,3 +20,12 @@ test("exposes the server lifecycle surface", () => {
   expect(typeof addon.closeServer).toBe("function");
   expect(typeof addon.finalizeServer).toBe("function");
 });
+
+test("exposes the per-connection socket surface", () => {
+  const addon = loadAddon();
+  expect(typeof addon.sendSocket).toBe("function");
+  expect(typeof addon.closeSocket).toBe("function");
+  expect(typeof addon.pauseSocket).toBe("function");
+  expect(typeof addon.resumeSocket).toBe("function");
+  expect(typeof addon.socketBufferedAmount).toBe("function");
+});

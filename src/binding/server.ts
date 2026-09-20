@@ -6,7 +6,7 @@ export type ServerHandle = number;
 /// The native side packs the slot byte and a 32 bit generation into a u40.
 const MAX_SERVER_HANDLE = 2 ** 40 - 1;
 
-function assertServerHandle(handle: ServerHandle): void {
+export function assertServerHandle(handle: ServerHandle): void {
   if (!Number.isSafeInteger(handle) || handle < 0 || handle > MAX_SERVER_HANDLE) {
     throw new RangeError(`ventijs: server handle must be a uint40, got ${handle}`);
   }
