@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="misc/venti_banner.png" alt="ventijs banner" />
+  <img src="misc/ventijs_banner.png" alt="ventijs banner" />
 </p>
 
 # ventijs
