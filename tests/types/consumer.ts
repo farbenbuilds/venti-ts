@@ -1,7 +1,11 @@
 import type WebSocketDefault from "../../src/index";
 import type {
+  AddressInfo,
   ClientOptions,
   CloseEvent,
+  ErrorEvent,
+  Event,
+  EventListenerOptions,
   MessageEvent,
   PerMessageDeflateOptions,
   RawData,
@@ -10,6 +14,7 @@ import type {
   VerifyClientCallbackAsync,
   WebSocket,
   WebSocketServer,
+  createWebSocketStream,
 } from "../../src/index";
 
 export type DefaultSocket = WebSocketDefault;
@@ -47,3 +52,15 @@ export const closeCodeOf = (event: CloseEvent): number => event.code;
 export const messageDataOf = (event: MessageEvent): WebSocket.Data => event.data;
 export const binaryTypeOf = (socket: WebSocket): WebSocket["binaryType"] => socket.binaryType;
 export const readyStateOf = (socket: WebSocket): WebSocket["readyState"] => socket.readyState;
+
+export type StreamFactory = createWebSocketStream;
+export type EventListener = EventListenerOptions;
+export type Address = AddressInfo;
+export type ErrorEvt = ErrorEvent;
+export type GenericEvent = Event;
+
+// Negative cases: a widening regression would make these compile.
+// @ts-expect-error RawData is never a plain string
+export const badRawData: RawData = "payload";
+// @ts-expect-error Data is never a number
+export const badData: WebSocket.Data = 1;

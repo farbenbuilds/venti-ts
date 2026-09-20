@@ -694,3 +694,6 @@ export type ServerOptions<
 > = WebSocket.ServerOptions<U, V>;
 export type AddressInfo = WebSocket.AddressInfo;
 export type WebSocketServer = WebSocket.WebSocketServer;
+// Type-level parity with upstream's ESM entry; the runtime value lands with
+// the compat factory.
+export type createWebSocketStream = typeof WebSocket.createWebSocketStream;

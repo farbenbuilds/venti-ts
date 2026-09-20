@@ -37,6 +37,21 @@ test("validates subprotocols against the ws token grammar", () => {
   expect(() => normalizeProtocols(["chat", "chat"])).toThrow(SyntaxError);
 });
 
+test("wraps out-of-type values the way ws does", () => {
+  expect(() => normalizeProtocols(5 as never)).toThrow(SyntaxError);
+  expect(() => normalizeProtocols(null as never)).toThrow(SyntaxError);
+});
+
+test("a falsy client per-message deflate value disables the extension", () => {
+  expect(normalizeClientOptions({ perMessageDeflate: null as never }).perMessageDeflate).toBe(
+    false,
+  );
+  expect(normalizeClientOptions({ perMessageDeflate: 0 as never }).perMessageDeflate).toBe(false);
+  expect(normalizeClientOptions({ perMessageDeflate: false }).perMessageDeflate).toBe(false);
+  expect(normalizeClientOptions({ perMessageDeflate: true }).perMessageDeflate).not.toBe(false);
+  expect(normalizeClientOptions().perMessageDeflate).not.toBe(false);
+});
+
 test("returns a copy of the caller's protocol array", () => {
   const input = ["chat"];
   const protocols = normalizeProtocols(input);

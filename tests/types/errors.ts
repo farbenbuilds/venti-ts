@@ -6,6 +6,7 @@ export const errorCodes: readonly ErrorCode[] = [
   "ERR_INVALID_CLOSE_REASON",
   "ERR_SOCKET_NOT_OPEN",
   "ERR_SOCKET_CLOSED",
+  "ERR_INVALID_STATE",
   "ERR_INVALID_HANDLE",
   "ERR_MAX_PAYLOAD",
   "ERR_PROTOCOL",

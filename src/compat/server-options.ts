@@ -3,7 +3,9 @@ import type { ServerOptions } from "../types/ws";
 import { DEFAULT_MAX_PAYLOAD, invalidOption, normalizePerMessageDeflate } from "./options";
 
 export function normalizeServerOptions(options?: ServerOptions): NormalizedServerOptions {
-  const source = options ?? {};
+  // ws copies own enumerable properties before reading, so inherited
+  // properties are ignored and each getter runs exactly once.
+  const source = { ...options };
   const port = source.port ?? null;
   const server = source.server ?? null;
   const noServer = source.noServer ?? false;
@@ -37,7 +39,7 @@ function isAmbiguousListenTarget(
   noServer: boolean,
 ): boolean {
   const hasPort = port !== null;
-  const hasServer = server !== null;
+  const hasServer = Boolean(server);
   if (hasPort && (hasServer || noServer)) return true;
   if (hasServer && noServer) return true;
   return !hasPort && !hasServer && !noServer;

@@ -71,6 +71,26 @@ test("unsubscribing removes one occurrence without touching the previous registr
   expect(dispatch(removed, "open")).toBe(1);
 });
 
+test("removal drops the last occurrence, matching removeListener", () => {
+  const calls: string[] = [];
+  const duplicate = (): void => {
+    calls.push("duplicate");
+  };
+  const marker = (): void => {
+    calls.push("marker");
+  };
+  let registry = createRegistry<TestEventMap>();
+  registry = subscribe(registry, "open", duplicate);
+  registry = subscribe(registry, "open", marker);
+  registry = subscribe(registry, "open", duplicate);
+  dispatch(registry, "open");
+  expect(calls).toEqual(["duplicate", "marker", "duplicate"]);
+
+  calls.length = 0;
+  dispatch(unsubscribe(registry, "open", duplicate), "open");
+  expect(calls).toEqual(["duplicate", "marker"]);
+});
+
 test("dispatching iterates the array captured at call time", () => {
   const calls: string[] = [];
   let registry = createRegistry<TestEventMap>();

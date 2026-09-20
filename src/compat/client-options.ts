@@ -8,7 +8,9 @@ import {
 } from "./options";
 
 export function normalizeClientOptions(options?: ClientOptions): NormalizedClientOptions {
-  const source = options ?? {};
+  // ws copies own enumerable properties before reading, so inherited
+  // properties are ignored and each getter runs exactly once.
+  const source = { ...options };
   const protocolVersion = source.protocolVersion ?? 13;
   if (protocolVersion !== 8 && protocolVersion !== 13) {
     invalidOption(

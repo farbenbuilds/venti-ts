@@ -53,5 +53,9 @@ test("writes into a caller-owned target and rejects invalid arguments", () => {
   expect(applyMask(source, mask, target)).toBe(true);
   expect([...target]).toEqual([254, 253, 252, 251]);
   expect(applyMask(source, Uint8Array.from([1, 2, 3]), target)).toBe(false);
+  expect([...target]).toEqual([254, 253, 252, 251]);
   expect(applyMask(source, mask, new Uint8Array(3))).toBe(false);
+  const longer = new Uint8Array(6);
+  expect(applyMask(source, mask, longer)).toBe(true);
+  expect([...longer]).toEqual([254, 253, 252, 251, 0, 0]);
 });

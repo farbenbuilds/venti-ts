@@ -1,4 +1,5 @@
 import { createRegistry, dispatch, subscribe } from "../../src/compat/events";
+import { normalizeServerOptions } from "../../src/compat/server-options";
 import type { EventMap, Handler, Registry } from "../../src/types/events";
 import type { ServerEventMap, ServerState } from "../../src/types/server";
 import type { SocketEventMap, SocketState } from "../../src/types/socket";
@@ -77,6 +78,7 @@ export const socketState: SocketState = {
 
 export const serverState: ServerState = {
   options: {},
+  normalizedOptions: normalizeServerOptions({ noServer: true }),
   path: "/",
   clients: new Set<WebSocket>(),
   listeners: createRegistry<ServerEventMap>(),

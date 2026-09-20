@@ -35,3 +35,15 @@ test("recognizes coded errors at untrusted boundaries", () => {
   expect(isCodedError({ code: "ERR_PROTOCOL" })).toBe(false);
   expect(isCodedError(null)).toBe(false);
 });
+
+test("rejects foreign and hostile codes", () => {
+  const foreign = Object.assign(new Error("ws"), { code: "WS_ERR_UNEXPECTED_RSV_1" });
+  expect(isCodedError(foreign)).toBe(false);
+  const hostile = new Error("hostile");
+  Object.defineProperty(hostile, "code", {
+    get() {
+      throw new Error("boom");
+    },
+  });
+  expect(isCodedError(hostile)).toBe(false);
+});
