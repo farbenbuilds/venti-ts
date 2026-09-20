@@ -1,12 +1,12 @@
-import { RuleTester } from "oxlint/plugins-dev"
-import { describe, it } from "vitest"
-import plugin from "../scripts/oxlint-plugin.mjs"
+import { RuleTester } from "oxlint/plugins-dev";
+import { describe, it } from "vitest";
+import plugin from "../scripts/oxlint-plugin.mjs";
 
-RuleTester.describe = describe
-RuleTester.it = it
+RuleTester.describe = describe;
+RuleTester.it = it;
 
-const ruleTester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } })
-const rules = plugin.rules
+const ruleTester = new RuleTester({ languageOptions: { parserOptions: { lang: "ts" } } });
+const rules = plugin.rules;
 
 ruleTester.run("no-oop", rules["no-oop"], {
   valid: ["export function ok(): number { return 1 }"],
@@ -36,7 +36,7 @@ ruleTester.run("no-oop", rules["no-oop"], {
       errors: [{ message: "Prototype mutation is banned." }],
     },
   ],
-})
+});
 
 ruleTester.run("no-enum", rules["no-enum"], {
   valid: ["export const COLOURS = ['red'] as const"],
@@ -46,9 +46,9 @@ ruleTester.run("no-enum", rules["no-enum"], {
       errors: [{ message: "Enums are banned; use `as const` unions." }],
     },
   ],
-})
+});
 
-const rocket = String.fromCodePoint(0x1f680)
+const rocket = String.fromCodePoint(0x1f680);
 
 ruleTester.run("no-emoji", rules["no-emoji"], {
   valid: ["export const name = 'rocket'"],
@@ -58,4 +58,4 @@ ruleTester.run("no-emoji", rules["no-emoji"], {
       errors: [{ message: "Emoji code points are banned in code, comments, and strings." }],
     },
   ],
-})
+});

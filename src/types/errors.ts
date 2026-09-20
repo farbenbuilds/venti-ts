@@ -7,6 +7,6 @@ export type ErrorCode =
   | "ERR_INVALID_HANDLE"
   | "ERR_MAX_PAYLOAD"
   | "ERR_PROTOCOL"
-  | "ERR_POLICY_VIOLATION"
+  | "ERR_POLICY_VIOLATION";
 
-export type CodedError = Error & { readonly code: ErrorCode }
+export type CodedError = Error & { readonly code: ErrorCode };

@@ -83,15 +83,15 @@ pnpm build
 The target surface is a drop-in replacement for `ws`:
 
 ```ts
-import { WebSocketServer } from "venti-ts"
+import { WebSocketServer } from "venti-ts";
 
-const server = new WebSocketServer({ port: 8080 })
+const server = new WebSocketServer({ port: 8080 });
 
 server.on("connection", (socket) => {
   socket.on("message", (data, isBinary) => {
-    socket.send(data, { binary: isBinary })
-  })
-})
+    socket.send(data, { binary: isBinary });
+  });
+});
 ```
 
 Constructor-shaped exports are plain functions that return explicit state

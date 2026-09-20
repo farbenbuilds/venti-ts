@@ -31,9 +31,9 @@ TypeScript:
 
 ```ts
 function normalizePort(input: unknown): number {
-  if (typeof input !== "number" || !Number.isInteger(input)) throw invalidPort(input)
-  if (input < 0 || input > 65535) throw invalidPort(input)
-  return input
+  if (typeof input !== "number" || !Number.isInteger(input)) throw invalidPort(input);
+  if (input < 0 || input > 65535) throw invalidPort(input);
+  return input;
 }
 ```
 
@@ -78,13 +78,13 @@ frozen instance:
 
 ```ts
 export function createSocket(options: SocketOptions): SocketHandle {
-  const listeners = createListenerRegistry()
-  const state = { readyState: CONNECTING, bufferedAmount: 0 }
+  const listeners = createListenerRegistry();
+  const state = { readyState: CONNECTING, bufferedAmount: 0 };
 
   const send = (data: Buffer, sendOptions?: SendOptions): boolean => {
-    if (state.readyState !== OPEN) return false
-    return bindingSend(options.connection, data, sendOptions)
-  }
+    if (state.readyState !== OPEN) return false;
+    return bindingSend(options.connection, data, sendOptions);
+  };
 
   return {
     send,
@@ -93,9 +93,9 @@ export function createSocket(options: SocketOptions): SocketHandle {
     on,
     off,
     get bufferedAmount() {
-      return state.bufferedAmount
+      return state.bufferedAmount;
     },
-  }
+  };
 }
 ```
 
@@ -142,6 +142,8 @@ receiver-style functions that silently mutate captured state.
   `import type WebSocket from "venti-ts"` stays drop-in; the runtime default
   arrives with the compatibility layer.
 - **Types over interfaces** unless declaration merging is required.
+- **Semicolons:** every statement and type member ends with `;`. `oxfmt`
+  enforces this, including code samples embedded in Markdown.
 - **No `any`.** Use `unknown` at untrusted boundaries and narrow explicitly.
 - **No non-null assertions** in binding code. Validate the handle exists.
 - **Explicit return types** on every exported function.
@@ -200,7 +202,9 @@ receiver-style functions that silently mutate captured state.
 | Zig formatting                 | `zig fmt`                                    | `zig fmt --check --exclude zig-pkg src build.zig` |
 | Nix formatting                 | `alejandra`                                  | `nix fmt`                                         |
 
-`.oxlintrc.json` encodes the mechanically checkable rules from this document.
+`.oxfmtrc.json` is authoritative for layout: double quotes, semicolons, and
+trailing commas in every multiline construct. `.oxlintrc.json` encodes the
+mechanically checkable rules from this document.
 The local plugin in `scripts/oxlint-plugin.mjs` bans classes, `this`, prototype
 mutation, enums, and emoji; native rules cover `max-lines`, `no-else-return`,
 `typescript/consistent-type-definitions`, `typescript/consistent-type-imports`,

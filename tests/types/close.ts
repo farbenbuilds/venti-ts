@@ -1,6 +1,6 @@
-import type { ProtocolCloseCode, ReadyState } from "../../src/types/close"
+import type { ProtocolCloseCode, ReadyState } from "../../src/types/close";
 
-export const readyStates: readonly ReadyState[] = [0, 1, 2, 3]
+export const readyStates: readonly ReadyState[] = [0, 1, 2, 3];
 
 export const protocolCodeTable: Readonly<Record<ProtocolCloseCode, true>> = {
   1000: true,
@@ -19,8 +19,8 @@ export const protocolCodeTable: Readonly<Record<ProtocolCloseCode, true>> = {
   1013: true,
   1014: true,
   1015: true,
-}
+};
 
 export function isTerminal(state: ReadyState): boolean {
-  return state === 3
+  return state === 3;
 }

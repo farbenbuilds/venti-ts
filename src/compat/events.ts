@@ -1,14 +1,14 @@
-import type { EventMap, Handler, Registry } from "../types/events"
+import type { EventMap, Handler, Registry } from "../types/events";
 
 export function createRegistry<E extends EventMap>(): Registry<E> {
-  return {}
+  return {};
 }
 
 export function listenerCount<E extends EventMap, K extends keyof E>(
   registry: Registry<E>,
   event: K,
 ): number {
-  return registry[event]?.length ?? 0
+  return registry[event]?.length ?? 0;
 }
 
 export function subscribe<E extends EventMap, K extends keyof E>(
@@ -16,8 +16,8 @@ export function subscribe<E extends EventMap, K extends keyof E>(
   event: K,
   handler: Handler<E[K]>,
 ): Registry<E> {
-  const bucket = registry[event] ?? []
-  return { ...registry, [event]: [...bucket, handler] }
+  const bucket = registry[event] ?? [];
+  return { ...registry, [event]: [...bucket, handler] };
 }
 
 export function unsubscribe<E extends EventMap, K extends keyof E>(
@@ -25,11 +25,11 @@ export function unsubscribe<E extends EventMap, K extends keyof E>(
   event: K,
   handler: Handler<E[K]>,
 ): Registry<E> {
-  const bucket = registry[event]
-  if (bucket === undefined) return registry
-  const index = bucket.lastIndexOf(handler)
-  if (index === -1) return registry
-  return { ...registry, [event]: bucket.toSpliced(index, 1) }
+  const bucket = registry[event];
+  if (bucket === undefined) return registry;
+  const index = bucket.lastIndexOf(handler);
+  if (index === -1) return registry;
+  return { ...registry, [event]: bucket.toSpliced(index, 1) };
 }
 
 export function dispatch<E extends EventMap, K extends keyof E>(
@@ -37,10 +37,10 @@ export function dispatch<E extends EventMap, K extends keyof E>(
   event: K,
   ...args: E[K]
 ): number {
-  const bucket = registry[event]
-  if (bucket === undefined) return 0
+  const bucket = registry[event];
+  if (bucket === undefined) return 0;
   for (let index = 0; index < bucket.length; index += 1) {
-    bucket[index](...args)
+    bucket[index](...args);
   }
-  return bucket.length
+  return bucket.length;
 }

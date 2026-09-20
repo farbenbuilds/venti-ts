@@ -1,67 +1,67 @@
-import { createRegistry, dispatch, subscribe } from "../../src/compat/events"
-import type { EventMap, Handler, Registry } from "../../src/types/events"
-import type { ServerEventMap, ServerState } from "../../src/types/server"
-import type { SocketEventMap, SocketState } from "../../src/types/socket"
-import type { WebSocket } from "../../src/types/ws"
-import type { ClientRequest, IncomingMessage } from "node:http"
-import type { Duplex } from "node:stream"
+import { createRegistry, dispatch, subscribe } from "../../src/compat/events";
+import type { EventMap, Handler, Registry } from "../../src/types/events";
+import type { ServerEventMap, ServerState } from "../../src/types/server";
+import type { SocketEventMap, SocketState } from "../../src/types/socket";
+import type { WebSocket } from "../../src/types/ws";
+import type { ClientRequest, IncomingMessage } from "node:http";
+import type { Duplex } from "node:stream";
 
 type HandlerTable<E extends EventMap> = {
-  [K in keyof E]: Handler<E[K]>
-}
+  [K in keyof E]: Handler<E[K]>;
+};
 
 export const socketHandlers: HandlerTable<SocketEventMap> = {
   open: (): void => {},
   message: (data: WebSocket.RawData, isBinary: boolean): void => {
-    void data
-    void isBinary
+    void data;
+    void isBinary;
   },
   close: (code: number, reason: Buffer): void => {
-    void code
-    void reason
+    void code;
+    void reason;
   },
   error: (error: Error): void => {
-    void error
+    void error;
   },
   ping: (data: Buffer): void => {
-    void data
+    void data;
   },
   pong: (data: Buffer): void => {
-    void data
+    void data;
   },
   upgrade: (request: IncomingMessage): void => {
-    void request
+    void request;
   },
   redirect: (url: string, request: ClientRequest): void => {
-    void url
-    void request
+    void url;
+    void request;
   },
   "unexpected-response": (request: ClientRequest, response: IncomingMessage): void => {
-    void request
-    void response
+    void request;
+    void response;
   },
-}
+};
 
 export const serverHandlers: HandlerTable<ServerEventMap> = {
   connection: (socket: WebSocket, request: IncomingMessage): void => {
-    void socket
-    void request
+    void socket;
+    void request;
   },
   error: (error: Error): void => {
-    void error
+    void error;
   },
   headers: (headers: string[], request: IncomingMessage): void => {
-    void headers
-    void request
+    void headers;
+    void request;
   },
   close: (): void => {},
   listening: (): void => {},
   wsClientError: (error: Error, socket: Duplex, request: IncomingMessage): void => {
-    void error
-    void socket
-    void request
+    void error;
+    void socket;
+    void request;
   },
-}
+};
 
 export const socketState: SocketState = {
   url: "ws://example.test",
@@ -73,29 +73,29 @@ export const socketState: SocketState = {
   isPaused: false,
   domHandlers: { onopen: null, onerror: null, onclose: null, onmessage: null },
   listeners: createRegistry<SocketEventMap>(),
-}
+};
 
 export const serverState: ServerState = {
   options: {},
   path: "/",
   clients: new Set<WebSocket>(),
   listeners: createRegistry<ServerEventMap>(),
-}
+};
 
-export type SocketRegistry = Registry<SocketEventMap>
-export type ServerRegistry = Registry<ServerEventMap>
+export type SocketRegistry = Registry<SocketEventMap>;
+export type ServerRegistry = Registry<ServerEventMap>;
 
 export function registerMessage(
   socket: SocketState,
   handler: Handler<SocketEventMap["message"]>,
 ): SocketState {
-  return { ...socket, listeners: subscribe(socket.listeners, "message", handler) }
+  return { ...socket, listeners: subscribe(socket.listeners, "message", handler) };
 }
 
 export function announceClose(socket: SocketState): number {
-  return dispatch(socket.listeners, "close", 1000, Buffer.from("done"))
+  return dispatch(socket.listeners, "close", 1000, Buffer.from("done"));
 }
 
 export function announceOpen(): number {
-  return dispatch(createRegistry<SocketEventMap>(), "open")
+  return dispatch(createRegistry<SocketEventMap>(), "open");
 }

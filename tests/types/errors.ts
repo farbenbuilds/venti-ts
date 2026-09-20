@@ -1,4 +1,4 @@
-import type { CodedError, ErrorCode } from "../../src/types/errors"
+import type { CodedError, ErrorCode } from "../../src/types/errors";
 
 export const errorCodes: readonly ErrorCode[] = [
   "ERR_INVALID_OPTION",
@@ -10,8 +10,8 @@ export const errorCodes: readonly ErrorCode[] = [
   "ERR_MAX_PAYLOAD",
   "ERR_PROTOCOL",
   "ERR_POLICY_VIOLATION",
-]
+];
 
 export function readErrorCode(error: CodedError): ErrorCode {
-  return error.code
+  return error.code;
 }
