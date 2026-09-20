@@ -31,7 +31,7 @@ Describe the change and why it belongs in venti-ts. Link the issue it closes.
 - [ ] `pnpm typecheck` passes.
 - [ ] `pnpm test` passes.
 - [ ] `pnpm build` produces the bundle and declarations.
-- [ ] `zig fmt --check zig src` passes for Zig changes.
+- [ ] `zig fmt --check --exclude zig-pkg src build.zig` passes for Zig changes.
 - [ ] Boundary changes cover payload retention, buffer copying, exactly-once
       `close`, stale handles, and capacity exhaustion.
 - [ ] `ws` conformance tests pass for compatibility changes.
