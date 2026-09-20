@@ -1,4 +1,4 @@
-# venti-ts Coding Conventions
+# ventijs Coding Conventions
 
 These conventions bind both languages in this repository. They adapt the spirit
 of the Linux kernel coding style to strict TypeScript and Zig 0.16.0, and they
@@ -139,7 +139,7 @@ receiver-style functions that silently mutate captured state.
   enforces this; the build fails otherwise.
 - **Exports:** named exports only. No default exports. The one exception is
   `src/index.ts`, which mirrors `ws` with a type-only default re-export so that
-  `import type WebSocket from "venti-ts"` stays drop-in; the runtime default
+  `import type WebSocket from "ventijs"` stays drop-in; the runtime default
   arrives with the compatibility layer.
 - **Types over interfaces** unless declaration merging is required.
 - **Semicolons:** every statement and type member ends with `;`. `oxfmt`

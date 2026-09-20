@@ -18,7 +18,7 @@ pub fn inject(b: *std.Build) void {
     const options_module = build_options.createModule();
 
     napi_zig.addLib(b, napi_dep, .{
-        .name = "venti",
+        .name = "ventijs",
         .root = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,

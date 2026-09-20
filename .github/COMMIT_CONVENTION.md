@@ -1,6 +1,6 @@
 # Git Commit Message Convention
 
-venti-ts follows the [Conventional Commits](https://www.conventionalcommits.org/)
+ventijs follows the [Conventional Commits](https://www.conventionalcommits.org/)
 format, adapted from
 [Angular's commit convention](https://github.com/conventional-changelog/conventional-changelog/tree/master/packages/conventional-changelog-angular).
 The convention keeps the changelog and release notes mechanical.

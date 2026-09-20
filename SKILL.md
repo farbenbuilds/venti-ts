@@ -1,9 +1,9 @@
 ---
-name: venti-ts
-description: Work on venti-ts, a pre-alpha TypeScript and Zig Node.js native addon that replaces the ws server API using the µWebZockets engine through napi-zig. Use for binding functions, the ws compatibility surface, Zig engine modules, tests, benchmarks, docs, and CI in this repository.
+name: ventijs
+description: Work on ventijs, a pre-alpha TypeScript and Zig Node.js native addon that replaces the ws server API using the µWebZockets engine through napi-zig. Use for binding functions, the ws compatibility surface, Zig engine modules, tests, benchmarks, docs, and CI in this repository.
 ---
 
-# venti-ts Engineering Skill
+# ventijs Engineering Skill
 
 Load this when implementing or reviewing changes in this repository.
 `AGENTS.md` holds the current branch state and exact commands; this skill holds
@@ -11,7 +11,7 @@ the working method and the non-obvious constraints.
 
 ## Mission
 
-venti-ts is a drop-in `ws` replacement whose protocol engine is the first-party
+ventijs is a drop-in `ws` replacement whose protocol engine is the first-party
 µWebZockets (Zig) engine reached through `napi-zig`. The TypeScript layer owns
 API shape, validation, and generated types. The Zig layer owns parsing, buffers,
 and backpressure. Consumers should migrate by changing an import specifier and

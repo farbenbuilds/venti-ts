@@ -34,7 +34,7 @@ pub const Channel = struct {
 
     /// Creates the threadsafe function. Runs on the Node main thread.
     pub fn open(channel: *Channel, env: napi.Env, dispatch: napi.Callback) !void {
-        const name = try env.createString("venti-ts.server");
+        const name = try env.createString("ventijs.server");
         var out: c.napi_threadsafe_function = undefined;
         try check(c.napi_create_threadsafe_function(
             env.handle,

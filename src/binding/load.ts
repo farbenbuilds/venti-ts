@@ -9,8 +9,8 @@ export type { VentiAddon } from "./native";
 const require = createRequire(import.meta.url);
 
 const candidatePaths = [
-  ["zig-out", "lib", "venti.node"],
-  ["dist", "venti.node"],
+  ["zig-out", "lib", "ventijs.node"],
+  ["dist", "ventijs.node"],
 ];
 
 function findPackageRoot(start: string): string | undefined {
@@ -26,13 +26,13 @@ function findPackageRoot(start: string): string | undefined {
 function resolveAddonPath(): string {
   const root = findPackageRoot(dirname(fileURLToPath(import.meta.url)));
   if (root === undefined) {
-    throw new Error("venti-ts: package root not found while resolving the native addon");
+    throw new Error("ventijs: package root not found while resolving the native addon");
   }
   for (const parts of candidatePaths) {
     const candidate = join(root, ...parts);
     if (existsSync(candidate)) return candidate;
   }
-  throw new Error(`venti-ts: native addon not found under ${root}; run "pnpm build:binding"`);
+  throw new Error(`ventijs: native addon not found under ${root}; run "pnpm build:binding"`);
 }
 
 let addon: VentiAddon | undefined;

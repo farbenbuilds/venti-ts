@@ -35,7 +35,7 @@ offered.
 
 ## Threat model
 
-The application embedding venti-ts is trusted. Network peers are untrusted. The
+The application embedding ventijs is trusted. Network peers are untrusted. The
 attacker-controlled surface is the same as a raw WebSocket server:
 
 - the HTTP upgrade request, including headers, extensions, and path;
@@ -106,7 +106,7 @@ from the published tarball.
 ## Verification
 
 CI builds and executes the addon on Linux, macOS, and Windows runners. The
-compatibility suite runs the same scenarios against `ws` and venti-ts and
+compatibility suite runs the same scenarios against `ws` and ventijs and
 compares observable behavior, and the Autobahn suite validates RFC 6455 framing
 with no exclusions. These controls reduce risk; they do not guarantee the
 absence of defects. Consumers should pin an exact version, review the shipped

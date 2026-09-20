@@ -1,6 +1,6 @@
 # ws Compatibility Matrix
 
-venti-ts targets 1:1 observable behavior and types with `ws` plus `@types/ws`
+ventijs targets 1:1 observable behavior and types with `ws` plus `@types/ws`
 8.18.1, which is the compatibility contract vendored at
 [`src/types/ws.d.ts`](src/types/ws.d.ts). This file is the parity tracker: every
 public surface item, the module that owns it, its status, and the test that
@@ -17,7 +17,7 @@ Status legend:
 - `deferred` - deliberately out of scope until the named prerequisite lands.
 
 uWebSockets.js is design inspiration only. None of its API is a public surface
-of venti-ts.
+of ventijs.
 
 ## Type surface and packaging
 
@@ -25,7 +25,7 @@ of venti-ts.
 | ---------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------ | ------ | -------------------------------- |
 | Named type exports           | Every `@types/ws` ESM named export, plus `WebSocketEventMap` as a documented superset | `src/types/ws.d.ts`, `src/index.ts`  | done   | `tests/types/consumer.ts`        |
 | `Server` type                | `export { type Server }` in upstream's ESM entry                                      | `src/types/ws.d.ts`, `src/index.ts`  | done   | `tests/types/consumer.ts`        |
-| Type-only default            | `import type WebSocket from "venti-ts"` mirrors `ws`                                  | `src/index.ts`                       | done   | `tests/types/consumer.ts`        |
+| Type-only default            | `import type WebSocket from "ventijs"` mirrors `ws`                                   | `src/index.ts`                       | done   | `tests/types/consumer.ts`        |
 | Qualified names              | `WebSocket.RawData`, `WebSocket.ServerOptions`, ...                                   | `src/types/ws.d.ts`                  | done   | `tests/types/consumer.ts`        |
 | Built declaration resolution | Resolves through `exports` as a Node ESM consumer, `skipLibCheck: false`              | `tsconfig.dist-types.json`, `tsdown` | done   | `tests/declarations/consumer.ts` |
 | Runtime values               | Default and named `WebSocket`, `WebSocketServer`, `createWebSocketStream`             | `src/compat/**`                      | todo   | -                                |
@@ -91,7 +91,7 @@ of venti-ts.
 
 ## Error shape policy
 
-venti-ts throws `Error` instances that keep the `ws` constructor (`TypeError`,
+ventijs throws `Error` instances that keep the `ws` constructor (`TypeError`,
 `RangeError`, `SyntaxError`) and message text wherever `ws` defines one, and
 adds a stable `ERR_*` code from `src/types/errors.ts` to every error. `ws` uses
 `WS_ERR_*` codes internally and leaves many thrown errors uncoded. This
@@ -101,14 +101,14 @@ every thrown error with tests as they land.
 
 ## Verification surface
 
-| Suite                   | Purpose                                                                        | Status |
-| ----------------------- | ------------------------------------------------------------------------------ | ------ |
-| `tests/binding.test.ts` | Native build, addon load, engine version round-trip                            | done   |
-| `tests/events.test.ts`  | Listener registry semantics                                                    | done   |
-| `tests/protocol/**`     | Close code, framing, and backpressure helpers                                  | done   |
-| `tests/compat/**`       | Option normalization and coded error factories                                 | done   |
-| `tests/types/**`        | Compile-time public surface, every event-map entry, state records              | done   |
-| `tests/declarations/**` | Built declarations through the package `exports` map                           | done   |
-| `tests/conformance/**`  | The same scenario run against `ws` and venti-ts, comparing observable behavior | todo   |
-| `bench/**`              | Measured throughput and latency against `ws` on the same host                  | todo   |
-| Autobahn (RFC 6455)     | Protocol conformance report through the CI target                              | todo   |
+| Suite                   | Purpose                                                                       | Status |
+| ----------------------- | ----------------------------------------------------------------------------- | ------ |
+| `tests/binding.test.ts` | Native build, addon load, engine version round-trip                           | done   |
+| `tests/events.test.ts`  | Listener registry semantics                                                   | done   |
+| `tests/protocol/**`     | Close code, framing, and backpressure helpers                                 | done   |
+| `tests/compat/**`       | Option normalization and coded error factories                                | done   |
+| `tests/types/**`        | Compile-time public surface, every event-map entry, state records             | done   |
+| `tests/declarations/**` | Built declarations through the package `exports` map                          | done   |
+| `tests/conformance/**`  | The same scenario run against `ws` and ventijs, comparing observable behavior | todo   |
+| `bench/**`              | Measured throughput and latency against `ws` on the same host                 | todo   |
+| Autobahn (RFC 6455)     | Protocol conformance report through the CI target                             | todo   |

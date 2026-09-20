@@ -1,4 +1,4 @@
-# venti-ts CI/CD Pipeline
+# ventijs CI/CD Pipeline
 
 The pipeline verifies formatting, type safety, `ws` compatibility, RFC 6455
 protocol behavior, native addon builds for every supported target, and release
@@ -105,7 +105,7 @@ that cannot load its own artifact fails the workflow.
 
 The compatibility job installs the pinned `ws` version as a dev dependency and
 executes the shared conformance suite twice: once against `ws` and once against
-venti-ts. The suite covers:
+ventijs. The suite covers:
 
 - server construction options and defaults;
 - upgrade handling, accepted and rejected handshakes;
@@ -139,9 +139,9 @@ per-message deflate. HTML/JSON reports are uploaded even when the gate fails.
 
 The benchmark job checks the pull request and its `main` base into separate
 directories, builds both from their own working directory on the same runner,
-and runs the versioned `venti-ts-ws-compare` contract:
+and runs the versioned `ventijs-ws-compare` contract:
 
-1. Start a `ws` echo server and the equivalent venti-ts echo server.
+1. Start a `ws` echo server and the equivalent ventijs echo server.
 2. Run the same bounded client workload against each: fixed connections,
    fixed message size, fixed duration, measured with a pinned tool.
 3. Repeat three times, discard the warm-up, and compare medians.

@@ -8,7 +8,7 @@ const MAX_SERVER_HANDLE = 2 ** 40 - 1;
 
 function assertServerHandle(handle: ServerHandle): void {
   if (!Number.isSafeInteger(handle) || handle < 0 || handle > MAX_SERVER_HANDLE) {
-    throw new RangeError(`venti-ts: server handle must be a uint40, got ${handle}`);
+    throw new RangeError(`ventijs: server handle must be a uint40, got ${handle}`);
   }
 }
 

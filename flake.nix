@@ -1,5 +1,5 @@
 {
-  description = "venti-ts / A NodeJS WebSocket wrapper for µWebZockets";
+  description = "ventijs / A NodeJS WebSocket wrapper for µWebZockets";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -54,7 +54,7 @@
           # The uWebZockets vendor build wants one prefix holding both zlib.h
           # and libz.a; nixpkgs splits those across the dev and static outputs.
           zlibPrefix = packagePkgs.symlinkJoin {
-            name = "venti-zlib";
+            name = "ventijs-zlib";
             paths = [
               packagePkgs.zlib.dev
               packagePkgs.zlib.static

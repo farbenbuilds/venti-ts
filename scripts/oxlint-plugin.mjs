@@ -92,7 +92,7 @@ const noEmoji = {
 };
 
 export default {
-  meta: { name: "venti" },
+  meta: { name: "ventijs" },
   rules: {
     "no-emoji": noEmoji,
     "no-enum": noEnum,
