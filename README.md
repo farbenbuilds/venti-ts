@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="misc/venti_banner.png" alt="venti-ts banner" />
+  <img src="misc/venti_banner.png" alt="ventijs banner" />
 </p>
 
-# venti-ts
+# ventijs
 
 A high-performance, drop-in replacement for [`ws`](https://github.com/websockets/ws),
-implemented as a Node.js native addon. venti-ts wraps the zero-allocation
+implemented as a Node.js native addon. ventijs wraps the zero-allocation
 [µWebZockets](https://github.com/farbenbuilds/uWebZockets) Zig engine, built
-for this project by the venti-ts author, through
+for this project by the ventijs author, through
 [`napi-zig`](https://github.com/yuku-toolchain/napi-zig), keeping the hot path
 inside Zig while the public surface stays idiomatic TypeScript.
 
@@ -65,14 +65,14 @@ crosses the boundary by pointer without an explicit borrow contract; see
 Published usage, once the first release lands:
 
 ```sh
-pnpm add venti-ts
+pnpm add ventijs
 ```
 
 From source on this branch:
 
 ```sh
-git clone git@github.com:farbenbuilds/venti-ts.git
-cd venti-ts
+git clone git@github.com:farbenbuilds/ventijs.git
+cd ventijs
 nix develop
 pnpm install
 pnpm build
@@ -83,7 +83,7 @@ pnpm build
 The target surface is a drop-in replacement for `ws`:
 
 ```ts
-import { WebSocketServer } from "venti-ts";
+import { WebSocketServer } from "ventijs";
 
 const server = new WebSocketServer({ port: 8080 });
 
@@ -114,7 +114,7 @@ records; they never use `class`, `this`, or prototype chains. See
 
 ## Performance
 
-venti-ts makes no absolute throughput claims from a single machine. The CI
+ventijs makes no absolute throughput claims from a single machine. The CI
 pipeline benchmarks the candidate against a `ws` baseline on the same runner
 and fails on a statistically significant regression; see
 [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md). Measured results, methodology, and raw
@@ -153,6 +153,6 @@ shell. The exact command contract is documented in
 ## License
 
 MIT. µWebZockets is the first-party MIT-licensed protocol engine, created for
-venti-ts by the same author. The `ws` project is MIT-licensed and defines the
-compatibility target; no `ws` source is incorporated. venti-ts is not
+ventijs by the same author. The `ws` project is MIT-licensed and defines the
+compatibility target; no `ws` source is incorporated. ventijs is not
 affiliated with the `ws` project.

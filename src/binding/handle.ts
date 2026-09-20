@@ -6,7 +6,7 @@ const MAX_HANDLE_BIG = 0xffff_ffff_ffff_ffffn;
 
 function assertUint32(value: number, label: string): void {
   if (!Number.isInteger(value) || value < 0 || value > MAX_UINT32) {
-    throw new RangeError(`venti-ts: connection handle ${label} must be a uint32, got ${value}`);
+    throw new RangeError(`ventijs: connection handle ${label} must be a uint32, got ${value}`);
   }
 }
 
@@ -21,7 +21,7 @@ export function unpackConnectionHandle(handle: ConnectionHandle): {
   readonly generation: number;
 } {
   if (handle < 0n || handle > MAX_HANDLE_BIG) {
-    throw new RangeError(`venti-ts: connection handle out of range: ${handle}`);
+    throw new RangeError(`ventijs: connection handle out of range: ${handle}`);
   }
   return {
     index: Number(handle & MAX_UINT32_BIG),

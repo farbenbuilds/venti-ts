@@ -1,4 +1,4 @@
-import type WebSocketDefault from "venti-ts";
+import type WebSocketDefault from "ventijs";
 import type {
   ClientOptions,
   CloseEvent,
@@ -10,7 +10,7 @@ import type {
   VerifyClientCallbackAsync,
   WebSocket,
   WebSocketServer,
-} from "venti-ts";
+} from "ventijs";
 
 export type DefaultSocket = WebSocketDefault;
 export type DefaultServer = Server;

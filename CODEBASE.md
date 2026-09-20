@@ -1,8 +1,8 @@
-# venti-ts Codebase
+# ventijs Codebase
 
 ## Scope
 
-venti-ts is a Node.js native addon that exposes the
+ventijs is a Node.js native addon that exposes the
 [µWebZockets](https://github.com/farbenbuilds/uWebZockets) first-party Zig
 engine through a `ws`-compatible TypeScript surface. The repository contains two languages with
 a single hard boundary between them: TypeScript owns the public API, argument
@@ -35,7 +35,7 @@ the current branch.
 Current tree on this branch:
 
 ```text
-venti-ts/
+ventijs/
 ├── flake.nix                  # pinned Node.js, pnpm, Zig 0.16.0 dev shell
 ├── flake.lock                 # locked Nix inputs
 ├── lefthook.yml               # pre-commit hook contract
@@ -176,7 +176,7 @@ Test and tooling directories:
 
 ```text
 tests/          # vitest unit, integration, and boundary tests
-bench/          # benchmark harness that runs venti-ts and ws side by side
+bench/          # benchmark harness that runs ventijs and ws side by side
 ```
 
 ## Language boundary and ownership
@@ -295,7 +295,7 @@ binding/socket.ts: send(handle, slice, opcode, fin) ----> Zig outbound ring
 Backpressure flows the other way: when the outbound ring exceeds its
 high-water mark, the native call reports it, queue growth stays visible through
 `socket.bufferedAmount`, and pending sends drain through their callbacks.
-`ws` does not return a boolean from `send`, so neither does venti-ts.
+`ws` does not return a boolean from `send`, so neither does ventijs.
 
 ## Event loop model
 

@@ -1,12 +1,12 @@
 # Third-Party Notices
 
-venti-ts ships a prebuilt native addon. The addon statically links the
+ventijs ships a prebuilt native addon. The addon statically links the
 µWebZockets engine and its vendored dependencies, so their license texts are
 included in each published platform artifact.
 
 ## Runtime components
 
-µWebZockets is the first-party engine created for venti-ts by the same author
+µWebZockets is the first-party engine created for ventijs by the same author
 and is pinned in `build.zig.zon`. The remaining runtime component is:
 
 | Component                                              | Version or revision       | License |

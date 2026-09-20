@@ -1,5 +1,5 @@
 {
-  description = "venti-ts / A NodeJS WebSocket wrapper for µWebZockets";
+  description = "ventijs / A NodeJS WebSocket wrapper for µWebZockets";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";

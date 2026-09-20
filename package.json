@@ -1,16 +1,16 @@
 {
-  "name": "venti-ts",
+  "name": "ventijs",
   "version": "0.0.0",
   "description": "A high-performance, drop-in replacement for ws, built on the first-party µWebZockets Zig engine via napi-zig.",
-  "homepage": "https://github.com/farbenbuilds/venti-ts#readme",
+  "homepage": "https://github.com/farbenbuilds/ventijs#readme",
   "bugs": {
-    "url": "https://github.com/farbenbuilds/venti-ts/issues"
+    "url": "https://github.com/farbenbuilds/ventijs/issues"
   },
   "license": "MIT",
   "author": "Noah Trần (https://github.com/Coder-Blue)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/farbenbuilds/venti-ts.git"
+    "url": "git+https://github.com/farbenbuilds/ventijs.git"
   },
   "files": [
     "dist"

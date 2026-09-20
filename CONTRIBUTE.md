@@ -1,6 +1,6 @@
-# Contributing to venti-ts
+# Contributing to ventijs
 
-venti-ts accepts focused changes that preserve `ws`-compatible behavior,
+ventijs accepts focused changes that preserve `ws`-compatible behavior,
 end-to-end type safety, bounded memory use, and the anti-OOP architecture
 described in [CODING_CONVENTION.md](CODING_CONVENTION.md).
 
@@ -15,8 +15,8 @@ The pinned Nix shell provides Node.js, pnpm, Zig 0.16.0, zls, and the
 TypeScript tooling:
 
 ```sh
-git clone git@github.com:farbenbuilds/venti-ts.git
-cd venti-ts
+git clone git@github.com:farbenbuilds/ventijs.git
+cd ventijs
 nix develop
 pnpm install
 ```
