@@ -13,6 +13,7 @@ test {
     _ = @import("registry_test.zig");
     _ = @import("events_test.zig");
     _ = @import("ring_test.zig");
+    _ = @import("ports_test.zig");
     _ = @import("callbacks_test.zig");
     _ = @import("instance_test.zig");
 }

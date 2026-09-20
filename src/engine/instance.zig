@@ -49,6 +49,9 @@ pub const Instance = struct {
     state: std.atomic.Value(State) = .init(.created),
     handle: Handle,
     env: c.napi_env,
+    /// Actual local port resolved after `listen`; equals the requested port
+    /// when the listener cannot be queried (Windows).
+    bound_port: u16 = 0,
 };
 
 /// Resolves a JavaScript server handle and rejects handles owned by another

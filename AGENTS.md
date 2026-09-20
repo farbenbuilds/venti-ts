@@ -22,7 +22,7 @@ will own parsing, buffers, and backpressure.
   `src/compat/{options,server-options,client-options,errors}.ts` normalize
   options and build coded errors, and `src/protocol/` holds the pure close
   code, framing, and backpressure helpers.
-  `src/engine/{handles,options,registry,events,ring,callbacks,instance,connections,server}.zig`
+  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server}.zig`
   hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
   testable module, entered through `src/engine_tests.zig`; the engine-coupled
   `server`/`connections` modules are covered by the addon-backed tests. There is no runtime `ws`

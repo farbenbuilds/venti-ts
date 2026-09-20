@@ -8,10 +8,12 @@
 //! callback can never touch freed memory.
 
 const std = @import("std");
+const builtin = @import("builtin");
 const napi = @import("napi-zig");
 const connections = @import("connections.zig");
 const instance = @import("instance.zig");
 const options = @import("options.zig");
+const ports = @import("ports.zig");
 
 /// Builds the engine application around an already-trusted configuration.
 pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.Env) !u40 {
@@ -48,6 +50,7 @@ pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.E
 pub fn listen(target: *instance.Instance) !void {
     if (target.state.load(.acquire) != .created) return error.InvalidServerState;
     try target.cluster.listen(target.config.listen.host_slice(), target.config.listen.port);
+    target.bound_port = bound_port(target);
     target.state.store(.listening, .release);
     target.runner = std.Thread.spawn(.{}, run_engine, .{target}) catch |err| {
         target.channel.close();
@@ -106,7 +109,7 @@ fn run_engine(target: *instance.Instance) void {
     _ = target.channel.emit(.{
         .kind = .listening,
         .server = target.handle.toInt(),
-        .code = target.config.listen.port,
+        .code = target.bound_port,
     });
     target.cluster.run() catch {
         _ = target.channel.emit(.{ .kind = .engine_error, .server = target.handle.toInt() });
@@ -114,6 +117,19 @@ fn run_engine(target: *instance.Instance) void {
     target.state.store(.closed, .release);
     _ = target.channel.emit(.{ .kind = .server_closed, .server = target.handle.toInt() });
     target.channel.release();
+}
+
+/// Best-effort local port of the bound listener. POSIX reads it back from the
+/// socket so `port: 0` reports the ephemeral port; Windows keeps the requested
+/// port because its listener is not a POSIX descriptor.
+fn bound_port(target: *instance.Instance) u16 {
+    if (builtin.os.tag == .windows) {
+        return target.config.listen.port;
+    } else {
+        const app = target.cluster.worker(0) orelse return target.config.listen.port;
+        const server = app.server orelse return target.config.listen.port;
+        return ports.bound_port(server.listener.fd) orelse target.config.listen.port;
+    }
 }
 
 pub fn create_server(env: napi.Env, raw: options.RawConfig, dispatch: napi.Callback) !u40 {

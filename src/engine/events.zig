@@ -15,8 +15,9 @@ pub const Kind = enum(u8) {
 };
 
 /// One engine-thread event. `server` is the packed, generation-checked server
-/// handle; `code` carries a status detail such as the requested port for
-/// `listening`.
+/// handle; `code` carries a status detail such as the bound port for
+/// `listening` (the requested port on platforms without descriptor
+/// introspection).
 pub const Event = struct {
     kind: Kind,
     server: u40,

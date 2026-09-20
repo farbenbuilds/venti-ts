@@ -63,6 +63,7 @@ venti-ts/
 │   │   ├── registry.zig       # bounded slot table for server instances
 │   │   ├── events.zig         # engine event vocabulary
 │   │   ├── ring.zig           # bounded SPSC event ring
+│   │   ├── ports.zig          # listener bound-port introspection
 │   │   ├── callbacks.zig      # threadsafe channel rendering events to JS
 │   │   ├── instance.zig       # live server record and instance table
 │   │   ├── connections.zig    # engine WebSocket route trampolines
@@ -75,6 +76,7 @@ venti-ts/
 │   │   ├── registry_test.zig
 │   │   ├── events_test.zig
 │   │   ├── ring_test.zig
+│   │   ├── ports_test.zig
 │   │   ├── callbacks_test.zig
 │   │   └── instance_test.zig
 │   ├── binding/
@@ -366,7 +368,8 @@ leaves:
   thread and frees every resource. Finalize refuses to free while events are
   still queued (`EventsPending`), and every server handle carries a generation
   and a Node environment owner, so stale handles and cross-worker calls are
-  typed errors.
+  typed errors. `listening` reports the bound port, so `port: 0` resolves to
+  the ephemeral port the kernel assigned.
 - `src/engine-tests/` holds one unit suite per testable module, aggregated by
   `root.zig` and entered through `src/engine_tests.zig`; `src/builds/testing.zig`
   compiles that entry for `zig build test`, and the `zig-test.yml` workflow runs

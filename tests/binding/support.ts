@@ -107,6 +107,16 @@ export function start(config: NativeServerConfig): ServerFixture {
   return server
 }
 
+/// Starts a server and resolves its bound port from the `listening` event, so
+/// `port: 0` tests never race another process for a probed port.
+export async function startAndWait(
+  config: NativeServerConfig,
+): Promise<{ readonly server: ServerFixture; readonly port: number }> {
+  const server = start(config)
+  const listening = await server.waitFor("listening")
+  return { server, port: listening.code }
+}
+
 function probePort(): Promise<number | undefined> {
   return new Promise((resolve, reject) => {
     const probe = createNetServer()

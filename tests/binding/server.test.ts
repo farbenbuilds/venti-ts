@@ -1,6 +1,6 @@
 import { expect, test } from "vitest"
 import type { EngineEventKind } from "../../src/binding/native"
-import { fixture, freePort, start, TEST_TIMEOUT_MS } from "./support"
+import { fixture, start, startAndWait, TEST_TIMEOUT_MS } from "./support"
 
 function kinds(events: { kind: EngineEventKind }[]): EngineEventKind[] {
   return events.map((event) => event.kind)
@@ -11,6 +11,7 @@ test("runs the native server lifecycle", { timeout: TEST_TIMEOUT_MS }, async () 
   try {
     const listening = await server.waitFor("listening")
     expect(listening.server).toBe(server.handle)
+    expect(listening.code).toBeGreaterThan(0)
     await server.dispose()
     expect(kinds(server.events)).toEqual(["listening", "serverClosed"])
   } finally {
@@ -24,11 +25,9 @@ test(
     timeout: TEST_TIMEOUT_MS,
   },
   async () => {
-    const port = await freePort()
-    const server = start({ host: "127.0.0.1", port })
+    const { server, port } = await startAndWait({ host: "127.0.0.1", port: 0 })
     let socket: WebSocket | undefined
     try {
-      await server.waitFor("listening")
       socket = new WebSocket(`ws://127.0.0.1:${port}/`)
       const open = await server.waitFor("connectionOpen")
       expect(open.generation).toBeGreaterThan(0)

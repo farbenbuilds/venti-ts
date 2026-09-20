@@ -1,7 +1,7 @@
 import { createServer as createNetServer } from "node:net"
 import { expect, test } from "vitest"
 import { listenServer } from "../../src/binding/server"
-import { fixture, freePort, start, TEST_TIMEOUT_MS } from "./support"
+import { fixture, freePort, start, startAndWait, TEST_TIMEOUT_MS } from "./support"
 
 type Blocker = { close: () => Promise<void> }
 
@@ -21,12 +21,10 @@ function occupy(port: number): Promise<Blocker> {
 }
 
 test("maxConnections caps accepted peers", { timeout: TEST_TIMEOUT_MS }, async () => {
-  const port = await freePort()
-  const server = start({ host: "127.0.0.1", port, maxConnections: 1 })
+  const { server, port } = await startAndWait({ host: "127.0.0.1", port: 0, maxConnections: 1 })
   let first: WebSocket | undefined
   let second: WebSocket | undefined
   try {
-    await server.waitFor("listening")
     first = new WebSocket(`ws://127.0.0.1:${port}/`)
     second = new WebSocket(`ws://127.0.0.1:${port}/`)
     const refused = new Promise<void>((resolve) => {
