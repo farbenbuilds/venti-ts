@@ -113,6 +113,12 @@ for a full staging ring, `ERR_SOCKET_NOT_OPEN` for sends before `open`, the
 close-code and close-reason codes for `close()`, and `ERR_PROTOCOL` for
 `wsClientError`; `tests/compat/socket/socket.test.ts`, `tests/compat/server/upgrade-policy.test.ts` assert them.
 
+The handshake is hardened beyond `ws`: a `handleProtocols` result that is not a
+token is refused instead of echoed into a response header, and control
+characters in `verifyClient` headers or status codes are dropped before the
+rejection is written. `ws` forwards those values verbatim.
+`tests/compat/server/upgrade*.test.ts` cover both.
+
 ## Verification surface
 
 | Suite                                                                                            | Purpose                                                                       | Status  |

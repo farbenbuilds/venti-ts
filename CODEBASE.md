@@ -54,7 +54,7 @@ ventijs/
 │   ├── zig-cc-pic             # PIC C compiler wrapper for vendored C builds
 │   └── zig-cxx-pic            # PIC C++ compiler wrapper for vendored C builds
 ├── src/
-│   ├── index.ts               # public export surface (type-only re-exports)
+│   ├── index.ts               # public type surface plus the runtime values
 │   ├── lib.zig                # napi-zig root module declaration and exports
 │   ├── engine_tests.zig       # Zig unit test entry point
 │   ├── engine/                # native engine modules, grouped by plane
@@ -282,7 +282,8 @@ the footer is adapted, converting `export =` into ESM type exports so `tsdown`
 can bundle it, and exporting `Server` to match upstream's ESM entry. The header
 records the upstream version.
 
-- `src/index.ts` re-exports the surface with `export type`; the only export not
+- `src/index.ts` re-exports the type surface with `export type *` and the
+  runtime constructors from `src/compat/constructors.ts`; the only export not
   in upstream's ESM entry is `WebSocketEventMap`, a deliberate superset.
 - The file is exempt from oxlint and oxfmt because upstream style violates the
   project rules; `pnpm typecheck:dist` still checks the bundled output with
@@ -376,8 +377,8 @@ the ABI.
 ## Module conventions
 
 - TypeScript files use `kebab-case` and export free functions or const
-  records. No default exports, except the type-only default re-export in
-  `src/index.ts` that mirrors the `ws` entry point.
+  records. No default exports, except the `src/index.ts` default that mirrors
+  the `ws` entry point with both the value and its type meaning.
 - Zig files use `snake_case`, functions and variables use `snake_case`, and
   types use `PascalCase`.
 - A module owns one responsibility. If a module needs two sections to explain

@@ -16,7 +16,8 @@ will own parsing, buffers, and backpressure.
   `src/binding/{native,handle,server,socket}.ts` declare the addon ABI and wrap
   the lifecycle and socket calls; `src/types/ws.d.ts` vendors the DefinitelyTyped
   `ws` declarations, and `src/index.ts` re-exports that surface as type-only ESM
-  exports. `src/types/{events,socket,server}.ts` hold the internal state records,
+  exports alongside the runtime `WebSocket`, `WebSocketServer`, and
+  `createWebSocketStream` values. `src/types/{events,socket,server}.ts` hold the internal state records,
   event maps, and listener-registry types;
   `src/types/{close,errors,status,options}.ts` hold the ready-state, close-code,
   error-code, engine-status, and normalized option types. `src/compat/` splits
