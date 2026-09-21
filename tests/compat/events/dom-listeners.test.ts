@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { WebSocket } from "../../src/index";
+import { WebSocket } from "../../../src/index";
 
 test("addEventListener delivers a DOM message event with the socket as target", () => {
   const socket = new WebSocket(null);

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { createWebSocketStream } from "../../src/compat/stream";
-import { WebSocket, WebSocketServer } from "../../src/index";
-import { TEST_TIMEOUT_MS } from "../binding/support";
+import { createWebSocketStream } from "../../../src/compat/stream";
+import { WebSocket, WebSocketServer } from "../../../src/index";
+import { TEST_TIMEOUT_MS } from "../../binding/support";
 import { attached } from "./socket-support";
 
 const MAX_MESSAGE_BYTES = 32 * 1024;

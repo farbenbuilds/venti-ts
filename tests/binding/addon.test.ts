@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { loadAddon } from "../src/binding/load";
+import { loadAddon } from "../../src/binding/load";
 
 test("loads the native addon", () => {
   expect(typeof loadAddon().engineVersion).toBe("function");

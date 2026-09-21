@@ -69,7 +69,7 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | All tests (one-shot)          | `pnpm test` (rebuilds the binding first)                                           |
 | Watch tests                   | `pnpm test:watch`                                                                  |
 | All hooks                     | `pnpm exec lefthook run pre-commit --all-files`                                    |
-| Single test                   | `pnpm exec vitest run tests/binding.test.ts`                                       |
+| Single test                   | `pnpm exec vitest run tests/binding/addon.test.ts`                                 |
 | Typecheck                     | `pnpm typecheck`                                                                   |
 | Zig unit tests                | `zig build test` (runs `src/engine-tests/`)                                        |
 | Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |

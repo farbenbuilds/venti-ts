@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { WebSocketServer } from "../../src/index";
+import { WebSocketServer } from "../../../src/index";
 import { rawUpgrade, request, serve, UPGRADE_HEADERS } from "./upgrade-support";
 
 test.each([

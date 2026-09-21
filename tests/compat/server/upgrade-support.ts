@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from "node:http";
 import { connect } from "node:net";
-import type { WebSocketServer } from "../../src/index";
+import type { WebSocketServer } from "../../../src/index";
 
 export const KEY = "dGhlIHNhbXBsZSBub25jZQ==";
 export const ACCEPT = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=";

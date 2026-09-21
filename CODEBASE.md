@@ -140,11 +140,21 @@ ventijs/
 │           ├── default.zig    # default build target query
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
-│   ├── binding.test.ts        # native pipeline smoke test
-│   ├── binding/               # binding lifecycle and handle tests
-│   ├── compat/                # facade units, option normalization, and errors
-│   ├── events.test.ts         # listener registry behavior
+│   ├── binding/
+│   │   ├── addon.test.ts      # native pipeline smoke test
+│   │   ├── server*.test.ts    # server lifecycle and limits
+│   │   ├── socket*.test.ts    # connection slab and socket boundaries
+│   │   └── support.ts         # fixtures shared by the binding suites
+│   ├── compat/
+│   │   ├── events/            # registry, emitter, and DOM listener tests
+│   │   ├── options/           # option normalization tests
+│   │   ├── socket/            # facade socket tests and the native fixture
+│   │   ├── server/            # server, upgrade, and handshake policy tests
+│   │   ├── errors.test.ts     # coded error factories
+│   │   └── stream.test.ts     # duplex adapter over a native socket
+│   ├── conformance/           # ws side-by-side scenario suites
 │   ├── protocol/              # close code, framing, and backpressure tests
+│   ├── tooling/               # lint plugin rule tests
 │   ├── types/                 # fixtures checked by pnpm typecheck
 │   └── declarations/          # fixtures checked by pnpm typecheck:dist
 └── .github/                   # community templates, issue forms, CI workflows
@@ -421,9 +431,9 @@ keep the rules enforced:
   unpack the 64-bit connection handle, and wrap the lifecycle calls;
   `src/binding/load.ts` keeps resolving the `.node` and now types the full
   `VentiAddon` record.
-- `tests/binding.test.ts` proves the Zig build, addon load, version round-trip,
-  and lifecycle surface; `tests/binding/` drives create, listen, a live
-  WebSocket connection through the slab, close, and finalize.
+- `tests/binding/addon.test.ts` proves the Zig build, addon load, version
+  round-trip, and lifecycle surface; `tests/binding/` drives create, listen, a
+  live WebSocket connection through the slab, close, and finalize.
 - `src/engine/payload.zig` is the outbound boundary. `stage` copies JavaScript
   bytes into a fixed-capacity structure-of-arrays ring before the call returns
   and publishes each record with a release store, so JavaScript memory is never
@@ -514,7 +524,7 @@ remain current:
   every commit alongside `zig fmt`, typecheck, and the test suite.
 - `flake.nix` pins Node.js, pnpm, Zig 0.16.0, zls, and TypeScript tooling;
   `.#musl` selects a musl dev shell on musl hosts.
-- `tests/binding.test.ts` proves the Zig build, addon load, and version
+- `tests/binding/addon.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
 The `compat/` factories and the engine-thread drain that flushes the staging

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { WebSocket, WebSocketServer } from "../../src/index";
+import { WebSocket, WebSocketServer } from "../../../src/index";
 import { ACCEPT, rawUpgrade, request, serve, UPGRADE_HEADERS } from "./upgrade-support";
 
 test("a valid handshake upgrades and emits connection", async () => {

@@ -1,8 +1,8 @@
 import { get } from "node:http";
 import { WebSocket as WsClient } from "ws";
 import { expect, test } from "vitest";
-import { WebSocket, WebSocketServer } from "../../src/index";
-import type { Server } from "../../src/index";
+import { WebSocket, WebSocketServer } from "../../../src/index";
+import type { Server } from "../../../src/index";
 
 function statusOf(port: number, path = "/"): Promise<number> {
   return new Promise((resolve, reject) => {

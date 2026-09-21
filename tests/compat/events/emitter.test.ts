@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { createEmitter } from "../../src/compat/events/emitter";
-import { createRegistry } from "../../src/compat/events/registry";
-import type { EmitterState } from "../../src/types/events";
+import { createEmitter } from "../../../src/compat/events/emitter";
+import { createRegistry } from "../../../src/compat/events/registry";
+import type { EmitterState } from "../../../src/types/events";
 
 type TestEventMap = {
   open: [];

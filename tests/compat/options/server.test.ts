@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { normalizeServerOptions } from "../../src/compat/options/server";
+import { normalizeServerOptions } from "../../../src/compat/options/server";
 
 test("fills the ws server defaults", () => {
   const options = normalizeServerOptions({ noServer: true });
