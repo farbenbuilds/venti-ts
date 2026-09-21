@@ -1,0 +1,54 @@
+import type { SocketEventMap, SocketState } from "../types/socket";
+import { createRegistry } from "./events";
+import { CONNECTING } from "./ready-state";
+
+const SOCKET_BRAND = Symbol("ventijs.socket");
+const SOCKET_STATE = Symbol("ventijs.socket.state");
+
+type BrandedSocket = {
+  [SOCKET_BRAND]?: true;
+  [SOCKET_STATE]?: SocketState;
+};
+
+export function brandSocket(socket: object, state: SocketState): void {
+  Object.defineProperties(socket, {
+    [SOCKET_BRAND]: { value: true },
+    [SOCKET_STATE]: { value: state },
+  });
+}
+
+export function isSocket(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  return (value as BrandedSocket)[SOCKET_BRAND] === true;
+}
+
+export function socketStateOf(socket: unknown): SocketState | undefined {
+  if (typeof socket !== "object" || socket === null) return undefined;
+  return (socket as BrandedSocket)[SOCKET_STATE];
+}
+
+/// Builds the mutable record behind one socket. Defaults mirror `ws`: a
+/// server-side socket starts CONNECTING with the abnormal close code latched
+/// until a close frame or the transport supplies a better one.
+export function createSocketState(): SocketState {
+  return {
+    url: "",
+    protocol: "",
+    extensions: "",
+    binaryType: "nodebuffer",
+    readyState: CONNECTING,
+    bufferedAmount: 0,
+    isPaused: false,
+    isServer: true,
+    closeCode: 1006,
+    closeReason: Buffer.alloc(0),
+    closeFrameSent: false,
+    closeFrameReceived: false,
+    errorEmitted: false,
+    attachment: null,
+    transport: null,
+    listeners: createRegistry<SocketEventMap>(),
+    maxListeners: 10,
+    target: undefined,
+  };
+}

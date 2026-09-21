@@ -20,16 +20,54 @@ export function subscribe<E extends EventMap, K extends keyof E>(
   return { ...registry, [event]: [...bucket, handler] };
 }
 
+export function prepend<E extends EventMap, K extends keyof E>(
+  registry: Registry<E>,
+  event: K,
+  handler: Handler<E[K]>,
+): Registry<E> {
+  const bucket = registry[event] ?? [];
+  return { ...registry, [event]: [handler, ...bucket] };
+}
+
 export function unsubscribe<E extends EventMap, K extends keyof E>(
   registry: Registry<E>,
   event: K,
   handler: Handler<E[K]>,
 ): Registry<E> {
+  return unsubscribeMatching(registry, event, (entry) => entry === handler);
+}
+
+/// Removes the most recent entry a predicate accepts, matching
+/// `EventEmitter.removeListener`, which scans from the end. Once wrappers and
+/// DOM listeners are matched through their tags by the caller.
+export function unsubscribeMatching<E extends EventMap, K extends keyof E>(
+  registry: Registry<E>,
+  event: K,
+  matches: (handler: Handler<E[K]>) => boolean,
+): Registry<E> {
   const bucket = registry[event];
   if (bucket === undefined) return registry;
-  const index = bucket.lastIndexOf(handler);
-  if (index === -1) return registry;
-  return { ...registry, [event]: bucket.toSpliced(index, 1) };
+  let index = bucket.length - 1;
+  while (index >= 0) {
+    if (matches(bucket[index])) {
+      return { ...registry, [event]: bucket.toSpliced(index, 1) };
+    }
+    index -= 1;
+  }
+  return registry;
+}
+
+export function removeAll<E extends EventMap>(registry: Registry<E>, event?: keyof E): Registry<E> {
+  if (event === undefined) return {};
+  return { ...registry, [event]: [] };
+}
+
+export function eventNames<E extends EventMap>(registry: Registry<E>): (keyof E)[] {
+  const names: (keyof E)[] = [];
+  for (const key of Object.keys(registry) as (keyof E)[]) {
+    if ((registry[key]?.length ?? 0) > 0) names.push(key);
+  }
+  return names;
 }
 
 export function dispatch<E extends EventMap, K extends keyof E>(
@@ -41,6 +79,23 @@ export function dispatch<E extends EventMap, K extends keyof E>(
   if (bucket === undefined) return 0;
   for (let index = 0; index < bucket.length; index += 1) {
     bucket[index](...args);
+  }
+  return bucket.length;
+}
+
+/// Dispatches with the emitter as `this`, which is the contract the vendored
+/// `@types/ws` listeners declare. `Reflect.apply` accepts the readonly tuple
+/// the event map carries.
+export function dispatchWith<E extends EventMap, K extends keyof E>(
+  registry: Registry<E>,
+  target: unknown,
+  event: K,
+  ...args: E[K]
+): number {
+  const bucket = registry[event];
+  if (bucket === undefined) return 0;
+  for (let index = 0; index < bucket.length; index += 1) {
+    Reflect.apply(bucket[index], target, args);
   }
   return bucket.length;
 }

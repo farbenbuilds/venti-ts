@@ -53,7 +53,7 @@ export const messageDataOf = (event: MessageEvent): WebSocket.Data => event.data
 export const binaryTypeOf = (socket: WebSocket): WebSocket["binaryType"] => socket.binaryType;
 export const readyStateOf = (socket: WebSocket): WebSocket["readyState"] => socket.readyState;
 
-export type StreamFactory = createWebSocketStream;
+export type StreamFactory = typeof createWebSocketStream;
 export type EventListener = EventListenerOptions;
 export type Address = AddressInfo;
 export type ErrorEvt = ErrorEvent;

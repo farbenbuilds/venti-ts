@@ -7,6 +7,7 @@ export type ErrorCode =
   | "ERR_INVALID_STATE"
   | "ERR_INVALID_HANDLE"
   | "ERR_MAX_PAYLOAD"
+  | "ERR_BACKPRESSURE"
   | "ERR_PROTOCOL"
   | "ERR_POLICY_VIOLATION";
 

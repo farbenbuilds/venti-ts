@@ -1,4 +1,9 @@
 import type WebSocketDefault from "ventijs";
+import WebSocketValueDefault, {
+  WebSocket as WebSocketValue,
+  WebSocketServer as WebSocketServerValue,
+  createWebSocketStream as createStream,
+} from "ventijs";
 import type {
   AddressInfo,
   ClientOptions,
@@ -53,11 +58,20 @@ export const messageDataOf = (event: MessageEvent): WebSocket.Data => event.data
 export const binaryTypeOf = (socket: WebSocket): WebSocket["binaryType"] => socket.binaryType;
 export const readyStateOf = (socket: WebSocket): WebSocket["readyState"] => socket.readyState;
 
-export type StreamFactory = createWebSocketStream;
+export type StreamFactory = typeof createWebSocketStream;
 export type EventListener = EventListenerOptions;
 export type Address = AddressInfo;
 export type ErrorEvt = ErrorEvent;
 export type GenericEvent = Event;
+
+// Runtime values keep both the construct signatures and the instance type
+// meanings that the `ws` class surface exposes.
+export const socket: WebSocket = new WebSocketValue(null);
+export const defaultSocket: WebSocketDefault = new WebSocketValueDefault(null);
+export const server: WebSocketServer = new WebSocketServerValue({ noServer: true });
+export const isSocket = (value: unknown): boolean => value instanceof WebSocketValue;
+export const isServer = (value: unknown): boolean => value instanceof WebSocketServerValue;
+export const stream = createStream(socket);
 
 // Negative cases: a widening regression would make these compile.
 // @ts-expect-error RawData is never a plain string

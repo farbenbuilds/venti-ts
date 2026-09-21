@@ -32,6 +32,14 @@ export function normalizeProtocols(protocols: string | string[] | undefined): re
   return result;
 }
 
+/// Parses a `Sec-WebSocket-Protocol` request header. `ws` accepts comma
+/// separated tokens with optional surrounding whitespace and rejects empty,
+/// duplicated, or out-of-grammar ones, which is what the token validator does
+/// after the split.
+export function parseProtocolHeader(header: string): readonly string[] {
+  return normalizeProtocols(header.split(",").map((protocol) => protocol.trim()));
+}
+
 export function normalizePerMessageDeflate(
   value: boolean | PerMessageDeflateOptions | undefined,
   fallback: boolean,
