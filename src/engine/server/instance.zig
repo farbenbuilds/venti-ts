@@ -8,12 +8,12 @@
 const std = @import("std");
 const napi = @import("napi-zig");
 const uwz = @import("uWebZockets");
-const callbacks = @import("callbacks.zig");
-const handles = @import("handles.zig");
+const callbacks = @import("../channel/callbacks.zig");
+const handles = @import("../socket/handles.zig");
 const options = @import("options.zig");
-const payload = @import("payload.zig");
+const payload = @import("../socket/payload.zig");
 const registry = @import("registry.zig");
-const socket = @import("socket.zig");
+const socket = @import("../socket/socket.zig");
 
 const c = napi.c;
 

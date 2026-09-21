@@ -1,7 +1,7 @@
-//! Unit tests for `src/engine/events.zig`.
+//! Unit tests for `src/engine/channel/events.zig`.
 
 const std = @import("std");
-const events = @import("../engine/events.zig");
+const events = @import("../../engine/channel/events.zig");
 
 test "events default the connection fields to zero" {
     const event = events.Event{ .kind = .connection_open, .server = 3 };

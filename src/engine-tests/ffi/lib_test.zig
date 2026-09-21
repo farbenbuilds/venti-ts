@@ -1,7 +1,7 @@
 //! Unit tests for `src/lib.zig`.
 
 const std = @import("std");
-const lib = @import("../lib.zig");
+const lib = @import("../../lib.zig");
 
 test "engine version is a dotted release string" {
     const version = lib.engine_version();

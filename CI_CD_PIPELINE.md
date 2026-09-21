@@ -77,7 +77,8 @@ workflow.
 
 `zig-test.yml` runs two jobs with the same vendor toolchain and cache: units
 (`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
-under `src/engine-tests/`) and the addon-backed lifecycle suite
+under `src/engine-tests/`, mirroring the `src/engine/` planes) and the
+addon-backed lifecycle suite
 (`pnpm build:binding` then
 `vitest tests/binding tests/compat/socket tests/compat/stream.test.ts`). Both
 install CMake, Ninja, Perl, patch, and a zlib static prefix for the vendored C

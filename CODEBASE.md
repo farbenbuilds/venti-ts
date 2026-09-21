@@ -57,34 +57,34 @@ ventijs/
 │   ├── index.ts               # public export surface (type-only re-exports)
 │   ├── lib.zig                # napi-zig root module declaration and exports
 │   ├── engine_tests.zig       # Zig unit test entry point
-│   ├── engine/                # native engine modules
-│   │   ├── handles.zig        # generation-checked connection slot slab
-│   │   ├── options.zig        # trusted listen configuration structs
-│   │   ├── registry.zig       # bounded slot table for server instances
-│   │   ├── events.zig         # engine event vocabulary
-│   │   ├── ring.zig           # bounded SPSC event ring
-│   │   ├── ports.zig          # listener bound-port introspection
-│   │   ├── callbacks.zig      # threadsafe channel rendering events to JS
-│   │   ├── instance.zig       # live server record and instance table
-│   │   ├── connections.zig    # engine WebSocket route trampolines
-│   │   ├── server.zig         # server lifecycle free functions
-│   │   ├── payload.zig        # bounded outbound payload staging ring
-│   │   ├── status.zig         # connection state and operation vocabulary
-│   │   ├── socket.zig         # per-connection ops and terminal latch
-│   │   └── socket_io.zig      # handle-resolving socket FFI free functions
+│   ├── engine/                # native engine modules, grouped by plane
+│   │   ├── channel/           # engine-thread to JS transport
+│   │   │   ├── callbacks.zig  # threadsafe channel rendering events to JS
+│   │   │   ├── events.zig     # engine event vocabulary
+│   │   │   └── ring.zig       # bounded SPSC event ring
+│   │   ├── ffi/               # N-API entry points
+│   │   │   ├── server_io.zig  # handle-resolving server FFI free functions
+│   │   │   └── socket_io.zig  # handle-resolving socket FFI free functions
+│   │   ├── server/            # lifecycle, config, and route wiring
+│   │   │   ├── server.zig     # server lifecycle free functions
+│   │   │   ├── server_cleanup.zig # environment-teardown cleanup hook
+│   │   │   ├── instance.zig   # live server record and instance table
+│   │   │   ├── registry.zig   # bounded slot table for server instances
+│   │   │   ├── options.zig    # trusted listen configuration structs
+│   │   │   ├── ports.zig      # listener bound-port introspection
+│   │   │   └── connections.zig # engine WebSocket route trampolines
+│   │   └── socket/            # per-connection state and staging
+│   │       ├── socket.zig     # per-connection ops and terminal latch
+│   │       ├── socket_ops.zig # outbound transitions over one record
+│   │       ├── status.zig     # connection state and operation vocabulary
+│   │       ├── handles.zig    # generation-checked connection slot slab
+│   │       └── payload.zig    # bounded outbound payload staging ring
 │   ├── engine-tests/          # one Zig unit suite per testable module
 │   │   ├── root.zig           # suite aggregator
-│   │   ├── lib_test.zig
-│   │   ├── handles_test.zig
-│   │   ├── options_test.zig
-│   │   ├── registry_test.zig
-│   │   ├── events_test.zig
-│   │   ├── ring_test.zig
-│   │   ├── ports_test.zig
-│   │   ├── callbacks_test.zig
-│   │   ├── instance_test.zig
-│   │   ├── payload_test.zig
-│   │   └── socket_test.zig
+│   │   ├── channel/           # callbacks, events, and ring suites
+│   │   ├── ffi/               # addon surface suite
+│   │   ├── server/            # instance, options, ports, registry suites
+│   │   └── socket/            # handles, payload, socket, socket_ops suites
 │   ├── binding/
 │   │   ├── load.ts            # native addon resolution and typed loading
 │   │   ├── native.ts          # addon ABI types and engine event records
@@ -194,13 +194,12 @@ src/
 │   └── backpressure.ts        # bufferedAmount and high-water policy
 ├── types/                     # public and internal type-only modules
 ├── engine_tests.zig           # Zig unit test entry point
-├── engine-tests/              # per-module Zig unit suites, one file each
-├── engine/                    # native engine modules, one responsibility each
-│   ├── server.zig             # engine lifecycle as free functions
-│   ├── socket.zig             # per-connection handles and state transitions
-│   ├── payload.zig            # bounded outbound payload staging
-│   ├── status.zig             # connection state and operation vocabulary
-│   └── ...                    # further Zig modules split by one responsibility
+├── engine-tests/              # per-module Zig unit suites, mirroring engine/
+├── engine/                    # native engine modules, grouped by plane
+│   ├── channel/               # event transport, vocabulary, and ring
+│   ├── ffi/                   # N-API entry points
+│   ├── server/                # lifecycle, instance table, config, routes
+│   └── socket/                # per-connection slab, ops, staging
 └── ...                        # further entry points and build wiring
 ```
 
@@ -330,10 +329,10 @@ compat/socket/send.ts: validate data and options
 binding/socket.ts: sendSocket(server, connection, data, binary)
       |
       v
-engine/socket_io.zig: resolve server and connection handles
+engine/ffi/socket_io.zig: resolve server and connection handles
       |
       v
-engine/socket.zig: state transition ----> engine/payload.zig: copy into the
+engine/socket/socket.zig: state transition ----> engine/socket/payload.zig: copy into the
                                                    bounded staging ring
                                                           |
                                                   (engine-thread drain lands
@@ -396,24 +395,24 @@ staging ring, and the socket FFI. `refactor/quality-hardening` closes the races
 and lifetime gaps the audit found, optimizes the build, and adds the gates that
 keep the rules enforced:
 
-- `src/engine/handles.zig` holds the generation-checked connection slab. One slot maps
+- `src/engine/socket/handles.zig` holds the generation-checked connection slab. One slot maps
   one-to-one onto an engine pool slot; `acquire` bumps the generation and
   `resolve` rejects a stale handle, so a call against a closed connection
   surfaces as a typed error instead of a use-after-free.
-- `src/engine/options.zig` trusts the JavaScript configuration once: it validates the
+- `src/engine/server/options.zig` trusts the JavaScript configuration once: it validates the
   host, port, backlog, route path, and per-route limits against the compiled
   capacities, reads every integer at the 53-bit safe width, and copies them
   into fixed-capacity `ListenConfig`, `Limits`, and `ServerConfig` records;
   `maxConnections` is enforced when a peer opens.
-- `src/engine/registry.zig` is a fixed-capacity atomic slot table; `src/engine/instance.zig`
+- `src/engine/server/registry.zig` is a fixed-capacity atomic slot table; `src/engine/server/instance.zig`
   holds the live `Instance` record and the bounded table that binds engine
-  callbacks to server state; `src/engine/connections.zig` registers the comptime
+  callbacks to server state; `src/engine/server/connections.zig` registers the comptime
   WebSocket trampolines that acquire and release slab slots.
-- `src/engine/events.zig` defines the fixed-size event vocabulary and
-  `src/engine/callbacks.zig` is the only bridge an engine thread may use to reach
+- `src/engine/channel/events.zig` defines the fixed-size event vocabulary and
+  `src/engine/channel/callbacks.zig` is the only bridge an engine thread may use to reach
   JavaScript: a bounded ring travels through one threadsafe function and is
   rendered on the Node main thread, allocating nothing on the engine thread.
-- `src/engine/server.zig` exposes create/listen/close/finalize. Create builds the
+- `src/engine/server/server.zig` exposes create/listen/close/finalize. Create builds the
   engine application through `AppType.cluster(1)`; listen binds the listener
   and starts the engine thread; close routes through the cluster wakeup; the
   `server_closed` event proves the loop has drained before finalize joins the
@@ -422,8 +421,9 @@ keep the rules enforced:
   and a Node environment owner, so stale handles and cross-worker calls are
   typed errors. `listening` reports the bound port, so `port: 0` resolves to
   the ephemeral port the kernel assigned.
-- `src/engine-tests/` holds one unit suite per testable module, aggregated by
-  `root.zig` and entered through `src/engine_tests.zig`; `src/builds/testing.zig`
+- `src/engine-tests/` holds one unit suite per testable module in the mirrored
+  plane folder, aggregated by `root.zig` and entered through
+  `src/engine_tests.zig`; `src/builds/testing.zig`
   compiles that entry for `zig build test`, and the `zig-test.yml` workflow runs
   it plus the addon-backed binding suite. `server` and `connections` are
   engine-coupled and are covered there instead of in the unit binary.
@@ -434,22 +434,22 @@ keep the rules enforced:
 - `tests/binding/addon.test.ts` proves the Zig build, addon load, version
   round-trip, and lifecycle surface; `tests/binding/` drives create, listen, a
   live WebSocket connection through the slab, close, and finalize.
-- `src/engine/payload.zig` is the outbound boundary. `stage` copies JavaScript
+- `src/engine/socket/payload.zig` is the outbound boundary. `stage` copies JavaScript
   bytes into a fixed-capacity structure-of-arrays ring before the call returns
   and publishes each record with a release store, so JavaScript memory is never
   retained and the engine thread only ever observes whole records. An
   oversized payload is rejected before any copy, and a full ring reports
   backpressure instead of allocating.
-- `src/engine/status.zig` holds the connection lifecycle and operation
+- `src/engine/socket/status.zig` holds the connection lifecycle and operation
   vocabulary, including the `ws` close-code acceptance rule.
-- `src/engine/socket.zig` is the per-connection slab: one record per engine
+- `src/engine/socket/socket.zig` is the per-connection slab: one record per engine
   pool slot, mirroring the handle index, with the bounded ring attached.
   `send`, `close`, `pause_dispatch`, and `resume_dispatch` are explicit
   transitions over that record; `finish` flips the terminal latch with one
   atomic compare-exchange per connection generation, so a close race can never
   emit two terminal events. `connections.zig` opens the record when a peer
   arrives and only emits `connectionClose` for the latch winner.
-- `src/engine/socket_io.zig` is the FFI seam: every entry point resolves the
+- `src/engine/ffi/socket_io.zig` is the FFI seam: every entry point resolves the
   server through the instance table and the connection through the
   generation-checked slab first, so a call against a closed connection returns
   `invalid-handle` instead of dereferencing a stale slot.
@@ -459,25 +459,25 @@ keep the rules enforced:
   the camelCase ABI statuses onto `EngineStatus`. `EngineStatus` gained
   `invalid-close-code` and `invalid-close-reason`, and the coded-error map
   covers both.
-- `src/engine-tests/{payload,socket}_test.zig` cover copy semantics, capacity
+- `src/engine-tests/socket/{payload,socket}_test.zig` cover copy semantics, capacity
   limits, close validation, dispatch pause, buffered accounting, and the
   concurrent terminal latch; `tests/binding/socket*.test.ts` drive the ops
   through the addon against a live connection. The engine-thread drain that
   turns staged records into frames is the next milestone: the ring and the
   per-connection accounting are in place, but nothing consumes them yet.
-- `src/engine/handles.zig` packs state and generation into one atomic word, so
+- `src/engine/socket/handles.zig` packs state and generation into one atomic word, so
   `resolve` answers both checks with a single acquire load and can never pair a
-  fresh generation with a stale state. `src/engine/socket.zig` gives every
+  fresh generation with a stale state. `src/engine/socket/socket.zig` gives every
   record a spin lock; `open`, `finish`, and the FFI operations serialize on it,
   and each operation re-checks the generation it resolved against, so a
   recycled slot can never receive a stale send, close, or pause.
-- `src/engine/socket_ops.zig` holds the outbound transitions; close stages its
+- `src/engine/socket/socket_ops.zig` holds the outbound transitions; close stages its
   frame and enters `closing` under the lock, so two concurrent closes stage
   exactly one frame, and the close frame is counted in `bufferedAmount`.
-- `src/engine/ring.zig` reserves the last `connection_capacity + 2` slots for
+- `src/engine/channel/ring.zig` reserves the last `connection_capacity + 2` slots for
   terminal events, so a burst of regular events can never drop a close or
   `server_closed`. A dropped reservation is counted, never silently retired.
-- `src/engine/callbacks.zig` latches a closing state before the engine thread
+- `src/engine/channel/callbacks.zig` latches a closing state before the engine thread
   is joined, uses a stack-buffer arena for rendering, and `server_cleanup.zig`
   registers an environment cleanup hook that stops the engine thread and frees
   a server a worker never finalized. `server_io.zig` keeps the N-API wrappers

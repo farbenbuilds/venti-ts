@@ -9,10 +9,10 @@
 //! never retained.
 
 const napi = @import("napi-zig");
-const handles = @import("handles.zig");
-const instance = @import("instance.zig");
-const payload = @import("payload.zig");
-const status = @import("status.zig");
+const handles = @import("../socket/handles.zig");
+const instance = @import("../server/instance.zig");
+const payload = @import("../socket/payload.zig");
+const status = @import("../socket/status.zig");
 
 /// Ordinal into `NATIVE_SOCKET_STATUSES` in `src/binding/native.ts`. Ordinals
 /// keep the per-message path free of JS string allocation.

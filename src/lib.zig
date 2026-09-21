@@ -1,8 +1,8 @@
 const napi = @import("napi-zig");
 const uwz = @import("uWebZockets");
 const build_options = @import("build_options");
-const server_io = @import("engine/server_io.zig");
-const socket_io = @import("engine/socket_io.zig");
+const server_io = @import("engine/ffi/server_io.zig");
+const socket_io = @import("engine/ffi/socket_io.zig");
 
 comptime {
     napi.module(@This());

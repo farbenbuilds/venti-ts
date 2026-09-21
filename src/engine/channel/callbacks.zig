@@ -6,7 +6,7 @@
 const std = @import("std");
 const napi = @import("napi-zig");
 const events = @import("events.zig");
-const options = @import("options.zig");
+const options = @import("../server/options.zig");
 const ring_module = @import("ring.zig");
 
 const c = napi.c;

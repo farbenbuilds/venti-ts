@@ -6,9 +6,9 @@
 //! surface has one small owner, mirroring `socket_io.zig`.
 
 const napi = @import("napi-zig");
-const instance = @import("instance.zig");
-const options = @import("options.zig");
-const server = @import("server.zig");
+const instance = @import("../server/instance.zig");
+const options = @import("../server/options.zig");
+const server = @import("../server/server.zig");
 
 pub fn create_server(env: napi.Env, raw: options.RawConfig, dispatch: napi.Callback) !u40 {
     const config = try options.trust(raw);
