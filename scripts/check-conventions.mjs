@@ -25,9 +25,12 @@ const TEXT_EXTENSIONS = new Set([
   ".yml",
   ".yaml",
 ]);
-const EMOJI = /\p{Extended_Pictographic}/u;
+const EMOJI = /\p{Extended_Pictographic}|\u20E3|\p{Regional_Indicator}/u;
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ZIG_FUNCTION = /\bfn\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g;
+// snake_case is lowercase words joined by single underscores; a leading,
+// trailing, or doubled underscore is not snake_case.
+const ZIG_SNAKE_CASE = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/;
 
 const violations = [];
 
@@ -56,13 +59,15 @@ function check(path) {
 
   if (extension === ".zig") {
     for (const match of source.matchAll(ZIG_FUNCTION)) {
-      if (!/[A-Z]/.test(match[1])) continue;
-      violations.push(`${name}: Zig function '${match[1]}' is not snake_case`);
+      if (!ZIG_SNAKE_CASE.test(match[1])) {
+        violations.push(`${name}: Zig function '${match[1]}' is not snake_case`);
+      }
     }
   }
 
   if (extension === ".ts" && name.startsWith("src/")) {
-    const stem = name.slice(name.lastIndexOf("/") + 1).split(".")[0];
+    const base = name.slice(name.lastIndexOf("/") + 1);
+    const stem = base.slice(0, base.length - extension.length);
     if (!KEBAB_CASE.test(stem)) {
       violations.push(`${name}: TypeScript filename '${stem}' is not kebab-case`);
     }

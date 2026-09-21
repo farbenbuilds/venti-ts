@@ -9,12 +9,13 @@ on:
       - "build.zig"
       - "build.zig.zon"
       - "scripts/**"
-      - "src/binding/**"
-      - "tests/binding/**"
-      - "tests/compat/socket/**"
-      - "tests/compat/stream.test.ts"
+      - "src/**"
+      - "tests/**"
       - "package.json"
       - "pnpm-lock.yaml"
+      - "tsconfig.json"
+      - "tsconfig.dist-types.json"
+      - "tsdown.config.ts"
       - ".github/workflows/zig-test.yml"
   pull_request:
     branches:
@@ -24,12 +25,13 @@ on:
       - "build.zig"
       - "build.zig.zon"
       - "scripts/**"
-      - "src/binding/**"
-      - "tests/binding/**"
-      - "tests/compat/socket/**"
-      - "tests/compat/stream.test.ts"
+      - "src/**"
+      - "tests/**"
       - "package.json"
       - "pnpm-lock.yaml"
+      - "tsconfig.json"
+      - "tsconfig.dist-types.json"
+      - "tsdown.config.ts"
       - ".github/workflows/zig-test.yml"
   workflow_dispatch:
 
@@ -139,4 +141,4 @@ jobs:
         run: pnpm exec tsdown && pnpm run typecheck:dist
 
       - name: Run binding lifecycle tests
-        run: pnpm exec vitest run tests/binding tests/compat/socket tests/compat/stream.test.ts
+        run: pnpm exec vitest run tests/binding tests/compat/socket tests/compat/stream.test.ts tests/conformance

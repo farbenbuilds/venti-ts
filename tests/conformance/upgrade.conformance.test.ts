@@ -33,6 +33,17 @@ const UPGRADE_HEADERS = {
   "Sec-WebSocket-Version": "13",
 };
 
+/// Resolves once the status line, the header block, and any declared body have
+/// all arrived, so a rejection keeps the full body `ws` writes.
+function responseComplete(data: string): boolean {
+  const headerEnd = data.indexOf("\r\n\r\n");
+  if (headerEnd === -1 || !data.startsWith("HTTP/1.1 ")) return false;
+  if (data.startsWith("HTTP/1.1 101")) return true;
+  const length = /^content-length:\s*(\d+)$/im.exec(data.slice(0, headerEnd));
+  if (length === null) return true;
+  return data.length >= headerEnd + 4 + Number(length[1]);
+}
+
 function rawUpgrade(port: number, raw: string, waitMs = 200): Promise<string> {
   return new Promise((resolve, reject) => {
     const socket = connect(port, "127.0.0.1", () => {
@@ -51,7 +62,7 @@ function rawUpgrade(port: number, raw: string, waitMs = 200): Promise<string> {
     socket.on("close", finish);
     socket.on("data", (chunk) => {
       data += chunk.toString("latin1");
-      if (data.startsWith("HTTP/1.1 101") && data.includes("\r\n\r\n")) finish();
+      if (responseComplete(data)) finish();
     });
     socket.on("error", (error) => {
       if (!settled) reject(error);
