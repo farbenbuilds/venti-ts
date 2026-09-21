@@ -1,7 +1,7 @@
-//! Unit tests for `src/engine/ring.zig`.
+//! Unit tests for `src/engine/channel/ring.zig`.
 
 const std = @import("std");
-const ring_module = @import("../engine/ring.zig");
+const ring_module = @import("../../engine/channel/ring.zig");
 
 const capacity = 8;
 const terminal_reserve = 2;

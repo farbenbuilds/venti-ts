@@ -1,7 +1,7 @@
-//! Unit tests for `src/engine/handles.zig`.
+//! Unit tests for `src/engine/socket/handles.zig`.
 
 const std = @import("std");
-const handles = @import("../engine/handles.zig");
+const handles = @import("../../engine/socket/handles.zig");
 
 test "acquire and resolve hand out live slots" {
     const Slab = handles.connection_slab(4);

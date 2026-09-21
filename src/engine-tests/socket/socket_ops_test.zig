@@ -1,8 +1,8 @@
-//! Unit tests for the outbound transitions in `src/engine/socket_ops.zig`.
+//! Unit tests for the outbound transitions in `src/engine/socket/socket_ops.zig`.
 
 const std = @import("std");
-const payload = @import("../engine/payload.zig");
-const socket = @import("../engine/socket.zig");
+const payload = @import("../../engine/socket/payload.zig");
+const socket = @import("../../engine/socket/socket.zig");
 
 const Ring = payload.payload_ring(4, 16);
 const Slab = socket.socket_slab(4, Ring);

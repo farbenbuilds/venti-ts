@@ -27,9 +27,12 @@ will own parsing, buffers, and backpressure.
   own the server and Node HTTP upgrade path, and `constructors.ts`, `errors.ts`,
   `ready-state.ts`, `stream.ts` sit at the root. `src/protocol/` holds the pure
   close code, framing, and backpressure helpers.
-  `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server,server_io,server_cleanup,payload,status,socket,socket_ops,socket_io}.zig`
-  hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
-  testable module, entered through `src/engine_tests.zig`; the engine-coupled
+  `src/engine/` holds the native foundation grouped by plane: `channel/`
+  (threadsafe transport, event vocabulary, ring), `ffi/` (the N-API entry
+  points), `server/` (lifecycle, instance table, config, route wiring), and
+  `socket/` (per-connection slab, ops, staging); `src/engine-tests/` mirrors
+  those folders with one Zig unit suite per testable module, entered through
+  `src/engine_tests.zig`; the engine-coupled
   `server`/`connections` modules are covered by the addon-backed tests. Socket
   ops stage into a bounded ring and return typed statuses; the engine-thread
   drain that frames and writes them is still missing, so the facade's native

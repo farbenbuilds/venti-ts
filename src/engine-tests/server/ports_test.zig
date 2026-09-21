@@ -1,7 +1,7 @@
-//! Unit tests for `src/engine/ports.zig`.
+//! Unit tests for `src/engine/server/ports.zig`.
 
 const std = @import("std");
-const ports = @import("../engine/ports.zig");
+const ports = @import("../../engine/server/ports.zig");
 
 test "port_of reads IPv4 and IPv6 network-order ports" {
     var v4: std.posix.sockaddr.storage = undefined;

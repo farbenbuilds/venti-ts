@@ -1,7 +1,7 @@
-//! Unit tests for `src/engine/payload.zig`.
+//! Unit tests for `src/engine/socket/payload.zig`.
 
 const std = @import("std");
-const payload = @import("../engine/payload.zig");
+const payload = @import("../../engine/socket/payload.zig");
 
 test "stages records in order and releases them" {
     var ring = payload.payload_ring(2, 8){};
