@@ -46,7 +46,7 @@ pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.E
     errdefer target.cluster.deinit();
 
     try connections.attach_route(target);
-    instance.servers.publish(handle, target);
+    instance.servers.publish(handle, target, env.handle);
     return handle.to_int();
 }
 
@@ -60,10 +60,7 @@ pub fn listen(target: *instance.Instance) !void {
     target.state.store(.listening, .release);
     target.runner = std.Thread.spawn(.{}, run_engine, .{target}) catch |err| {
         cleanup.remove(target);
-        target.channel.close();
-        target.cluster.deinit();
-        instance.servers.retire(target.handle);
-        std.heap.smp_allocator.destroy(target);
+        cleanup.destroy(target);
         return err;
     };
 }
@@ -75,7 +72,7 @@ pub fn close(target: *instance.Instance) !void {
             if (target.state.cmpxchgStrong(.created, .closed, .acq_rel, .acquire) != null) {
                 return error.InvalidServerState;
             }
-            _ = target.channel.emit_terminal(.{
+            _ = target.channel.emit_shutdown(.{
                 .kind = .server_closed,
                 .server = target.handle.to_int(),
             });
@@ -106,10 +103,7 @@ pub fn finalize(target: *instance.Instance) !void {
     if (target.channel.pending() != 0) return error.EventsPending;
 
     cleanup.remove(target);
-    target.channel.close();
-    target.cluster.deinit();
-    instance.servers.retire(target.handle);
-    std.heap.smp_allocator.destroy(target);
+    cleanup.destroy(target);
 }
 
 fn run_engine(target: *instance.Instance) void {
@@ -120,10 +114,10 @@ fn run_engine(target: *instance.Instance) void {
         .code = target.bound_port,
     });
     target.cluster.run() catch {
-        _ = target.channel.emit_terminal(.{ .kind = .engine_error, .server = target.handle.to_int() });
+        _ = target.channel.emit_shutdown(.{ .kind = .engine_error, .server = target.handle.to_int() });
     };
     target.state.store(.closed, .release);
-    _ = target.channel.emit_terminal(.{ .kind = .server_closed, .server = target.handle.to_int() });
+    _ = target.channel.emit_shutdown(.{ .kind = .server_closed, .server = target.handle.to_int() });
     if (acquired) target.channel.release();
 }
 

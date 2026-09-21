@@ -29,7 +29,7 @@ export type NativeServerConfig = {
 export type EngineDispatch = (event: EngineEvent) => void;
 
 /// Per-connection operation results mirrored from `socket.Status` in
-/// `src/engine/status.zig`. The ABI carries the enum ordinal; this array is
+/// `src/engine/socket/status.zig`. The ABI carries the enum ordinal; this array is
 /// the ordinal-to-name table and must keep the Zig declaration order.
 export const NATIVE_SOCKET_STATUSES = [
   "ok",
@@ -60,6 +60,8 @@ export type VentiAddon = {
   pauseSocket(server: number, connection: bigint): number;
   resumeSocket(server: number, connection: bigint): number;
   socketBufferedAmount(server: number, connection: bigint): number;
-  /// Events the channel could not queue because its ring was full.
+  /// Events the channel could not reserve or queue, including threadsafe
+  /// function failures. The terminal reserve keeps close and shutdown events
+  /// out of the regular drop set.
   serverDroppedEvents(server: number): bigint;
 };

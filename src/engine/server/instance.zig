@@ -65,11 +65,11 @@ pub const Instance = struct {
 
 /// Resolves a JavaScript server handle and rejects handles owned by another
 /// Node.js environment (worker thread), so one isolate cannot drive another's
-/// server.
+/// server. The owning environment is checked inside the slot table, before the
+/// instance pointer is loaded, so a worker teardown cannot race the lookup
+/// into freed memory.
 pub fn lookup(env: napi.Env, raw: u40) ?*Instance {
-    const target = servers.lookup(Handle.from_int(raw)) orelse return null;
-    if (target.env != env.handle) return null;
-    return target;
+    return servers.lookup(Handle.from_int(raw), env.handle);
 }
 
 /// Engine-thread lookup for a comptime trampoline slot.

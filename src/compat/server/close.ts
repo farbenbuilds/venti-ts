@@ -1,6 +1,7 @@
 import type { ServerState } from "../../types/server";
 import type { AddressInfo } from "../../types/ws";
-import { emitEvent, onceEvent } from "../events/emitter";
+import { emitEvent } from "../events/emitter";
+import { onceEvent } from "../events/tags";
 import { createError } from "../errors";
 
 /// Latches the terminal server state before dispatch so a repeated close

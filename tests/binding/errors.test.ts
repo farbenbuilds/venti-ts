@@ -11,6 +11,20 @@ test("maps every native lifecycle error name to a stable code", () => {
   expect(nativeError(new Error("ThreadsafeFunctionUnavailable")).code).toBe("ERR_PROTOCOL");
 });
 
+test("maps engine resource failures to state errors, not ABI mismatches", () => {
+  for (const name of [
+    "CapacityExhausted",
+    "ServerCapacityExhausted",
+    "EngineWorkerMissing",
+    "AddressInUse",
+    "SystemResources",
+    "ThreadQuotaExceeded",
+    "OutOfMemory",
+  ]) {
+    expect(nativeError(new Error(name)).code).toBe("ERR_INVALID_STATE");
+  }
+});
+
 test("keeps the native name as the message", () => {
   expect(nativeError(new Error("UnknownServer")).message).toBe("UnknownServer");
 });

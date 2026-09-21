@@ -6,10 +6,17 @@ import type { ServerState } from "../../types/server";
 import { emitEvent } from "../events/emitter";
 import { createError } from "../errors";
 import { listenerCount } from "../events/registry";
-import { parseProtocolHeader } from "../options/shared";
+import { parseProtocolHeader, isProtocolToken } from "../options/shared";
 
 export const KEY_PATTERN = /^[+/0-9A-Za-z]{22}==$/;
 const GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+const STATUS_MIN = 100;
+const STATUS_MAX = 599;
+
+/// Control characters must never reach a response header or status line.
+function hasControlCharacters(value: string): boolean {
+  return value.includes("\u0000") || value.includes("\r") || value.includes("\n");
+}
 
 export function socketAccept(key: string): string {
   return createHash("sha1")
@@ -45,7 +52,9 @@ export function parseProtocols(
 }
 
 /// Picks the response subprotocol: the `handleProtocols` hook owns the
-/// decision when present, otherwise `ws` takes the first offered protocol.
+/// decision when present, otherwise `ws` takes the first offered protocol. A
+/// hook result that is not a valid token is refused rather than echoed into a
+/// response header.
 export function selectProtocol(
   state: ServerState,
   protocols: readonly string[],
@@ -54,8 +63,9 @@ export function selectProtocol(
   if (protocols.length === 0) return false;
   const offered = new Set(protocols);
   const handleProtocols = state.options.handleProtocols;
-  if (handleProtocols) return handleProtocols(offered, request);
-  return protocols[0] ?? false;
+  const selected = handleProtocols ? handleProtocols(offered, request) : (protocols[0] ?? false);
+  if (!isProtocolToken(selected)) return false;
+  return selected;
 }
 
 /// Emits `wsClientError` when a listener exists, otherwise writes the HTTP
@@ -76,19 +86,21 @@ export function abortOrEmit(
 }
 
 /// Writes the HTTP error response `ws` sends when preconditions fail. The
-/// caller-owned headers merge over the defaults exactly like upstream.
+/// caller-owned headers merge over the defaults, but control characters are
+/// stripped first so an application-supplied value cannot split the response.
 export function abortHandshake(
   socket: Duplex,
   code: number,
   message?: string,
   headers?: OutgoingHttpHeaders,
 ): void {
-  const body = message || STATUS_CODES[code] || "";
+  const status = Number.isInteger(code) && code >= STATUS_MIN && code <= STATUS_MAX ? code : 500;
+  const body = message || STATUS_CODES[status] || "";
   const merged: OutgoingHttpHeaders = {
     Connection: "close",
     "Content-Type": "text/html",
     "Content-Length": Buffer.byteLength(body),
-    ...headers,
+    ...sanitizeHeaders(headers),
   };
   const lines = Object.keys(merged)
     .map((name) => `${name}: ${String(merged[name])}`)
@@ -96,5 +108,21 @@ export function abortHandshake(
   socket.once("finish", () => {
     socket.destroy();
   });
-  socket.end(`HTTP/1.1 ${code} ${STATUS_CODES[code] ?? ""}\r\n${lines}\r\n\r\n${body}`);
+  socket.end(`HTTP/1.1 ${status} ${STATUS_CODES[status] ?? ""}\r\n${lines}\r\n\r\n${body}`);
+}
+
+/// Drops any header whose name or value carries a control character. `ws`
+/// forwards them verbatim; this is a deliberate hardening divergence.
+function sanitizeHeaders(headers?: OutgoingHttpHeaders): OutgoingHttpHeaders {
+  const safe: OutgoingHttpHeaders = {};
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (hasControlCharacters(name)) continue;
+    const values = Array.isArray(value) ? value : [value];
+    const unsafe = values.some(
+      (entry) => entry !== undefined && hasControlCharacters(String(entry)),
+    );
+    if (unsafe) continue;
+    safe[name] = value;
+  }
+  return safe;
 }

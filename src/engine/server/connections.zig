@@ -44,7 +44,12 @@ fn on_open(slot: usize, ws: *uwz.WebSocket) void {
         return;
     }
     const index = connection_index(server, ws) orelse return;
-    const handle = server.slab.acquire(index) catch return;
+    // The slab slot is already active, so the engine connection is a
+    // duplicate. Terminate the refused connection instead of leaking it.
+    const handle = server.slab.acquire(index) catch {
+        ws.terminate();
+        return;
+    };
     server.sockets.open(index, handle.generation);
     _ = server.channel.emit(.{
         .kind = .connection_open,

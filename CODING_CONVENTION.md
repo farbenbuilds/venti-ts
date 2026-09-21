@@ -121,7 +121,7 @@ receiver-style functions that silently mutate captured state.
   it is (`state`, `conn`, `server`), never `self`.
 - No module-level mutable variables. Compile-time constants are fine. The one
   sanctioned exception is the bounded server-instance table in
-  `src/engine/instance.zig`: the engine callback ABI carries no user context, so that
+  `src/engine/server/instance.zig`: the engine callback ABI carries no user context, so that
   table is the explicit binding between context-free callbacks and state. It is
   written only by create/finalize on the Node main thread, read by engine
   callbacks through comptime slots, and reached from JavaScript only through
@@ -138,9 +138,9 @@ receiver-style functions that silently mutate captured state.
 - **Imports:** `import type` for type-only imports. `verbatimModuleSyntax`
   enforces this; the build fails otherwise.
 - **Exports:** named exports only. No default exports. Exceptions: `src/index.ts`
-  mirrors `ws` with a type-only default re-export so
-  `import type WebSocket from "ventijs"` stays drop-in (the runtime default
-  arrives with the compatibility layer); `tsdown.config.ts` and
+  mirrors `ws` with a default export that carries both the runtime value and the
+  instance type, so `import WebSocket from "ventijs"` and
+  `import type WebSocket from "ventijs"` stay drop-in; `tsdown.config.ts` and
   `scripts/oxlint-plugin.mjs` are tooling entry points, exempted by the oxlint
   overrides.
 - **Types over interfaces** unless declaration merging is required.

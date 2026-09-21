@@ -2,7 +2,6 @@ import { get } from "node:http";
 import { WebSocket as WsClient } from "ws";
 import { expect, test } from "vitest";
 import { WebSocket, WebSocketServer } from "../../../src/index";
-import type { Server } from "../../../src/index";
 
 function statusOf(port: number, path = "/"): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -13,14 +12,9 @@ function statusOf(port: number, path = "/"): Promise<number> {
   });
 }
 
-function onceEvent<T>(server: Server, event: string): Promise<T> {
+function onceEvent<T>(target: unknown, event: string): Promise<T> {
   return new Promise((resolve) => {
-    server.once(
-      event as never,
-      ((value: T) => {
-        resolve(value);
-      }) as never,
-    );
+    (target as { once(event: string, listener: (value: T) => void): void }).once(event, resolve);
   });
 }
 

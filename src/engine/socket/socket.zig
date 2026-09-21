@@ -75,7 +75,7 @@ pub fn socket_slab(comptime capacity: u32, comptime PayloadRing: type) type {
             const slot = slab.slot_at(index) orelse return .invalid_handle;
             slot.lock();
             defer slot.unlock();
-            return ops.set_paused(slot, index, generation, paused);
+            return ops.set_paused(slot, generation, paused);
         }
 
         /// Flips the terminal latch. Returns true for exactly one caller per
@@ -107,9 +107,15 @@ pub fn socket_slab(comptime capacity: u32, comptime PayloadRing: type) type {
             slot.buffered.store(current - @min(drained, current), .release);
         }
 
-        pub fn buffered(slab: *const Self, index: u32) u32 {
-            if (index >= capacity) return 0;
-            return slab.slots[index].buffered.load(.acquire);
+        /// Bytes staged for a live generation. The generation is re-checked
+        /// under the record lock, so a recycled slot never reports the new
+        /// connection's count to a stale handle.
+        pub fn buffered(slab: *Self, index: u32, generation: u32) u32 {
+            const slot = slab.slot_at(index) orelse return 0;
+            slot.lock();
+            defer slot.unlock();
+            if (slot.generation != generation) return 0;
+            return slot.buffered.load(.acquire);
         }
 
         pub fn is_paused(slab: *const Self, index: u32) bool {

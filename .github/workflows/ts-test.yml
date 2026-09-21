@@ -67,9 +67,9 @@ jobs:
       - name: Unit tests
         # The native addon is not built in this job, so the suites that attach
         # to it stay out exactly like tests/binding/**: the binding lifecycle
-        # tests and the compat facade tests that adopt a native connection.
+        # tests and the compat facade suite that adopts a native connection.
         run: >-
           pnpm exec vitest run
           --exclude 'tests/binding/**'
-          --exclude 'tests/compat/socket/socket.test.ts'
+          --exclude 'tests/compat/socket/**'
           --exclude 'tests/compat/stream.test.ts'

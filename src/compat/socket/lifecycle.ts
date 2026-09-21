@@ -1,13 +1,17 @@
 import { closeSocket, pauseSocket, resumeSocket } from "../../binding/socket";
-import { isValidCloseReason, isValidStatusCode } from "../../protocol/close-codes";
+import {
+  CLOSE_ABNORMAL,
+  CLOSE_NORMAL,
+  isValidCloseReason,
+  isValidStatusCode,
+} from "../../protocol/close-codes";
 import type { SocketState } from "../../types/socket";
+import type { EngineStatus } from "../../types/status";
 import { emitEvent } from "../events/emitter";
 import { createError } from "../errors";
-import { CLOSED, CLOSING, CONNECTING, OPEN } from "../ready-state";
-import { bufferedAmountOf, defer, notOpenError, toPayload } from "./payload";
+import { CLOSED, CLOSING, CONNECTING } from "../ready-state";
+import { bufferedAmountOf, statusError } from "./payload";
 
-const CLOSE_NORMAL = 1000;
-const CLOSE_ABNORMAL = 1006;
 const EMPTY = Buffer.alloc(0);
 
 export function finishConnection(state: SocketState, code: number, reason: Buffer): void {
@@ -21,8 +25,12 @@ export function finishConnection(state: SocketState, code: number, reason: Buffe
 export function failConnection(state: SocketState, error: Error): void {
   if (state.readyState === CLOSED) return;
   state.errorEmitted = true;
-  emitEvent(state, "error", error);
-  finishConnection(state, CLOSE_ABNORMAL, EMPTY);
+  // The terminal latch must run even when an unhandled `error` throws.
+  try {
+    emitEvent(state, "error", error);
+  } finally {
+    finishConnection(state, CLOSE_ABNORMAL, EMPTY);
+  }
 }
 
 export function closeConnection(state: SocketState, code?: unknown, reason?: unknown): void {
@@ -32,7 +40,7 @@ export function closeConnection(state: SocketState, code?: unknown, reason?: unk
     return;
   }
   if (state.readyState === CLOSING) return;
-  const closeCode = code === undefined ? CLOSE_NORMAL : assertCloseCode(code);
+  const closeCode = code === undefined ? CLOSE_NORMAL : Math.trunc(assertCloseCode(code));
   const closeReason = toCloseReason(reason);
   state.readyState = CLOSING;
   if (state.attachment === null) return;
@@ -42,9 +50,31 @@ export function closeConnection(state: SocketState, code?: unknown, reason?: unk
     closeCode,
     closeReason,
   );
-  if (status !== "ok") return;
-  state.closeFrameSent = true;
-  state.bufferedAmount = bufferedAmountOf(state);
+  if (status === "ok") {
+    state.closeFrameSent = true;
+    state.bufferedAmount = bufferedAmountOf(state);
+    return;
+  }
+  if (status === "closing" || status === "closed") {
+    finishConnection(state, CLOSE_ABNORMAL, EMPTY);
+    return;
+  }
+  failConnection(state, closeFailure(status));
+}
+
+/// Maps a rejected native close onto a coded error instead of leaving the
+/// socket latched in CLOSING with no frame sent.
+function closeFailure(status: EngineStatus): Error {
+  if (status === "backpressure") {
+    return createError("ERR_BACKPRESSURE", "ventijs: the outbound staging ring is full");
+  }
+  if (status === "invalid-handle") {
+    return createError("ERR_INVALID_HANDLE", "ventijs: the connection handle is stale");
+  }
+  if (status === "ok" || status === "closing" || status === "closed") {
+    return createError("ERR_INVALID_STATE", "ventijs: the connection is already closing");
+  }
+  return statusError(status);
 }
 
 function assertCloseCode(code: unknown): number {
@@ -70,38 +100,6 @@ function toCloseReason(reason: unknown): Buffer {
     );
   }
   return bytes;
-}
-
-/// Normalizes `ping`/`pong` arguments the way `ws` does. The engine stages
-/// text, binary, and close frames today; control-frame staging lands with the
-/// ping/pong binding, so an open socket reports the missing transport through
-/// its callback instead of silently dropping the frame.
-export function controlFrame(
-  state: SocketState,
-  kind: "ping" | "pong",
-  data: unknown,
-  mask: unknown,
-  callback: unknown,
-): void {
-  if (state.readyState === CONNECTING) throw notOpenError(CONNECTING);
-  let payload = data;
-  let failure = callback;
-  if (typeof payload === "function") {
-    failure = payload;
-    payload = undefined;
-  } else if (typeof mask === "function") {
-    failure = mask;
-  }
-  if (typeof payload === "number") payload = String(payload);
-  if (state.readyState !== OPEN) {
-    state.bufferedAmount += toPayload(payload).bytes.length;
-    defer(failure, notOpenError(state.readyState));
-    return;
-  }
-  defer(
-    failure,
-    createError("ERR_INVALID_STATE", `ventijs: ${kind} frames are not implemented yet`),
-  );
 }
 
 export function pauseConnection(state: SocketState): void {

@@ -19,6 +19,11 @@ test "the terminal reserve covers every connection close plus the lifecycle pair
     try std.testing.expect(callbacks.terminal_reserve < callbacks.capacity);
 }
 
+test "the shutdown reserve is the lifecycle pair inside the terminal reserve" {
+    try std.testing.expectEqual(@as(usize, 2), callbacks.shutdown_reserve);
+    try std.testing.expect(callbacks.shutdown_reserve < callbacks.terminal_reserve);
+}
+
 test "a fresh channel has dropped nothing" {
     var channel = callbacks.Channel{};
     try std.testing.expectEqual(@as(u64, 0), channel.dropped());

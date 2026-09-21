@@ -17,6 +17,15 @@ const NATIVE_ERROR_CODES: Readonly<Record<string, ErrorCode>> = {
   InvalidMessageCapacity: "ERR_INVALID_OPTION",
   InvalidFrameCapacity: "ERR_INVALID_OPTION",
   ThreadsafeFunctionUnavailable: "ERR_PROTOCOL",
+  // Resource and environment failures the engine wrappers can surface; these
+  // are states of the host, not ABI mismatches.
+  CapacityExhausted: "ERR_INVALID_STATE",
+  ServerCapacityExhausted: "ERR_INVALID_STATE",
+  EngineWorkerMissing: "ERR_INVALID_STATE",
+  AddressInUse: "ERR_INVALID_STATE",
+  SystemResources: "ERR_INVALID_STATE",
+  ThreadQuotaExceeded: "ERR_INVALID_STATE",
+  OutOfMemory: "ERR_INVALID_STATE",
 };
 
 /// Wraps a native addon failure in a coded `Error`. The native name stays the

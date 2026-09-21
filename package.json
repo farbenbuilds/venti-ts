@@ -31,7 +31,7 @@
     "lint:fix": "oxlint --fix",
     "test": "pnpm run build:binding && vitest run",
     "test:watch": "pnpm run build:binding && vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "typecheck:dist": "tsc -p tsconfig.dist-types.json",
     "release": "bumpp",
     "prepublishOnly": "pnpm run build"

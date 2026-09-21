@@ -11,11 +11,11 @@ import {
 import { CLOSED, CLOSING, CONNECTING, OPEN } from "../ready-state";
 import {
   closeConnection,
-  controlFrame,
   pauseConnection,
   resumeConnection,
   terminateConnection,
 } from "./lifecycle";
+import { controlFrame } from "./control";
 import { sendData } from "./send";
 import { brandSocket, createSocketState } from "./state";
 
@@ -48,8 +48,17 @@ export function createSocket(
       return state.binaryType;
     },
     set binaryType(value: string) {
-      if (value !== "nodebuffer" && value !== "arraybuffer" && value !== "fragments") return;
-      state.binaryType = value;
+      // `ws` also accepts "blob" whenever the Blob global exists; the vendored
+      // types omit it, so the record widens only at runtime.
+      if (
+        value !== "nodebuffer" &&
+        value !== "arraybuffer" &&
+        value !== "fragments" &&
+        value !== "blob"
+      ) {
+        return;
+      }
+      state.binaryType = value as typeof state.binaryType;
     },
     get bufferedAmount(): number {
       return state.bufferedAmount;

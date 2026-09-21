@@ -8,7 +8,14 @@ import {
   createMessageEvent,
   createOpenEvent,
 } from "./dom-events";
-import { asTagged, originalOf, type TaggedHandler } from "./emitter";
+import {
+  asTagged,
+  DOM_WRAPPER,
+  isDomEntry,
+  originalOf,
+  onceWrapper,
+  type TaggedHandler,
+} from "./tags";
 import { subscribe, unsubscribeMatching } from "./registry";
 
 const DOM_TYPES = ["open", "error", "close", "message"] as const;
@@ -30,10 +37,11 @@ function isDomType(type: string): type is DomEventType {
   return (DOM_TYPES as readonly string[]).includes(type);
 }
 
+/// Attribute wrappers are branded DOM wrappers carrying `attribute`; a user
+/// function with an `attribute` property must never be mistaken for one.
 function isAttribute(entry: unknown): boolean {
   const tagged = asTagged(entry);
-  if (tagged.attribute === true) return true;
-  return asTagged(tagged.listener).attribute === true;
+  return tagged[DOM_WRAPPER] === true && tagged.attribute === true;
 }
 
 function wrapperFor(state: SocketState, type: DomEventType, handler: unknown): TaggedHandler {
@@ -63,22 +71,6 @@ function wrapperFor(state: SocketState, type: DomEventType, handler: unknown): T
   }
 }
 
-function onceDomWrapper(
-  state: SocketState,
-  type: DomEventType,
-  wrapper: TaggedHandler,
-): TaggedHandler {
-  const once = (...args: readonly unknown[]): void => {
-    state.listeners = unsubscribeMatching(
-      state.listeners,
-      type,
-      (entry) => entry === (once as unknown as never),
-    );
-    Reflect.apply(wrapper, state.target, args);
-  };
-  return Object.assign(once, { listener: wrapper }) as unknown as TaggedHandler;
-}
-
 export function addEventListener(
   state: SocketState,
   type: string,
@@ -88,14 +80,17 @@ export function addEventListener(
   if (!isDomType(type)) return;
   const attributed = options.attribute === true;
   const bucket = state.listeners[type] ?? [];
-  if (!attributed && bucket.some((entry) => originalOf(entry) === handler && !isAttribute(entry))) {
-    return;
-  }
+  const duplicate = bucket.some(
+    (entry) => isDomEntry(entry) && originalOf(entry) === handler && !isAttribute(entry),
+  );
+  if (!attributed && duplicate) return;
   const wrapper = wrapperFor(state, type, handler);
   wrapper.attribute = attributed;
   wrapper.listener = handler;
-  const entry =
-    options.once === true ? onceDomWrapper(state, type, wrapper) : (wrapper as TaggedHandler);
+  wrapper[DOM_WRAPPER] = true;
+  const entry = options.once
+    ? onceWrapper(state, type, wrapper as unknown as Handler<SocketEventMap[DomEventType]>)
+    : (wrapper as TaggedHandler);
   state.listeners = subscribe(
     state.listeners,
     type,
@@ -108,7 +103,7 @@ export function removeEventListener(state: SocketState, type: string, handler: u
   state.listeners = unsubscribeMatching(
     state.listeners,
     type,
-    (entry) => originalOf(entry) === handler && !isAttribute(entry),
+    (entry) => isDomEntry(entry) && originalOf(entry) === handler && !isAttribute(entry),
   );
 }
 

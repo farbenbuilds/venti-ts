@@ -22,17 +22,41 @@ test("a valid handshake upgrades and emits connection", async () => {
   }
 });
 
-test("handleProtocols selects the response subprotocol", async () => {
+test("handleProtocols selects the response subprotocol and the socket sees it", async () => {
   const server = new WebSocketServer({
     noServer: true,
     handleProtocols: (protocols) => (protocols.has("superchat") ? "superchat" : false),
   });
   const harness = await serve(server);
   try {
+    const connection = new Promise<WebSocket>((resolve) => {
+      harness.server.once("connection", (socket) => {
+        resolve(socket);
+      });
+    });
     const headers = { ...UPGRADE_HEADERS, "Sec-WebSocket-Protocol": "chat, superchat" };
     const result = await rawUpgrade(harness.port, request("/", headers));
     expect(result.status).toBe(101);
     expect(result.response).toContain("Sec-WebSocket-Protocol: superchat");
+    const socket = await connection;
+    expect(socket.protocol).toBe("superchat");
+  } finally {
+    await harness.close();
+  }
+});
+
+test("a non-token handleProtocols result is refused, not echoed", async () => {
+  const server = new WebSocketServer({
+    noServer: true,
+    handleProtocols: () => "chat\r\nX-Injected: 1",
+  });
+  const harness = await serve(server);
+  try {
+    const headers = { ...UPGRADE_HEADERS, "Sec-WebSocket-Protocol": "chat" };
+    const result = await rawUpgrade(harness.port, request("/", headers));
+    expect(result.status).toBe(101);
+    expect(result.response).not.toContain("X-Injected");
+    expect(result.response).not.toContain("Sec-WebSocket-Protocol");
   } finally {
     await harness.close();
   }

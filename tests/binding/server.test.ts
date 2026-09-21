@@ -69,3 +69,12 @@ test(
     }
   },
 );
+
+test("rejects non-integer configuration before the native call", () => {
+  expect(() => fixture({ port: 0.5 })).toThrow(/must be a safe integer/);
+  expect(() => fixture({ port: Number.NaN })).toThrow(/"port"/);
+  expect(() => fixture({ port: 0, backlog: 1.5 })).toThrow(/"backlog"/);
+  expect(() => fixture({ port: 0, maxConnections: Number.POSITIVE_INFINITY })).toThrow(
+    /"maxConnections"/,
+  );
+});

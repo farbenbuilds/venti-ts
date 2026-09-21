@@ -12,7 +12,7 @@ test "send stages a record and accounts the buffered amount" {
     slab.open(1, 42);
 
     try std.testing.expectEqual(socket.Status.ok, slab.send(1, 42, .text, "hello"));
-    try std.testing.expectEqual(@as(u32, 5), slab.buffered(1));
+    try std.testing.expectEqual(@as(u32, 5), slab.buffered(1, 42));
 
     const view = slab.ring.peek().?;
     try std.testing.expectEqual(@as(u32, 1), view.index);
@@ -36,7 +36,7 @@ test "send rejects oversized payloads and unknown slots" {
 
     try std.testing.expectEqual(socket.Status.payload_too_large, slab.send(0, 1, .binary, "0123456789abcdefg"));
     try std.testing.expectEqual(socket.Status.invalid_handle, slab.send(4, 1, .binary, "x"));
-    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0, 1));
 }
 
 test "close validates the code and reason" {
@@ -63,7 +63,7 @@ test "close accepts the exact reason boundary and accounts its bytes" {
     const reason = "x" ** 123;
 
     try std.testing.expectEqual(socket.Status.ok, slab.close(0, 1, 1000, reason));
-    try std.testing.expectEqual(@as(u32, 125), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 125), slab.buffered(0, 1));
     try std.testing.expectEqual(@as(usize, 125), slab.ring.peek().?.bytes.len);
 }
 
