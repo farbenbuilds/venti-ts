@@ -4,7 +4,7 @@ import type {
   Event as SocketEvent,
   MessageEvent,
   WebSocket,
-} from "../types/ws";
+} from "../../types/ws";
 
 export function createOpenEvent(target: WebSocket): SocketEvent {
   return { type: "open", target };

@@ -1,6 +1,6 @@
-import type { NormalizedPerMessageDeflate } from "../types/options";
-import type { PerMessageDeflateOptions } from "../types/ws";
-import { createError } from "./errors";
+import type { NormalizedPerMessageDeflate } from "../../types/options";
+import type { PerMessageDeflateOptions } from "../../types/ws";
+import { createError } from "../errors";
 
 export const DEFAULT_MAX_PAYLOAD = 100 * 1024 * 1024;
 export const DEFAULT_MAX_REDIRECTS = 10;

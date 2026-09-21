@@ -19,18 +19,22 @@ will own parsing, buffers, and backpressure.
   exports. `src/types/{events,socket,server}.ts` hold the internal state records,
   event maps, and listener-registry types;
   `src/types/{close,errors,status,options}.ts` hold the ready-state, close-code,
-  error-code, engine-status, and normalized option types. `src/compat/events.ts`
-  implements the listener registry,
-  `src/compat/{options,server-options,client-options,errors}.ts` normalize
-  options and build coded errors, and `src/protocol/` holds the pure close
-  code, framing, and backpressure helpers.
+  error-code, engine-status, and normalized option types. `src/compat/` splits
+  by surface: `events/{registry,emitter,dom-events,dom-listeners}.ts` own the
+  listener registry and DOM handlers, `options/{shared,server,client}.ts`
+  normalize options, `socket/{socket,state,attach,send,payload,lifecycle}.ts`
+  own the socket facade, `server/{server,close,listeners,upgrade,handshake,clients}.ts`
+  own the server and Node HTTP upgrade path, and `constructors.ts`, `errors.ts`,
+  `ready-state.ts`, `stream.ts` sit at the root. `src/protocol/` holds the pure
+  close code, framing, and backpressure helpers.
   `src/engine/{handles,options,registry,events,ring,ports,callbacks,instance,connections,server,server_io,server_cleanup,payload,status,socket,socket_ops,socket_io}.zig`
   hold the native foundation; `src/engine-tests/` holds one Zig unit suite per
   testable module, entered through `src/engine_tests.zig`; the engine-coupled
   `server`/`connections` modules are covered by the addon-backed tests. Socket
   ops stage into a bounded ring and return typed statuses; the engine-thread
-  drain that frames and writes them is still missing, so there is no runtime
-  `ws` surface yet. `pnpm build:binding` builds the addon in ReleaseSafe, and
+  drain that frames and writes them is still missing, so the facade's native
+  sockets stage without flushing and the Node upgrade path has no receiver.
+  `pnpm build:binding` builds the addon in ReleaseSafe, and
   `scripts/check-conventions.mjs` (run by `pnpm lint` and a `lefthook` job)
   enforces the line budget, Zig naming, filename case, and the emoji ban. The
   pinned `ws`/`@types/ws` devDependencies back the first conformance leg in

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { normalizeClientOptions } from "../../src/compat/client-options";
-import { normalizeProtocols } from "../../src/compat/options";
-import { normalizeServerOptions } from "../../src/compat/server-options";
+import { normalizeClientOptions } from "../../src/compat/options/client";
+import { normalizeProtocols } from "../../src/compat/options/shared";
+import { normalizeServerOptions } from "../../src/compat/options/server";
 
 function capture(fn: () => void): unknown {
   try {

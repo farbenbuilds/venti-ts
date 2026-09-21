@@ -1,6 +1,6 @@
-import type { SocketEventMap, SocketState } from "../types/socket";
-import { createRegistry } from "./events";
-import { CONNECTING } from "./ready-state";
+import type { SocketEventMap, SocketState } from "../../types/socket";
+import { createRegistry } from "../events/registry";
+import { CONNECTING } from "../ready-state";
 
 const SOCKET_BRAND = Symbol("ventijs.socket");
 const SOCKET_STATE = Symbol("ventijs.socket.state");

@@ -1,6 +1,6 @@
-import type { ServerState } from "../types/server";
-import type { WebSocket } from "../types/ws";
-import { emitClose } from "./server-close";
+import type { ServerState } from "../../types/server";
+import type { WebSocket } from "../../types/ws";
+import { emitClose } from "./close";
 
 /// Adds an accepted socket to `server.clients` and removes it on close. When
 /// `close()` was called first, the last client leaving releases the deferred

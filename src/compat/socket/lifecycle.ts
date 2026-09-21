@@ -1,10 +1,10 @@
-import { closeSocket, pauseSocket, resumeSocket } from "../binding/socket";
-import { isValidCloseReason, isValidStatusCode } from "../protocol/close-codes";
-import type { SocketState } from "../types/socket";
-import { emitEvent } from "./emitter";
-import { createError } from "./errors";
-import { CLOSED, CLOSING, CONNECTING, OPEN } from "./ready-state";
-import { bufferedAmountOf, defer, notOpenError, toPayload } from "./socket-payload";
+import { closeSocket, pauseSocket, resumeSocket } from "../../binding/socket";
+import { isValidCloseReason, isValidStatusCode } from "../../protocol/close-codes";
+import type { SocketState } from "../../types/socket";
+import { emitEvent } from "../events/emitter";
+import { createError } from "../errors";
+import { CLOSED, CLOSING, CONNECTING, OPEN } from "../ready-state";
+import { bufferedAmountOf, defer, notOpenError, toPayload } from "./payload";
 
 const CLOSE_NORMAL = 1000;
 const CLOSE_ABNORMAL = 1006;

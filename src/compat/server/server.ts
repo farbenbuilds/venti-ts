@@ -1,13 +1,13 @@
 import { STATUS_CODES, createServer as createHttpServer } from "node:http";
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
-import type { ServerEventMap, ServerSocketConstructor, ServerState } from "../types/server";
-import type { ServerOptions, WebSocket, WebSocketServer } from "../types/ws";
-import { createEmitter } from "./emitter";
-import { createRegistry } from "./events";
-import { addressOf, closeWebSocketServer } from "./server-close";
-import { wireServer } from "./server-listeners";
-import { normalizeServerOptions } from "./server-options";
+import type { ServerEventMap, ServerSocketConstructor, ServerState } from "../../types/server";
+import type { ServerOptions, WebSocket, WebSocketServer } from "../../types/ws";
+import { createEmitter } from "../events/emitter";
+import { createRegistry } from "../events/registry";
+import { addressOf, closeWebSocketServer } from "./close";
+import { wireServer } from "./listeners";
+import { normalizeServerOptions } from "../options/server";
 import { handleUpgrade, shouldHandle, type UpgradeCallback } from "./upgrade";
 
 const SERVER_BRAND = Symbol("ventijs.server");

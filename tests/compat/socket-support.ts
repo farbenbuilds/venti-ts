@@ -1,6 +1,6 @@
 import { WebSocket as WsClient } from "ws";
 import { packConnectionHandle } from "../../src/binding/handle";
-import { attachNativeSocket } from "../../src/compat/socket-attach";
+import { attachNativeSocket } from "../../src/compat/socket/attach";
 import { WebSocket } from "../../src/index";
 import { startAndWait, type ServerFixture } from "../binding/support";
 

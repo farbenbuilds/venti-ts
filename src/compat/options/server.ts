@@ -1,6 +1,6 @@
-import type { NormalizedServerOptions } from "../types/options";
-import type { ServerOptions } from "../types/ws";
-import { DEFAULT_MAX_PAYLOAD, invalidOption, normalizePerMessageDeflate } from "./options";
+import type { NormalizedServerOptions } from "../../types/options";
+import type { ServerOptions } from "../../types/ws";
+import { DEFAULT_MAX_PAYLOAD, invalidOption, normalizePerMessageDeflate } from "./shared";
 
 export function normalizeServerOptions(options?: ServerOptions): NormalizedServerOptions {
   // ws copies own enumerable properties before reading, so inherited

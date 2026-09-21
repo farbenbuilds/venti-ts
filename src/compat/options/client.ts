@@ -1,11 +1,11 @@
-import type { NormalizedClientOptions } from "../types/options";
-import type { ClientOptions } from "../types/ws";
+import type { NormalizedClientOptions } from "../../types/options";
+import type { ClientOptions } from "../../types/ws";
 import {
   DEFAULT_MAX_PAYLOAD,
   DEFAULT_MAX_REDIRECTS,
   invalidOption,
   normalizePerMessageDeflate,
-} from "./options";
+} from "./shared";
 
 export function normalizeClientOptions(options?: ClientOptions): NormalizedClientOptions {
   // ws copies own enumerable properties before reading, so inherited

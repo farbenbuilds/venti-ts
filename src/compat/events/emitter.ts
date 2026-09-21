@@ -1,5 +1,5 @@
-import type { Emitter, EmitterState, EventMap, Handler } from "../types/events";
-import { createError } from "./errors";
+import type { Emitter, EmitterState, EventMap, Handler } from "../../types/events";
+import { createError } from "../errors";
 import {
   dispatchWith,
   eventNames,
@@ -8,7 +8,7 @@ import {
   removeAll,
   subscribe,
   unsubscribeMatching,
-} from "./events";
+} from "./registry";
 
 const ERROR_EVENT = "error";
 const MAX_WRAPPER_DEPTH = 3;

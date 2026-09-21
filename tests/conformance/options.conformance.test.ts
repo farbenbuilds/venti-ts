@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { expect, test } from "vitest";
-import { normalizeProtocols } from "../../src/compat/options";
-import { normalizeServerOptions } from "../../src/compat/server-options";
+import { normalizeProtocols } from "../../src/compat/options/shared";
+import { normalizeServerOptions } from "../../src/compat/options/server";
 
 type Outcome =
   | { readonly threw: false }

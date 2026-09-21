@@ -2,11 +2,11 @@ import { createHash } from "node:crypto";
 import { STATUS_CODES } from "node:http";
 import type { IncomingMessage, OutgoingHttpHeaders } from "node:http";
 import type { Duplex } from "node:stream";
-import type { ServerState } from "../types/server";
-import { emitEvent } from "./emitter";
-import { createError } from "./errors";
-import { listenerCount } from "./events";
-import { parseProtocolHeader } from "./options";
+import type { ServerState } from "../../types/server";
+import { emitEvent } from "../events/emitter";
+import { createError } from "../errors";
+import { listenerCount } from "../events/registry";
+import { parseProtocolHeader } from "../options/shared";
 
 export const KEY_PATTERN = /^[+/0-9A-Za-z]{22}==$/;
 const GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";

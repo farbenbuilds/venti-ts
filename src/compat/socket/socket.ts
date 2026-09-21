@@ -1,25 +1,25 @@
-import type { ReadyState } from "../types/close";
-import type { ClientOptions, ServerOptions, WebSocket } from "../types/ws";
-import { createEmitter } from "./emitter";
-import { createError } from "./errors";
+import type { ReadyState } from "../../types/close";
+import type { ClientOptions, ServerOptions, WebSocket } from "../../types/ws";
+import { createEmitter } from "../events/emitter";
+import { createError } from "../errors";
 import {
   addEventListener,
   defineDomAttributes,
   removeEventListener,
   type DomListenerOptions,
-} from "./event-target";
-import { CLOSED, CLOSING, CONNECTING, OPEN } from "./ready-state";
+} from "../events/dom-listeners";
+import { CLOSED, CLOSING, CONNECTING, OPEN } from "../ready-state";
 import {
   closeConnection,
   controlFrame,
   pauseConnection,
   resumeConnection,
   terminateConnection,
-} from "./socket-lifecycle";
-import { sendData } from "./socket-send";
-import { brandSocket, createSocketState } from "./socket-state";
+} from "./lifecycle";
+import { sendData } from "./send";
+import { brandSocket, createSocketState } from "./state";
 
-export { isSocket } from "./socket-state";
+export { isSocket } from "./state";
 
 /// The `ws`-shaped socket record. Client construction is deferred, so a
 /// non-null address reports the deferred scope; `null` builds the server-side

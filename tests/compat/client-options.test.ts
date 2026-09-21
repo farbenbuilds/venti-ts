@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { normalizeClientOptions } from "../../src/compat/client-options";
+import { normalizeClientOptions } from "../../src/compat/options/client";
 
 test("fills the ws client defaults", () => {
   const options = normalizeClientOptions();

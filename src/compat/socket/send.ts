@@ -1,9 +1,9 @@
-import { sendSocket } from "../binding/socket";
-import type { SocketState } from "../types/socket";
-import type { EngineStatus } from "../types/status";
-import { createError } from "./errors";
-import { CONNECTING, OPEN } from "./ready-state";
-import { bufferedAmountOf, defer, notOpenError, statusError, toPayload } from "./socket-payload";
+import { sendSocket } from "../../binding/socket";
+import type { SocketState } from "../../types/socket";
+import type { EngineStatus } from "../../types/status";
+import { createError } from "../errors";
+import { CONNECTING, OPEN } from "../ready-state";
+import { bufferedAmountOf, defer, notOpenError, statusError, toPayload } from "./payload";
 
 const NOT_ATTACHED =
   "ventijs: the socket has no native transport attached; engine socket adoption is not implemented yet";

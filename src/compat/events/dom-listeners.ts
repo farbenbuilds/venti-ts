@@ -1,15 +1,15 @@
-import type { Handler } from "../types/events";
-import type { SocketEventMap, SocketState } from "../types/socket";
-import type { WebSocket } from "../types/ws";
+import type { Handler } from "../../types/events";
+import type { SocketEventMap, SocketState } from "../../types/socket";
+import type { WebSocket } from "../../types/ws";
 import {
   callListener,
   createCloseEvent,
   createErrorEvent,
   createMessageEvent,
   createOpenEvent,
-} from "./event-objects";
+} from "./dom-events";
 import { asTagged, originalOf, type TaggedHandler } from "./emitter";
-import { subscribe, unsubscribeMatching } from "./events";
+import { subscribe, unsubscribeMatching } from "./registry";
 
 const DOM_TYPES = ["open", "error", "close", "message"] as const;
 const ATTRIBUTES = [

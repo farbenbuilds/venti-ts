@@ -1,10 +1,14 @@
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
-import type { ServerState } from "../types/server";
-import type { VerifyClientCallbackAsync, VerifyClientCallbackSync, WebSocket } from "../types/ws";
-import { trackClient } from "./client-tracking";
-import { emitEvent } from "./emitter";
-import { createError } from "./errors";
+import type { ServerState } from "../../types/server";
+import type {
+  VerifyClientCallbackAsync,
+  VerifyClientCallbackSync,
+  WebSocket,
+} from "../../types/ws";
+import { trackClient } from "./clients";
+import { emitEvent } from "../events/emitter";
+import { createError } from "../errors";
 import {
   abortHandshake,
   abortOrEmit,
@@ -15,7 +19,7 @@ import {
   selectProtocol,
   socketAccept,
 } from "./handshake";
-import { attachSocket } from "./socket-attach";
+import { attachSocket } from "../socket/attach";
 
 const UPGRADED = Symbol("ventijs.upgraded");
 

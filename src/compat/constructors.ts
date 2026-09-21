@@ -6,8 +6,8 @@ import type {
   WebSocket as WebSocketInstance,
   WebSocketServer as WebSocketServerInstance,
 } from "../types/ws";
-import { createWebSocketServer, isServer } from "./server";
-import { createSocket, isSocket } from "./socket";
+import { createWebSocketServer, isServer } from "./server/server";
+import { createSocket, isSocket } from "./socket/socket";
 import { createWebSocketStream } from "./stream";
 
 type SocketConstructor = typeof ws.WebSocket;

@@ -1,12 +1,12 @@
 import type { Duplex } from "node:stream";
-import type { ConnectionHandle } from "../binding/handle";
-import type { ServerHandle } from "../binding/server";
-import type { WebSocket } from "../types/ws";
-import { emitEvent } from "./emitter";
-import { createError } from "./errors";
-import { CLOSED, CLOSING, OPEN } from "./ready-state";
-import { finishConnection } from "./socket-lifecycle";
-import { socketStateOf } from "./socket-state";
+import type { ConnectionHandle } from "../../binding/handle";
+import type { ServerHandle } from "../../binding/server";
+import type { WebSocket } from "../../types/ws";
+import { emitEvent } from "../events/emitter";
+import { createError } from "../errors";
+import { CLOSED, CLOSING, OPEN } from "../ready-state";
+import { finishConnection } from "./lifecycle";
+import { socketStateOf } from "./state";
 
 /// Adopts a generation-checked native connection. Socket operations then
 /// route through `src/binding/socket.ts`; the engine-thread drain that flushes

@@ -1,5 +1,5 @@
-import { createRegistry, dispatch, subscribe } from "../../src/compat/events";
-import { normalizeServerOptions } from "../../src/compat/server-options";
+import { createRegistry, dispatch, subscribe } from "../../src/compat/events/registry";
+import { normalizeServerOptions } from "../../src/compat/options/server";
 import type { EventMap, Handler, Registry } from "../../src/types/events";
 import type { ServerEventMap, ServerState } from "../../src/types/server";
 import type { SocketEventMap, SocketState } from "../../src/types/socket";

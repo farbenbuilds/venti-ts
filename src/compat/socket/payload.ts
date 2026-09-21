@@ -1,8 +1,8 @@
-import { socketBufferedAmount } from "../binding/socket";
-import type { CodedError } from "../types/errors";
-import type { SocketState } from "../types/socket";
-import type { ErrorStatus } from "../types/status";
-import { createError, createStatusError } from "./errors";
+import { socketBufferedAmount } from "../../binding/socket";
+import type { CodedError } from "../../types/errors";
+import type { SocketState } from "../../types/socket";
+import type { ErrorStatus } from "../../types/status";
+import { createError, createStatusError } from "../errors";
 
 const READY_STATE_NAMES = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"] as const;
 

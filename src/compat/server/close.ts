@@ -1,7 +1,7 @@
-import type { ServerState } from "../types/server";
-import type { AddressInfo } from "../types/ws";
-import { emitEvent, onceEvent } from "./emitter";
-import { createError } from "./errors";
+import type { ServerState } from "../../types/server";
+import type { AddressInfo } from "../../types/ws";
+import { emitEvent, onceEvent } from "../events/emitter";
+import { createError } from "../errors";
 
 /// Latches the terminal server state before dispatch so a repeated close
 /// request cannot emit `close` twice, then emits it once.

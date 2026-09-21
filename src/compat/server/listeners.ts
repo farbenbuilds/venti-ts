@@ -1,7 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
-import type { ServerState } from "../types/server";
-import { emitEvent } from "./emitter";
+import type { ServerState } from "../../types/server";
+import { emitEvent } from "../events/emitter";
 import { handleUpgrade } from "./upgrade";
 
 type UpgradeHandler = (request: IncomingMessage, socket: Duplex, head: Buffer) => void;
