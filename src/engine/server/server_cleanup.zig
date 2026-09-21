@@ -40,8 +40,17 @@ fn on_env_cleanup(raw: ?*anyopaque) callconv(.c) void {
         runner.join();
         target.runner = null;
     }
-    instance.servers.retire(target.handle);
+    destroy(target);
+}
+
+/// Releases every native resource an instance owns and frees it. Every
+/// teardown path funnels through here, so a new resource cannot be missed in
+/// one of them. The caller must have joined the engine thread and removed the
+/// environment cleanup hook; the hook's own path calls this directly because
+/// Node is already running it.
+pub fn destroy(target: *instance.Instance) void {
     target.channel.close();
     target.cluster.deinit();
+    instance.servers.retire(target.handle);
     std.heap.smp_allocator.destroy(target);
 }

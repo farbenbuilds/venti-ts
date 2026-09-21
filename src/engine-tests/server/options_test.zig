@@ -88,6 +88,19 @@ test "trust accepts the exact text capacity boundaries" {
     );
 }
 
+test "trust rejects a frame cap below the control-frame floor" {
+    try std.testing.expectError(
+        error.InvalidFrameCapacity,
+        options.trust(.{ .port = 1, .max_message_bytes = 1_024, .max_frame_bytes = 124 }),
+    );
+    const config = try options.trust(.{
+        .port = 1,
+        .max_message_bytes = 1_024,
+        .max_frame_bytes = options.min_frame_bytes,
+    });
+    try std.testing.expectEqual(options.min_frame_bytes, config.limits.max_frame_bytes);
+}
+
 test "trust accepts a frame cap equal to the message cap" {
     const config = try options.trust(.{
         .port = 1,

@@ -1,28 +1,33 @@
 //! Engine-to-JavaScript transport: the only bridge an engine thread may use to
 //! reach JavaScript. Events travel through one threadsafe function and are
-//! rendered on the Node main thread by `call_js`; nothing allocates on the
-//! engine thread.
+//! rendered on the Node main thread by `dispatch.call_js`; nothing allocates
+//! on the engine thread.
 
 const std = @import("std");
 const napi = @import("napi-zig");
+const dispatch = @import("dispatch.zig");
 const events = @import("events.zig");
-const options = @import("../server/options.zig");
-const ring_module = @import("ring.zig");
+const sizing = @import("sizing.zig");
 
 const c = napi.c;
 
 pub const Event = events.Event;
 
 /// Slots held back for terminal events: one close per connection plus the pair.
-pub const terminal_reserve: usize = options.connection_capacity + 2;
+pub const terminal_reserve = sizing.terminal_reserve;
+
+/// Slots only shutdown events may claim.
+pub const shutdown_reserve = sizing.shutdown_reserve;
 
 /// Ring depth rounded to the power of two the mask needs (comptime sum 288).
-pub const capacity: usize = std.math.ceilPowerOfTwo(
-    usize,
-    2 * options.connection_capacity + 32,
-) catch unreachable;
+pub const capacity = sizing.capacity;
 
-const Ring = ring_module.event_ring(capacity, terminal_reserve);
+const Ring = sizing.Ring;
+
+/// Reserve tier an event belongs to. Terminal and shutdown events are
+/// reachable only through their emit functions, so a regular flood can never
+/// consume their slots.
+const Tier = enum { regular, terminal, shutdown };
 
 /// Bounded bridge between one engine thread and the Node main thread.
 pub const Channel = struct {
@@ -31,21 +36,23 @@ pub const Channel = struct {
     closing: std.atomic.Value(bool) = .init(false),
     ring: Ring = .{},
 
-    /// Creates the threadsafe function. Runs on the Node main thread.
-    pub fn open(channel: *Channel, env: napi.Env, dispatch: napi.Callback) !void {
+    /// Creates the threadsafe function. Runs on the Node main thread. The
+    /// context is the ring, not the channel: dispatch only needs the ring and
+    /// the channel may be freed by the handler the dispatch invokes.
+    pub fn open(channel: *Channel, env: napi.Env, dispatch_fn: napi.Callback) !void {
         const name = try env.createString("ventijs.server");
         var out: c.napi_threadsafe_function = undefined;
         const status = c.napi_create_threadsafe_function(
             env.handle,
-            dispatch.val.handle,
+            dispatch_fn.val.handle,
             null,
             name.handle,
             0,
             1,
             null,
             null,
-            channel,
-            call_js,
+            &channel.ring,
+            dispatch.call_js,
             &out,
         );
         if (status != .ok) return error.ThreadsafeFunctionUnavailable;
@@ -84,19 +91,29 @@ pub const Channel = struct {
 
     /// Queues one regular event; a full ring drops it and returns false.
     pub fn emit(channel: *Channel, event: Event) bool {
-        return channel.publish(event, false);
+        return channel.publish(event, .regular);
     }
 
-    /// Queues one terminal event, which may use the reserved tail.
+    /// Queues one connection-close event, which may use the close tail but
+    /// never the shutdown pair.
     pub fn emit_terminal(channel: *Channel, event: Event) bool {
-        return channel.publish(event, true);
+        return channel.publish(event, .terminal);
     }
 
-    fn publish(channel: *Channel, event: Event, terminal: bool) bool {
+    /// Queues one shutdown event (`server_closed` or `engine_error`), the only
+    /// tier allowed to claim the last two slots.
+    pub fn emit_shutdown(channel: *Channel, event: Event) bool {
+        return channel.publish(event, .shutdown);
+    }
+
+    fn publish(channel: *Channel, event: Event, tier: Tier) bool {
         if (channel.closing.load(.acquire)) return false;
         const tsfn = channel.tsfn orelse return false;
-        const sequence = if (terminal) channel.ring.reserve_terminal() else channel.ring.reserve();
-        const claimed = sequence orelse return false;
+        const claimed = switch (tier) {
+            .regular => channel.ring.reserve(),
+            .terminal => channel.ring.reserve_terminal(),
+            .shutdown => channel.ring.reserve_shutdown(),
+        } orelse return false;
         const slot = channel.ring.slot(claimed);
         slot.event = event;
         slot.sequence = claimed;
@@ -118,33 +135,3 @@ pub const Channel = struct {
         return channel.ring.dropped_count();
     }
 };
-
-/// Renders one event into JavaScript and invokes the dispatch function. The
-/// stack-buffer arena keeps rendering allocation-free, and the channel is not
-/// touched after the handler runs because the handler may destroy it.
-fn call_js(
-    raw_env: c.napi_env,
-    js_callback: c.napi_value,
-    context: ?*anyopaque,
-    data: ?*anyopaque,
-) callconv(.c) void {
-    // Node drains a destroyed tsfn with a null env; nothing to render or touch.
-    if (@intFromPtr(raw_env) == 0 or @intFromPtr(js_callback) == 0) return;
-
-    const slot: *Ring.Slot = @ptrCast(@alignCast(data orelse return));
-    const channel: *Channel = @ptrCast(@alignCast(context orelse return));
-    const event = slot.event;
-    channel.ring.complete(slot.sequence);
-
-    var buffer: [2048]u8 = undefined;
-    var fixed = std.heap.FixedBufferAllocator.init(&buffer);
-    var arena = std.heap.ArenaAllocator.init(fixed.allocator());
-    defer arena.deinit();
-    const env = napi.Env{ .handle = raw_env, .arena = &arena };
-
-    const value = env.toJs(event) catch return;
-    var receiver: c.napi_value = undefined;
-    if (c.napi_get_undefined(raw_env, &receiver) != .ok) return;
-    var result: c.napi_value = undefined;
-    _ = c.napi_call_function(raw_env, receiver, js_callback, 1, @ptrCast(&value.handle), &result);
-}

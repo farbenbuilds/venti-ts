@@ -78,8 +78,7 @@ pub fn close(slot: anytype, ring: anytype, index: u32, generation: u32, code: u1
 }
 
 /// Sets the inbound-dispatch pause flag for an open connection.
-pub fn set_paused(slot: anytype, index: u32, generation: u32, paused: bool) status.Status {
-    _ = index;
+pub fn set_paused(slot: anytype, generation: u32, paused: bool) status.Status {
     if (slot.generation != generation) return .invalid_handle;
     if (slot.blocked_status()) |blocked| return blocked;
     slot.paused.store(paused, .release);

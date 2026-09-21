@@ -28,7 +28,19 @@ test "a stale generation is rejected on every operation" {
     try std.testing.expectEqual(socket.Status.invalid_handle, slab.pause_dispatch(0, 3));
     try std.testing.expectEqual(socket.Status.invalid_handle, slab.resume_dispatch(0, 3));
     try std.testing.expectEqual(@as(usize, 0), slab.ring.pending());
-    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0, 4));
+}
+
+test "a recycled slot reports no buffered amount to the old generation" {
+    var slab = Slab{};
+    slab.open(0, 1);
+    _ = slab.send(0, 1, .binary, "abcd");
+    try std.testing.expectEqual(@as(u32, 4), slab.buffered(0, 1));
+
+    slab.open(0, 2);
+    _ = slab.send(0, 2, .binary, "xy");
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0, 1));
+    try std.testing.expectEqual(@as(u32, 2), slab.buffered(0, 2));
 }
 
 test "open resets the record for a recycled generation" {
@@ -40,7 +52,7 @@ test "open resets the record for a recycled generation" {
 
     slab.open(0, 2);
     try std.testing.expectEqual(@as(?socket.State, .open), slab.state_of(0));
-    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0, 2));
     try std.testing.expect(!slab.is_paused(0));
     try std.testing.expect(slab.latch_terminal(0));
 }
@@ -100,9 +112,9 @@ test "draining saturates the buffered amount at zero" {
 
     _ = slab.send(0, 1, .binary, "abcd");
     slab.note_drained(0, 2);
-    try std.testing.expectEqual(@as(u32, 2), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 2), slab.buffered(0, 1));
     slab.note_drained(0, 9);
-    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0));
+    try std.testing.expectEqual(@as(u32, 0), slab.buffered(0, 1));
 }
 
 test "valid close codes mirror the compatibility contract" {

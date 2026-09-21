@@ -20,6 +20,9 @@ pub const body_capacity: u32 = 4 * 1024;
 /// NUL sentinel the engine's `[]const u8` listeners expect.
 pub const host_capacity = 254;
 pub const path_capacity = 256;
+/// RFC 6455 section 5.5 caps every control frame at 125 bytes, so a close
+/// frame must always fit inside the configured frame cap.
+pub const min_frame_bytes: u32 = 125;
 pub const max_port: u32 = 65_535;
 pub const max_backlog: u32 = 65_535;
 
@@ -116,7 +119,7 @@ fn trust_limits(raw: RawConfig) Error!Limits {
     if (raw.max_message_bytes <= 0 or raw.max_message_bytes > message_capacity) {
         return error.InvalidMessageCapacity;
     }
-    if (raw.max_frame_bytes <= 0 or raw.max_frame_bytes > raw.max_message_bytes) {
+    if (raw.max_frame_bytes < min_frame_bytes or raw.max_frame_bytes > raw.max_message_bytes) {
         return error.InvalidFrameCapacity;
     }
     return .{

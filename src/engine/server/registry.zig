@@ -4,9 +4,14 @@
 //! owns a comptime trampoline set keyed by a slot in this table. Claims and
 //! retires are atomic; lookups happen on the engine thread with acquire
 //! ordering against the publish. Every handle carries a generation so a stale
-//! JavaScript handle resolves to null instead of a recycled server.
+//! JavaScript handle resolves to null instead of a recycled server, and every
+//! slot records its owning environment so a lookup from another worker never
+//! dereferences a teardown-freed instance.
 
 const std = @import("std");
+const napi = @import("napi-zig");
+
+const c = napi.c;
 
 /// Packed server handle: generation in the high bits, slot in the low byte.
 /// Returned to JavaScript as a `u40` number, well inside the safe-integer
@@ -39,6 +44,8 @@ pub fn slot_table(comptime capacity: usize, comptime T: type) type {
 
         slots: [capacity]std.atomic.Value(?*T) =
             [_]std.atomic.Value(?*T){std.atomic.Value(?*T).init(null)} ** capacity,
+        envs: [capacity]std.atomic.Value(?c.napi_env) =
+            [_]std.atomic.Value(?c.napi_env){std.atomic.Value(?c.napi_env).init(null)} ** capacity,
         generations: [capacity]std.atomic.Value(u32) =
             [_]std.atomic.Value(u32){std.atomic.Value(u32).init(0)} ** capacity,
         claimed: std.atomic.Value(u32) = .init(0),
@@ -46,46 +53,55 @@ pub fn slot_table(comptime capacity: usize, comptime T: type) type {
         /// Reserves the lowest free slot. The CAS loop terminates because
         /// `claimed` only ever gains bits and the table has at most 32 of
         /// them; every failed swap reloads the newest value.
-        pub fn claim(self: *Self) !Handle {
-            var current = self.claimed.load(.acquire);
+        pub fn claim(table: *Self) !Handle {
+            var current = table.claimed.load(.acquire);
             while (true) {
                 if (current == all_claimed) return error.CapacityExhausted;
                 const slot: u5 = @intCast(@ctz(~current));
                 const next = current | (@as(u32, 1) << slot);
-                if (self.claimed.cmpxchgWeak(current, next, .acq_rel, .monotonic)) |actual| {
+                if (table.claimed.cmpxchgWeak(current, next, .acq_rel, .monotonic)) |actual| {
                     current = actual;
                     continue;
                 }
-                const generation = self.generations[slot].fetchAdd(1, .acq_rel) +% 1;
+                const generation = table.generations[slot].fetchAdd(1, .acq_rel) +% 1;
                 return .{ .slot = @intCast(slot), .generation = generation };
             }
         }
 
-        /// Makes a claimed slot resolvable. Call after the value is fully built.
-        pub fn publish(self: *Self, handle: Handle, item: *T) void {
-            self.slots[handle.slot].store(item, .release);
+        /// Makes a claimed slot resolvable and records its owning environment.
+        /// Call after the value is fully built.
+        pub fn publish(table: *Self, handle: Handle, item: *T, env: c.napi_env) void {
+            if (handle.slot >= capacity) return;
+            table.envs[handle.slot].store(env, .release);
+            table.slots[handle.slot].store(item, .release);
         }
 
-        /// Resolves a handle, rejecting stale generations and free slots.
-        pub fn lookup(self: *Self, handle: Handle) ?*T {
+        /// Resolves a handle, rejecting free slots, stale generations, and
+        /// handles owned by another environment. The environment is compared
+        /// before the instance pointer is loaded, so a worker cannot observe
+        /// an instance another worker is tearing down.
+        pub fn lookup(table: *Self, handle: Handle, env: c.napi_env) ?*T {
             if (handle.slot >= capacity) return null;
-            if (self.generations[handle.slot].load(.acquire) != handle.generation) return null;
-            return self.slots[handle.slot].load(.acquire);
+            if (table.generations[handle.slot].load(.acquire) != handle.generation) return null;
+            if (table.envs[handle.slot].load(.acquire) != env) return null;
+            return table.slots[handle.slot].load(.acquire);
         }
 
         /// Engine-thread lookup for a comptime trampoline slot. The slot is
-        /// trusted at compile time, so the generation check is skipped.
-        pub fn lookup_slot(self: *Self, slot: u32) ?*T {
+        /// trusted at compile time, so the generation and environment checks
+        /// are skipped.
+        pub fn lookup_slot(table: *Self, slot: u32) ?*T {
             if (slot >= capacity) return null;
-            return self.slots[slot].load(.acquire);
+            return table.slots[slot].load(.acquire);
         }
 
         /// Clears a slot after its engine thread has fully stopped.
-        pub fn retire(self: *Self, handle: Handle) void {
+        pub fn retire(table: *Self, handle: Handle) void {
             if (handle.slot >= capacity) return;
-            if (self.generations[handle.slot].load(.acquire) != handle.generation) return;
-            self.slots[handle.slot].store(null, .release);
-            _ = self.claimed.fetchAnd(~(@as(u32, 1) << @intCast(handle.slot)), .acq_rel);
+            if (table.generations[handle.slot].load(.acquire) != handle.generation) return;
+            table.envs[handle.slot].store(null, .release);
+            table.slots[handle.slot].store(null, .release);
+            _ = table.claimed.fetchAnd(~(@as(u32, 1) << @intCast(handle.slot)), .acq_rel);
         }
     };
 }

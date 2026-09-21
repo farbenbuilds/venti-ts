@@ -4,8 +4,9 @@ const std = @import("std");
 const ring_module = @import("../../engine/channel/ring.zig");
 
 const capacity = 8;
-const terminal_reserve = 2;
-const Ring = ring_module.event_ring(capacity, terminal_reserve);
+const terminal_reserve = 4;
+const shutdown_reserve = 2;
+const Ring = ring_module.event_ring(capacity, terminal_reserve, shutdown_reserve);
 
 test "the ring refuses to overrun while the main thread lags" {
     var ring = Ring{};
@@ -16,12 +17,26 @@ test "the ring refuses to overrun while the main thread lags" {
     try std.testing.expectEqual(@as(u64, capacity - terminal_reserve), ring.pending());
 }
 
-test "terminal events may use the reserved tail" {
+test "close events may use the terminal tail" {
     var ring = Ring{};
     while (ring.reserve() != null) {}
-    try std.testing.expect(ring.reserve_terminal() != null);
-    try std.testing.expect(ring.reserve_terminal() != null);
+
+    var closes: u32 = 0;
+    while (ring.reserve_terminal() != null) closes += 1;
+    try std.testing.expectEqual(@as(u32, terminal_reserve - shutdown_reserve), closes);
+    try std.testing.expectEqual(@as(u64, capacity - shutdown_reserve), ring.pending());
+}
+
+test "a close-event flood cannot consume the shutdown pair" {
+    var ring = Ring{};
+    while (ring.reserve() != null) {}
+    while (ring.reserve_terminal() != null) {}
+
+    try std.testing.expectEqual(@as(?u64, null), ring.reserve());
     try std.testing.expectEqual(@as(?u64, null), ring.reserve_terminal());
+    try std.testing.expect(ring.reserve_shutdown() != null);
+    try std.testing.expect(ring.reserve_shutdown() != null);
+    try std.testing.expectEqual(@as(?u64, null), ring.reserve_shutdown());
     try std.testing.expectEqual(@as(u64, capacity), ring.pending());
 }
 
@@ -36,16 +51,26 @@ test "completing a reservation frees the slot for the next sequence" {
     try std.testing.expectEqual(@as(u64, capacity - terminal_reserve), ring.pending());
 }
 
-test "a dropped reservation stays outstanding until a later completion skips it" {
+test "a dropped reservation no longer blocks finalize" {
     var ring = Ring{};
     const dropped = ring.reserve().?;
     ring.drop(dropped);
-    try std.testing.expectEqual(@as(u64, 1), ring.pending());
-    try std.testing.expectEqual(@as(u64, 1), ring.dropped_count());
-
-    const next = ring.reserve().?;
-    ring.complete(next);
     try std.testing.expectEqual(@as(u64, 0), ring.pending());
+    try std.testing.expectEqual(@as(u64, 1), ring.dropped_count());
+}
+
+test "a dropped reservation still holds its slot against reuse" {
+    var ring = Ring{};
+    var dropped: u32 = 0;
+    while (ring.reserve()) |sequence| {
+        ring.drop(sequence);
+        dropped += 1;
+    }
+    try std.testing.expectEqual(@as(u32, capacity - terminal_reserve), dropped);
+    try std.testing.expectEqual(@as(u64, 0), ring.pending());
+    // One dropped per reservation plus the refused claim that ended the loop.
+    try std.testing.expectEqual(@as(u64, dropped + 1), ring.dropped_count());
+    try std.testing.expectEqual(@as(?u64, null), ring.reserve());
 }
 
 test "completion is monotonic" {

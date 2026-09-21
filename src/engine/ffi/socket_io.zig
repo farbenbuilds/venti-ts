@@ -19,6 +19,7 @@ const status = @import("../socket/status.zig");
 pub const Status = u8;
 
 /// Stages one outbound text or binary message for a connection handle.
+/// Payloads above the trusted frame cap are rejected before staging.
 pub fn send_socket(
     env: napi.Env,
     server: u40,
@@ -30,6 +31,9 @@ pub fn send_socket(
     const handle = resolve_connection(target, connection) orelse {
         return @intFromEnum(status.Status.invalid_handle);
     };
+    if (data.len > target.config.limits.max_frame_bytes) {
+        return @intFromEnum(status.Status.payload_too_large);
+    }
     const kind: payload.Kind = if (binary) .binary else .text;
     return @intFromEnum(target.sockets.send(handle.index, handle.generation, kind, data));
 }
@@ -73,7 +77,7 @@ pub fn resume_socket(env: napi.Env, server: u40, connection: u64) !Status {
 pub fn socket_buffered_amount(env: napi.Env, server: u40, connection: u64) !u32 {
     const target = instance.lookup(env, server) orelse return error.UnknownServer;
     const handle = resolve_connection(target, connection) orelse return 0;
-    return target.sockets.buffered(handle.index);
+    return target.sockets.buffered(handle.index, handle.generation);
 }
 
 /// Resolves a packed handle and returns it only when the slab still holds that
