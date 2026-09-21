@@ -1,9 +1,9 @@
-import { createRegistry, dispatch, subscribe } from "../../src/compat/events";
-import { normalizeServerOptions } from "../../src/compat/server-options";
+import { createRegistry, dispatch, subscribe } from "../../src/compat/events/registry";
+import { normalizeServerOptions } from "../../src/compat/options/server";
 import type { EventMap, Handler, Registry } from "../../src/types/events";
 import type { ServerEventMap, ServerState } from "../../src/types/server";
 import type { SocketEventMap, SocketState } from "../../src/types/socket";
-import type { WebSocket } from "../../src/types/ws";
+import type { ServerOptions, WebSocket } from "../../src/types/ws";
 import type { ClientRequest, IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 
@@ -72,16 +72,34 @@ export const socketState: SocketState = {
   readyState: 0,
   bufferedAmount: 0,
   isPaused: false,
-  domHandlers: { onopen: null, onerror: null, onclose: null, onmessage: null },
+  isServer: true,
+  closeCode: 1006,
+  closeReason: Buffer.alloc(0),
+  closeFrameSent: false,
+  closeFrameReceived: false,
+  errorEmitted: false,
+  attachment: null,
+  transport: null,
   listeners: createRegistry<SocketEventMap>(),
+  maxListeners: 10,
+  target: undefined,
 };
+
+const socketClass: NonNullable<ServerOptions["WebSocket"]> = null as never;
 
 export const serverState: ServerState = {
   options: {},
   normalizedOptions: normalizeServerOptions({ noServer: true }),
   path: "/",
   clients: new Set<WebSocket>(),
+  webSocket: socketClass,
+  server: null,
+  lifecycle: "running",
+  shouldEmitClose: false,
+  removeListeners: null,
   listeners: createRegistry<ServerEventMap>(),
+  maxListeners: 10,
+  target: undefined,
 };
 
 export type SocketRegistry = Registry<SocketEventMap>;

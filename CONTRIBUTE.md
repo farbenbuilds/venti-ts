@@ -66,7 +66,7 @@ Before every commit, run `pnpm lint`, `pnpm format:check`, and
 `pnpm build` and `pnpm test` rebuild the native binding first, so a clean
 checkout needs nothing beyond `nix develop` and `pnpm install`. `src/index.ts`
 re-exports the vendored `ws` type surface and gains value exports as the
-compatibility layer lands; `tests/binding.test.ts` only proves the native
+compatibility layer lands; `tests/binding/addon.test.ts` only proves the native
 pipeline, so replace it as the `ws` surface lands, do not extend it.
 
 ## Engineering requirements

@@ -1,6 +1,9 @@
-import type { ClientRequest, IncomingMessage } from "node:http";
+import type { IncomingMessage, ClientRequest } from "node:http";
+import type { Duplex } from "node:stream";
+import type { ConnectionHandle } from "../binding/handle";
+import type { ServerHandle } from "../binding/server";
 import type { ReadyState } from "./close";
-import type { Registry } from "./events";
+import type { EmitterState, Registry } from "./events";
 import type { WebSocket } from "./ws";
 
 export type BinaryType = WebSocket["binaryType"];
@@ -17,16 +20,32 @@ export type SocketEventMap = {
   "unexpected-response": [request: ClientRequest, response: IncomingMessage];
 };
 
-export type SocketDomHandlers = Pick<WebSocket, "onopen" | "onerror" | "onclose" | "onmessage">;
+/// The generation-checked handles a native connection routes through. A
+/// socket created by the Node upgrade path carries no attachment until the
+/// engine adoption boundary lands.
+export type SocketAttachment = {
+  readonly server: ServerHandle;
+  readonly connection: ConnectionHandle;
+};
 
-export type SocketState = {
-  readonly url: string;
-  readonly protocol: string;
-  readonly extensions: string;
+export type SocketState = EmitterState<SocketEventMap> & {
+  url: string;
+  protocol: string;
+  extensions: string;
   binaryType: BinaryType;
   readyState: ReadyState;
   bufferedAmount: number;
   isPaused: boolean;
-  readonly domHandlers: SocketDomHandlers;
-  listeners: Registry<SocketEventMap>;
+  isServer: boolean;
+  closeCode: number;
+  closeReason: Buffer;
+  closeFrameSent: boolean;
+  closeFrameReceived: boolean;
+  errorEmitted: boolean;
+  attachment: SocketAttachment | null;
+  /// The upgraded Node stream, retained so `terminate()` can destroy it and
+  /// the close event can latch. Null for native attachments.
+  transport: Duplex | null;
 };
+
+export type SocketRegistry = Registry<SocketEventMap>;

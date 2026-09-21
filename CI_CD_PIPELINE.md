@@ -70,14 +70,16 @@ exhaustion. The build job uploads `dist/` and the generated `.d.ts` bundle so
 reviewers can inspect the published type surface without building locally.
 
 `ts-test.yml` runs the pure suites (`tests/protocol`, `tests/compat`,
-`tests/events.test.ts`, `tests/oxlint-plugin.test.ts`) without the native
-toolchain. `tests/binding.test.ts` and the addon-backed suites run through
-`pnpm test` in the planned native workflow.
+`tests/conformance`, `tests/tooling`) without the native toolchain, skipping
+only the suites that adopt a native connection. `tests/binding/**` and the
+addon-backed compat suites run through `pnpm test` in the planned native
+workflow.
 
 `zig-test.yml` runs two jobs with the same vendor toolchain and cache: units
 (`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
 under `src/engine-tests/`) and the addon-backed lifecycle suite
-(`pnpm build:binding` then `vitest tests/binding.test.ts tests/binding`). Both
+(`pnpm build:binding` then
+`vitest tests/binding tests/compat/socket tests/compat/stream.test.ts`). Both
 install CMake, Ninja, Perl, patch, and a zlib static prefix for the vendored C
 dependencies, then cache `.zig-cache` and `zig-pkg` between runs.
 

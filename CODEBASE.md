@@ -92,11 +92,33 @@ ventijs/
 │   │   ├── server.ts          # server create/listen/close/finalize wrappers
 │   │   └── socket.ts          # socket send/close/pause/resume wrappers
 │   ├── compat/
-│   │   ├── client-options.ts  # client option normalization and defaults
+│   │   ├── constructors.ts    # WebSocket/WebSocketServer runtime assembly
 │   │   ├── errors.ts          # coded error factories and status mapping
-│   │   ├── events.ts          # listener registry replacing EventEmitter
-│   │   ├── options.ts         # shared normalization helpers and constants
-│   │   └── server-options.ts  # server option normalization and defaults
+│   │   ├── ready-state.ts     # CONNECTING/OPEN/CLOSING/CLOSED ordinals
+│   │   ├── stream.ts          # createWebSocketStream duplex adapter
+│   │   ├── events/
+│   │   │   ├── registry.ts    # listener registry replacing EventEmitter
+│   │   │   ├── emitter.ts     # EventEmitter-shaped surface over the registry
+│   │   │   ├── dom-events.ts  # DOM event object factories
+│   │   │   └── dom-listeners.ts # add/removeEventListener and on* attributes
+│   │   ├── options/
+│   │   │   ├── shared.ts      # shared normalization helpers and constants
+│   │   │   ├── server.ts      # server option validation and normalization
+│   │   │   └── client.ts      # client option validation and normalization
+│   │   ├── socket/
+│   │   │   ├── socket.ts      # WebSocket constructor-shaped factory
+│   │   │   ├── state.ts       # socket record, brands, and defaults
+│   │   │   ├── attach.ts      # native and upgraded-stream adoption
+│   │   │   ├── send.ts        # send routing into the binding
+│   │   │   ├── payload.ts     # payload normalization and status mapping
+│   │   │   └── lifecycle.ts   # close/terminate/pause/resume and terminal latch
+│   │   └── server/
+│   │       ├── server.ts      # WebSocketServer constructor-shaped factory
+│   │       ├── close.ts       # server close and address semantics
+│   │       ├── listeners.ts   # Node HTTP server event wiring
+│   │       ├── upgrade.ts     # handleUpgrade and shouldHandle
+│   │       ├── handshake.ts   # accept key, rejections, subprotocol parsing
+│   │       └── clients.ts     # clientTracking set maintenance
 │   ├── protocol/
 │   │   ├── backpressure.ts    # bufferedAmount math and water marks
 │   │   ├── close-codes.ts     # RFC 6455 close codes and predicates
@@ -118,11 +140,21 @@ ventijs/
 │           ├── default.zig    # default build target query
 │           └── native.zig     # vendored C compiler overrides
 ├── tests/
-│   ├── binding.test.ts        # native pipeline smoke test
-│   ├── binding/               # binding lifecycle and handle tests
-│   ├── compat/                # option normalization and error factory tests
-│   ├── events.test.ts         # listener registry behavior
+│   ├── binding/
+│   │   ├── addon.test.ts      # native pipeline smoke test
+│   │   ├── server*.test.ts    # server lifecycle and limits
+│   │   ├── socket*.test.ts    # connection slab and socket boundaries
+│   │   └── support.ts         # fixtures shared by the binding suites
+│   ├── compat/
+│   │   ├── events/            # registry, emitter, and DOM listener tests
+│   │   ├── options/           # option normalization tests
+│   │   ├── socket/            # facade socket tests and the native fixture
+│   │   ├── server/            # server, upgrade, and handshake policy tests
+│   │   ├── errors.test.ts     # coded error factories
+│   │   └── stream.test.ts     # duplex adapter over a native socket
+│   ├── conformance/           # ws side-by-side scenario suites
 │   ├── protocol/              # close code, framing, and backpressure tests
+│   ├── tooling/               # lint plugin rule tests
 │   ├── types/                 # fixtures checked by pnpm typecheck
 │   └── declarations/          # fixtures checked by pnpm typecheck:dist
 └── .github/                   # community templates, issue forms, CI workflows
@@ -148,13 +180,14 @@ src/
 │   ├── server.ts              # server handle create/listen/close free functions
 │   └── socket.ts              # socket handle send/close/ping free functions
 ├── compat/                    # ws API compatibility, one concern per module
-│   ├── server.ts              # WebSocketServer constructor-shaped factory
-│   ├── socket.ts              # WebSocket constructor-shaped factory
-│   ├── events.ts              # explicit listener registry and dispatch
-│   ├── options.ts             # shared option normalization helpers
-│   ├── server-options.ts      # server option validation and normalization
-│   ├── client-options.ts      # client option validation and normalization
-│   └── errors.ts              # coded error factories and status mapping
+│   ├── constructors.ts        # WebSocket/WebSocketServer runtime assembly
+│   ├── errors.ts              # coded error factories and status mapping
+│   ├── ready-state.ts         # ready-state ordinals for both facades
+│   ├── stream.ts              # createWebSocketStream duplex adapter
+│   ├── events/                # listener registry, emitter, and DOM handlers
+│   ├── options/               # shared, server, and client normalization
+│   ├── socket/                # socket factory, state, send, and lifecycle
+│   └── server/                # server factory, upgrade, and handshake policy
 ├── protocol/                  # pure TypeScript helpers
 │   ├── close-codes.ts         # RFC 6455 close code constants and predicates
 │   ├── framing.ts             # length and mask helpers used by tests
@@ -266,7 +299,7 @@ records the upstream version.
 JS: new WebSocketServer(options)
       |
       v
-compat/{options,server-options,client-options}.ts: validate and normalize
+compat/options/{shared,server,client}.ts: validate and normalize
       |
       v
 binding/server.ts: createServer(config) ----> Zig engine
@@ -279,7 +312,7 @@ binding/server.ts: createServer(config) ----> Zig engine
                      ("connection")                         ("message", "close", ...)
                                |                                     |
                                v                                     v
-                     compat/events.ts dispatch                compat/events.ts dispatch
+                     compat/events/registry.ts dispatch     compat/events/registry.ts dispatch
                                |                                     |
                                v                                     v
                         JS listener                           JS listener
@@ -291,7 +324,7 @@ Outbound path:
 JS: socket.send(data, options)
       |
       v
-compat/socket.ts: validate data and options
+compat/socket/send.ts: validate data and options
       |
       v
 binding/socket.ts: sendSocket(server, connection, data, binary)
@@ -398,9 +431,9 @@ keep the rules enforced:
   unpack the 64-bit connection handle, and wrap the lifecycle calls;
   `src/binding/load.ts` keeps resolving the `.node` and now types the full
   `VentiAddon` record.
-- `tests/binding.test.ts` proves the Zig build, addon load, version round-trip,
-  and lifecycle surface; `tests/binding/` drives create, listen, a live
-  WebSocket connection through the slab, close, and finalize.
+- `tests/binding/addon.test.ts` proves the Zig build, addon load, version
+  round-trip, and lifecycle surface; `tests/binding/` drives create, listen, a
+  live WebSocket connection through the slab, close, and finalize.
 - `src/engine/payload.zig` is the outbound boundary. `stage` copies JavaScript
   bytes into a fixed-capacity structure-of-arrays ring before the call returns
   and publishes each record with a release store, so JavaScript memory is never
@@ -491,10 +524,10 @@ remain current:
   every commit alongside `zig fmt`, typecheck, and the test suite.
 - `flake.nix` pins Node.js, pnpm, Zig 0.16.0, zls, and TypeScript tooling;
   `.#musl` selects a musl dev shell on musl hosts.
-- `tests/binding.test.ts` proves the Zig build, addon load, and version
+- `tests/binding/addon.test.ts` proves the Zig build, addon load, and version
   round-trip.
 
-The `compat/` factories, the engine-thread drain that flushes the staging ring,
-and the message path are the next implementation milestones. The addon exposes
-the engine version, the server lifecycle, and the per-connection socket
-operations; the `ws` runtime surface lands on top of them.
+The `compat/` factories and the engine-thread drain that flushes the staging
+ring are the next implementation milestones. The addon exposes the engine
+version, the server lifecycle, and the per-connection socket operations; the
+`ws` runtime surface sits on top of them, with the drain and receiver pending.

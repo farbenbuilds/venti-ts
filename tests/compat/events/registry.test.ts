@@ -5,7 +5,7 @@ import {
   listenerCount,
   subscribe,
   unsubscribe,
-} from "../src/compat/events";
+} from "../../../src/compat/events/registry";
 
 type TestEventMap = {
   open: [];

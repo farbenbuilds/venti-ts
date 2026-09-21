@@ -1,0 +1,42 @@
+import type { IncomingMessage } from "node:http";
+import type { Duplex } from "node:stream";
+import type { ServerState } from "../../types/server";
+import { emitEvent } from "../events/emitter";
+import { handleUpgrade } from "./upgrade";
+
+type UpgradeHandler = (request: IncomingMessage, socket: Duplex, head: Buffer) => void;
+
+type ServerHandlers = {
+  readonly onListening: () => void;
+  readonly onError: (error: Error) => void;
+  readonly onUpgrade: UpgradeHandler;
+};
+
+/// Forwards the HTTP server's lifecycle to the facade and routes upgrades
+/// through the same `handleUpgrade` path `noServer` callers use, so both modes
+/// share one handshake implementation.
+export function wireServer(state: ServerState): void {
+  const httpServer = state.server;
+  if (httpServer === null) return;
+  const handlers: ServerHandlers = {
+    onListening: (): void => {
+      emitEvent(state, "listening");
+    },
+    onError: (error: Error): void => {
+      emitEvent(state, "error", error);
+    },
+    onUpgrade: (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
+      handleUpgrade(state, request, socket, head, (accepted, incoming) => {
+        emitEvent(state, "connection", accepted, incoming);
+      });
+    },
+  };
+  httpServer.on("listening", handlers.onListening);
+  httpServer.on("error", handlers.onError);
+  httpServer.on("upgrade", handlers.onUpgrade);
+  state.removeListeners = (): void => {
+    httpServer.removeListener("listening", handlers.onListening);
+    httpServer.removeListener("error", handlers.onError);
+    httpServer.removeListener("upgrade", handlers.onUpgrade);
+  };
+}

@@ -1,6 +1,6 @@
-import type { NormalizedPerMessageDeflate } from "../types/options";
-import type { PerMessageDeflateOptions } from "../types/ws";
-import { createError } from "./errors";
+import type { NormalizedPerMessageDeflate } from "../../types/options";
+import type { PerMessageDeflateOptions } from "../../types/ws";
+import { createError } from "../errors";
 
 export const DEFAULT_MAX_PAYLOAD = 100 * 1024 * 1024;
 export const DEFAULT_MAX_REDIRECTS = 10;
@@ -30,6 +30,14 @@ export function normalizeProtocols(protocols: string | string[] | undefined): re
     result.push(protocol);
   }
   return result;
+}
+
+/// Parses a `Sec-WebSocket-Protocol` request header. `ws` accepts comma
+/// separated tokens with optional surrounding whitespace and rejects empty,
+/// duplicated, or out-of-grammar ones, which is what the token validator does
+/// after the split.
+export function parseProtocolHeader(header: string): readonly string[] {
+  return normalizeProtocols(header.split(",").map((protocol) => protocol.trim()));
 }
 
 export function normalizePerMessageDeflate(

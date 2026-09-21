@@ -22,6 +22,7 @@ const ERROR_CODE_LOOKUP: Readonly<Record<ErrorCode, true>> = {
   ERR_INVALID_STATE: true,
   ERR_INVALID_HANDLE: true,
   ERR_MAX_PAYLOAD: true,
+  ERR_BACKPRESSURE: true,
   ERR_PROTOCOL: true,
   ERR_POLICY_VIOLATION: true,
 };

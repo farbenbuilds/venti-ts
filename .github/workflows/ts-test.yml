@@ -65,4 +65,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Unit tests
-        run: pnpm exec vitest run --exclude 'tests/binding/**' --exclude 'tests/binding.test.ts'
+        # The native addon is not built in this job, so the suites that attach
+        # to it stay out exactly like tests/binding/**: the binding lifecycle
+        # tests and the compat facade tests that adopt a native connection.
+        run: >-
+          pnpm exec vitest run
+          --exclude 'tests/binding/**'
+          --exclude 'tests/compat/socket/socket.test.ts'
+          --exclude 'tests/compat/stream.test.ts'
