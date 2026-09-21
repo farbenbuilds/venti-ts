@@ -9,6 +9,12 @@ export const DEFAULT_CONCURRENCY_LIMIT = 10;
 
 const SUBPROTOCOL_PATTERN = /^[!#$%&'*+\-.0-9A-Z^_`|a-z~]+$/;
 
+/// Token grammar for a `Sec-WebSocket-Protocol` value. Anything that is not a
+/// token (notably CR/LF) must never reach a response header.
+export function isProtocolToken(value: unknown): value is string {
+  return typeof value === "string" && SUBPROTOCOL_PATTERN.test(value);
+}
+
 export function invalidOption(message: string, constructor: ErrorConstructor = TypeError): never {
   throw createError("ERR_INVALID_OPTION", message, constructor);
 }

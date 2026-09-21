@@ -8,7 +8,8 @@ import { createRegistry } from "../events/registry";
 import { addressOf, closeWebSocketServer } from "./close";
 import { wireServer } from "./listeners";
 import { normalizeServerOptions } from "../options/server";
-import { handleUpgrade, shouldHandle, type UpgradeCallback } from "./upgrade";
+import { handleUpgrade, shouldHandle } from "./upgrade";
+import type { UpgradeCallback } from "./accept";
 
 const SERVER_BRAND = Symbol("ventijs.server");
 

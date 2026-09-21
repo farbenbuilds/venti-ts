@@ -10,6 +10,26 @@ export type RawResult = {
   readonly status: number;
 };
 
+/// Resolves once the status line, the header block, and any declared body have
+/// all arrived, so a rejection keeps its full body instead of racing the
+/// header terminator. The wire timeout stays only as a safety net.
+function responseComplete(data: string): boolean {
+  const headerEnd = data.indexOf("\r\n\r\n");
+  if (headerEnd === -1 || !data.startsWith("HTTP/1.1 ")) return false;
+  if (data.startsWith("HTTP/1.1 101")) return true;
+  const length = /^content-length:\s*(\d+)$/im.exec(data.slice(0, headerEnd));
+  if (length === null) return true;
+  return data.length >= headerEnd + 4 + Number(length[1]);
+}
+
+/// Reads the status from a complete status line instead of a fixed offset, so
+/// a partial wire read can never fabricate a status.
+function statusOf(data: string): number {
+  if (!data.includes("\r\n\r\n")) return 0;
+  const match = /^HTTP\/1\.1 (\d{3})\b/.exec(data);
+  return match === null ? 0 : Number(match[1]);
+}
+
 export function rawUpgrade(port: number, request: string, waitMs = 200): Promise<RawResult> {
   return new Promise((resolve, reject) => {
     const socket = connect(port, "127.0.0.1", () => {
@@ -21,15 +41,14 @@ export function rawUpgrade(port: number, request: string, waitMs = 200): Promise
       if (settled) return;
       settled = true;
       socket.destroy();
-      const end = data.indexOf("\r\n\r\n");
-      resolve({ response: data, status: end === -1 ? 0 : Number(data.slice(9, 12)) });
+      resolve({ response: data, status: statusOf(data) });
     };
     socket.setTimeout(waitMs, finish);
     socket.on("end", finish);
     socket.on("close", finish);
     socket.on("data", (chunk) => {
       data += chunk.toString("latin1");
-      if (data.startsWith("HTTP/1.1 101") && data.includes("\r\n\r\n")) finish();
+      if (responseComplete(data)) finish();
     });
     socket.on("error", (error) => {
       if (!settled) reject(error);

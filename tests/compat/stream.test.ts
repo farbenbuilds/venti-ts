@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { createWebSocketStream } from "../../src/compat/stream";
 import { TEST_TIMEOUT_MS } from "../binding/support";
-import { attached } from "./socket/socket-support";
+import { attached, terminateClient } from "./socket/socket-support";
 
 test(
   "createWebSocketStream writes through the socket transport",
@@ -22,7 +22,7 @@ test(
       expect(socket.bufferedAmount).toBe(8);
       stream.destroy();
     } finally {
-      client.terminate();
+      terminateClient(client);
       await server.dispose();
     }
   },

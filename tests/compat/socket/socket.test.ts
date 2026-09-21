@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { createWebSocketStream } from "../../../src/compat/stream";
 import { WebSocket, WebSocketServer } from "../../../src/index";
 import { TEST_TIMEOUT_MS } from "../../binding/support";
-import { attached } from "./socket-support";
+import { attached, terminateClient } from "./socket-support";
 
 const MAX_MESSAGE_BYTES = 32 * 1024;
 
@@ -60,7 +60,7 @@ test(
       socket.send(Buffer.from([1, 2, 3]), { binary: true });
       expect(socket.bufferedAmount).toBe(8);
     } finally {
-      client.terminate();
+      terminateClient(client);
       await server.dispose();
     }
   },
@@ -70,17 +70,22 @@ test("send reports ring overflow through the callback", { timeout: TEST_TIMEOUT_
   const { server, client, socket } = await attached();
   try {
     const failures: Error[] = [];
-    for (let index = 0; index < 9; index += 1) {
-      socket.send(new Uint8Array(MAX_MESSAGE_BYTES), (error) => {
-        if (error) failures.push(error);
-      });
-    }
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    const sends = 9;
+    await new Promise<void>((resolve) => {
+      let pending = sends;
+      for (let index = 0; index < sends; index += 1) {
+        socket.send(new Uint8Array(MAX_MESSAGE_BYTES), (error) => {
+          if (error) failures.push(error);
+          pending -= 1;
+          if (pending === 0) resolve();
+        });
+      }
+    });
     expect(failures.map((error) => (error as { code?: string }).code)).toEqual([
       "ERR_BACKPRESSURE",
     ]);
   } finally {
-    client.terminate();
+    terminateClient(client);
     await server.dispose();
   }
 });
@@ -93,7 +98,7 @@ test("close latches the closing state exactly once", { timeout: TEST_TIMEOUT_MS 
     expect(() => socket.close(1000, "done")).not.toThrow();
     expect(socket.readyState).toBe(socket.CLOSING);
   } finally {
-    client.terminate();
+    terminateClient(client);
     await server.dispose();
   }
 });
@@ -109,7 +114,20 @@ test("pause and resume mirror the native dispatch flag", { timeout: TEST_TIMEOUT
     socket.resume();
     expect(socket.isPaused).toBe(false);
   } finally {
-    client.terminate();
+    terminateClient(client);
     await server.dispose();
   }
+});
+
+test("ready-state statics are non-writable like ws", () => {
+  expect(() => {
+    (WebSocket as unknown as { CONNECTING: number }).CONNECTING = 5;
+  }).toThrow(TypeError);
+  expect(WebSocket.CONNECTING).toBe(0);
+});
+
+test("binaryType accepts blob at runtime like ws", () => {
+  const socket = new WebSocket(null);
+  socket.binaryType = "blob";
+  expect(socket.binaryType).toBe("blob");
 });

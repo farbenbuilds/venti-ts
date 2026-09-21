@@ -81,11 +81,14 @@ namespace WebSocket {
 
 Object.defineProperty(WebSocket, Symbol.hasInstance, { value: isSocket });
 Object.defineProperty(WebSocketServer, Symbol.hasInstance, { value: isServer });
+// `ws` pins the ready-state constants; the remaining statics stay writable.
+Object.defineProperties(WebSocket, {
+  CONNECTING: { value: 0, enumerable: true },
+  OPEN: { value: 1, enumerable: true },
+  CLOSING: { value: 2, enumerable: true },
+  CLOSED: { value: 3, enumerable: true },
+});
 Object.assign(WebSocket, {
-  CONNECTING: 0,
-  OPEN: 1,
-  CLOSING: 2,
-  CLOSED: 3,
   WebSocket,
   WebSocketServer,
   Server: WebSocketServer,

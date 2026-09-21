@@ -1,14 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import type { ServerState } from "../../types/server";
-import type {
-  VerifyClientCallbackAsync,
-  VerifyClientCallbackSync,
-  WebSocket,
-} from "../../types/ws";
-import { trackClient } from "./clients";
-import { emitEvent } from "../events/emitter";
-import { createError } from "../errors";
+import type { VerifyClientCallbackAsync, VerifyClientCallbackSync } from "../../types/ws";
 import {
   abortHandshake,
   abortOrEmit,
@@ -16,14 +9,8 @@ import {
   KEY_PATTERN,
   parseProtocols,
   requestHeader,
-  selectProtocol,
-  socketAccept,
 } from "./handshake";
-import { attachSocket } from "../socket/attach";
-
-const UPGRADED = Symbol("ventijs.upgraded");
-
-export type UpgradeCallback = (client: WebSocket, request: IncomingMessage) => void;
+import { completeUpgrade, type UpgradeCallback } from "./accept";
 
 export function shouldHandle(state: ServerState, request: IncomingMessage): boolean {
   const path = state.options.path;
@@ -74,7 +61,9 @@ export function handleUpgrade(
 
   const protocols = parseProtocols(state, request, socket);
   if (protocols === undefined) return;
-  const verify = state.normalizedOptions.verifyClient ?? null;
+  // Read the hook at upgrade time so a post-construction assignment on
+  // `server.options` takes effect, matching `ws`.
+  const verify = state.options.verifyClient ?? null;
   if (verify === null) {
     completeUpgrade(state, request, socket, head, key, protocols, callback);
     return;
@@ -101,48 +90,4 @@ export function handleUpgrade(
     return;
   }
   completeUpgrade(state, request, socket, head, key, protocols, callback);
-}
-
-function completeUpgrade(
-  state: ServerState,
-  request: IncomingMessage,
-  socket: Duplex,
-  head: Buffer,
-  key: string,
-  protocols: readonly string[],
-  callback: UpgradeCallback,
-): void {
-  if (!socket.readable || !socket.writable) {
-    socket.destroy();
-    return;
-  }
-  if ((socket as Duplex & { [UPGRADED]?: true })[UPGRADED] === true) {
-    throw createError(
-      "ERR_INVALID_STATE",
-      "server.handleUpgrade() was called more than once with the same socket, possibly due to a misconfiguration",
-    );
-  }
-  if (state.lifecycle !== "running") {
-    abortHandshake(socket, 503);
-    return;
-  }
-  const headers = [
-    "HTTP/1.1 101 Switching Protocols",
-    "Upgrade: websocket",
-    "Connection: Upgrade",
-    `Sec-WebSocket-Accept: ${socketAccept(key)}`,
-  ];
-  const accepted = Reflect.construct(state.webSocket, [
-    null,
-    undefined,
-    state.options,
-  ]) as WebSocket;
-  const protocol = selectProtocol(state, protocols, request);
-  if (protocol) headers.push(`Sec-WebSocket-Protocol: ${protocol}`);
-  emitEvent(state, "headers", headers, request);
-  Object.defineProperty(socket, UPGRADED, { value: true });
-  socket.write(headers.concat("\r\n").join("\r\n"));
-  attachSocket(accepted, socket);
-  if (state.normalizedOptions.clientTracking) trackClient(state, accepted);
-  callback(accepted, request);
 }

@@ -111,3 +111,34 @@ test("wsClientError replaces the written rejection", async () => {
     await harness.close();
   }
 });
+
+test("verifyClient headers with control characters are dropped", async () => {
+  const async = await serve(
+    new WebSocketServer({
+      noServer: true,
+      verifyClient: (_info, callback) => {
+        callback(false, 403, "Nope", { "X-Bad": "a\r\nX-Injected: 1", "X-Good": "ok" });
+      },
+    }),
+  );
+  try {
+    const result = await rawUpgrade(async.port, request("/", UPGRADE_HEADERS));
+    expect(result.status).toBe(403);
+    expect(result.response).toContain("X-Good: ok");
+    expect(result.response).not.toContain("X-Injected");
+  } finally {
+    await async.close();
+  }
+});
+
+test("a verifyClient assigned after construction takes effect", async () => {
+  const server = new WebSocketServer({ noServer: true });
+  server.options.verifyClient = () => false;
+  const harness = await serve(server);
+  try {
+    const result = await rawUpgrade(harness.port, request("/", UPGRADE_HEADERS));
+    expect(result.status).toBe(401);
+  } finally {
+    await harness.close();
+  }
+});
