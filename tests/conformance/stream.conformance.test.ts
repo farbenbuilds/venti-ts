@@ -73,5 +73,5 @@ test("a socket error destroys the stream without terminating", async () => {
   await settle();
   expect(ourErrors).toEqual(upstreamErrors);
   expect(actual.counts.terminated).toBe(expected.counts.terminated);
-  expect(actual.destroyed).toBe(expected.destroyed);
+  expect(ours.destroyed).toBe(upstream.destroyed);
 });

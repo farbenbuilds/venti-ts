@@ -50,8 +50,9 @@ will own parsing, buffers, and backpressure.
 - Documented scripts `test:compat` and `bench` do not exist in `package.json`.
   `build`, `build:binding`, `dev`, `format`, `format:check`, `lint`, `lint:fix`,
   `test`, `test:watch`, `typecheck`, `typecheck:dist`, `release`, and
-  `prepublishOnly` are wired. `pnpm typecheck` checks `tests/types` alongside
-  `src`; `pnpm build` ends with `typecheck:dist`, which checks the built
+  `prepublishOnly` are wired. `pnpm typecheck` checks `src`, `tests/types`, and
+  the vitest suites through `tsconfig.test.json`; `pnpm build` ends with
+  `typecheck:dist`, which checks the built
   declarations through the package `exports` map.
 - Git hooks are installed by `lefthook` during `pnpm install` (allowed through
   `pnpm-workspace.yaml`); `pnpm-lock.yaml` is committed.
@@ -88,10 +89,10 @@ Every non-Windows target builds the vendor C libraries through the PIC
 wrappers in `scripts/`; on musl hosts `.envrc` selects `.#musl`. Cross-compile
 with `zig build -Dtarget=<triple>` plus a matching `UWEBZOCKETS_ZLIB_PREFIX`.
 
-`pnpm typecheck` uses `tsconfig.json` `include: ["src", "tests/types"]`, so it
-does not check the vitest suites, and vitest strips types without checking them.
-Widen the include temporarily or annotate explicitly when other test types must
-be verified. `pnpm typecheck:dist` checks `tests/declarations` against the built
+`pnpm typecheck` runs `tsconfig.json` (`include: ["src", "tests/types"]`) and
+then `tsconfig.test.json` (`include: ["tests"]`, minus `tests/declarations`),
+so the vitest suites are typechecked even though vitest strips types.
+`pnpm typecheck:dist` checks `tests/declarations` against the built
 declarations through the package `exports` map; it needs `tsdown` output.
 
 ## Non-negotiable rules

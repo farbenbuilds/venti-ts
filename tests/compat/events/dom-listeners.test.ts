@@ -102,7 +102,7 @@ test("onclose and onerror build the ws event shapes", () => {
 test("unknown DOM event types are ignored like ws", () => {
   const socket = new WebSocket(null);
   let calls = 0;
-  socket.addEventListener("ping", () => {
+  socket.addEventListener("ping" as never, () => {
     calls += 1;
   });
   socket.emit("ping", Buffer.from("x"));

@@ -11,23 +11,36 @@
     "ventijs/no-oop": "error",
     "eqeqeq": ["error", "always"],
     "import/no-default-export": "error",
-    "max-lines": ["error", { "max": 150 }],
+    "max-lines": [
+      "error",
+      {
+        "max": 150
+      }
+    ],
     "no-else-return": "error",
     "no-var": "error",
     "prefer-const": "error",
     "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/consistent-type-imports": [
       "error",
-      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+      {
+        "prefer": "type-imports",
+        "fixStyle": "separate-type-imports"
+      }
     ],
     "typescript/explicit-module-boundary-types": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
-    "unicorn/filename-case": ["error", { "case": "kebabCase" }]
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "kebabCase"
+      }
+    ]
   },
   "overrides": [
     {
-      "files": ["scripts/**/*.mjs"],
+      "files": ["scripts/**/*.mjs", "scripts/**/*.d.mts"],
       "rules": {
         "import/no-default-export": "off"
       }

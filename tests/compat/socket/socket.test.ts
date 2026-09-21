@@ -128,6 +128,6 @@ test("ready-state statics are non-writable like ws", () => {
 
 test("binaryType accepts blob at runtime like ws", () => {
   const socket = new WebSocket(null);
-  socket.binaryType = "blob";
+  socket.binaryType = "blob" as never;
   expect(socket.binaryType).toBe("blob");
 });

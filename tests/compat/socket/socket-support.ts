@@ -10,9 +10,14 @@ export type Attached = {
   readonly socket: WebSocket;
 };
 
-/// Terminates a `ws` client that may still be CONNECTING; `ws` throws in that
-/// state, and a test cleanup must not turn one failure into an unhandled one.
+/// Terminates a `ws` client that may still be CONNECTING. In that state `ws`
+/// aborts the handshake and emits `error` asynchronously, so a cleanup must
+/// both absorb the throw and attach an error listener to avoid an unhandled
+/// event.
 export function terminateClient(client: WsClient): void {
+  if (client.readyState === client.CONNECTING) {
+    client.once("error", () => {});
+  }
   try {
     client.terminate();
   } catch {

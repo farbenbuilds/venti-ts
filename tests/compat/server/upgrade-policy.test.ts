@@ -37,7 +37,7 @@ test("verifyClient sync and async control the handshake", async () => {
   const sync = await serve(
     new WebSocketServer({
       noServer: true,
-      verifyClient: (info) => info.origin === "https://allowed.test",
+      verifyClient: (info: { readonly origin?: string }) => info.origin === "https://allowed.test",
     }),
   );
   try {
@@ -77,7 +77,7 @@ test("verifyClient sees the raw origin header, undefined when absent", async () 
   const seen: unknown[] = [];
   const server = new WebSocketServer({
     noServer: true,
-    verifyClient: (info) => {
+    verifyClient: (info: { readonly origin?: string }) => {
       seen.push(info.origin);
       return false;
     },
