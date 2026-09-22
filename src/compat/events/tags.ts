@@ -1,4 +1,4 @@
-import type { EmitterState, EventMap, Handler } from "../../types/events";
+import type { EmitterState, EventMap, EventName, Handler, Listener } from "../../types/events";
 import { subscribe, unsubscribeMatching } from "./registry";
 
 const MAX_WRAPPER_DEPTH = 3;
@@ -59,7 +59,7 @@ export function listenerView(entry: unknown): unknown {
 /// wrappers are skipped: only `removeEventListener` removes them.
 export function removeTagged<E extends EventMap>(
   state: EmitterState<E>,
-  event: keyof E,
+  event: EventName<E>,
   handler: unknown,
 ): void {
   state.listeners = unsubscribeMatching(
@@ -72,26 +72,26 @@ export function removeTagged<E extends EventMap>(
 /// Self-removing one-shot wrapper shared by `once`, `prependOnceListener`,
 /// and the DOM `once` option. It unsubscribes before invoking so a throwing
 /// handler cannot run twice.
-export function onceWrapper<E extends EventMap, K extends keyof E>(
+export function onceWrapper<E extends EventMap, K extends EventName<E>>(
   state: EmitterState<E>,
   event: K,
-  raw: Handler<E[K]>,
+  raw: Listener<E, K>,
 ): TaggedHandler {
   const wrapper = (...args: E[K]): void => {
     state.listeners = unsubscribeMatching(
       state.listeners,
       event,
-      (entry) => entry === (wrapper as unknown as Handler<E[K]>),
+      (entry) => entry === (wrapper as unknown as Listener<E, K>),
     );
     Reflect.apply(raw, state.target, args);
   };
   return Object.assign(wrapper, { listener: raw }) as unknown as TaggedHandler;
 }
 
-export function onceEvent<E extends EventMap, K extends keyof E>(
+export function onceEvent<E extends EventMap, K extends EventName<E>>(
   state: EmitterState<E>,
   event: K,
-  handler: Handler<E[K]>,
+  handler: Listener<E, K>,
 ): void {
   state.listeners = subscribe(state.listeners, event, onceWrapper(state, event, handler));
 }

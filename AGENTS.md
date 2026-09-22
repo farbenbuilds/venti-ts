@@ -110,6 +110,10 @@ declarations through the package `exports` map; it needs `tsdown` output.
   everything else belongs in `devDependencies`.
 - Hot paths allocate nothing. Capacities are fixed or `comptime`, and every
   peer-controlled length is capped.
+- Types stay readable: explicit unions over derived `Exclude`/`Extract`
+  chains, a named alias for every non-trivial inline shape, and generics no
+  deeper than one parameter and one constraint. No conditional, recursive, or
+  `infer`-driven type computations.
 - Generated `.d.ts` files are build output; never hand-edit them.
 - No emojis in code, docs, issue forms, or commit messages.
 

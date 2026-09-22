@@ -13,9 +13,11 @@ import type { UpgradeCallback } from "./accept";
 
 const SERVER_BRAND = Symbol("ventijs.server");
 
+type BrandedServer = { readonly [SERVER_BRAND]?: true };
+
 export function isServer(value: unknown): boolean {
   if (typeof value !== "object" || value === null) return false;
-  return (value as { [SERVER_BRAND]?: true })[SERVER_BRAND] === true;
+  return (value as BrandedServer)[SERVER_BRAND] === true;
 }
 
 /// Builds the `ws`-shaped server record. The listener modes match upstream:

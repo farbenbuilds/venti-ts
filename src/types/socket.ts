@@ -6,7 +6,8 @@ import type { ReadyState } from "./close";
 import type { EmitterState, Registry } from "./events";
 import type { WebSocket } from "./ws";
 
-export type BinaryType = WebSocket["binaryType"];
+/// Binary payload views the socket can produce.
+export type BinaryType = "nodebuffer" | "arraybuffer" | "fragments";
 
 export type SocketEventMap = {
   open: [];

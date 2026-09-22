@@ -1,5 +1,10 @@
 export type ConnectionHandle = bigint;
 
+export type UnpackedConnectionHandle = {
+  readonly index: number;
+  readonly generation: number;
+};
+
 const MAX_UINT32 = 0xffff_ffff;
 const MAX_UINT32_BIG = 0xffff_ffffn;
 const MAX_HANDLE_BIG = 0xffff_ffff_ffff_ffffn;
@@ -22,10 +27,7 @@ export function assertConnectionHandle(handle: ConnectionHandle): void {
   }
 }
 
-export function unpackConnectionHandle(handle: ConnectionHandle): {
-  readonly index: number;
-  readonly generation: number;
-} {
+export function unpackConnectionHandle(handle: ConnectionHandle): UnpackedConnectionHandle {
   assertConnectionHandle(handle);
   return {
     index: Number(handle & MAX_UINT32_BIG),

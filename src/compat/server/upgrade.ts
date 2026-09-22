@@ -12,6 +12,10 @@ import {
 } from "./handshake";
 import { completeUpgrade, type UpgradeCallback } from "./accept";
 
+/// The `info` record a `verifyClient` hook receives. Its runtime `origin` can
+/// be undefined even though the vendored type declares `string`.
+type VerifyClientRequest = Parameters<VerifyClientCallbackSync>[0];
+
 export function shouldHandle(state: ServerState, request: IncomingMessage): boolean {
   const path = state.options.path;
   if (!path) return true;
@@ -74,7 +78,7 @@ export function handleUpgrade(
     origin: requestHeader(request, version === 8 ? "sec-websocket-origin" : "origin"),
     secure: isSecure(request),
     req: request,
-  } as unknown as Parameters<VerifyClientCallbackSync>[0];
+  } as unknown as VerifyClientRequest;
   if (verify.length === 2) {
     (verify as VerifyClientCallbackAsync)(info, (verified, code, message, headers) => {
       if (!verified) {

@@ -30,6 +30,10 @@ observing identical behavior.
 - Zero OOP is absolute in both languages. No `class`, `this`, `extends`, or
   prototype mutation. Constructor-shaped exports are plain functions returning
   explicit state records.
+- Types are read once and understood immediately: explicit unions, a named
+  alias for every non-trivial inline shape, generics no deeper than one
+  parameter and one constraint. No conditional, recursive, or `infer`-driven
+  type computation.
 - Route the task before writing code: `.agents/skills/using-agent-skills/SKILL.md`
   picks the lifecycle skill, and this skill picks the domain skills. When
   `graphify-out/graph.json` exists, answer architecture questions from

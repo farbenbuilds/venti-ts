@@ -13,6 +13,12 @@ const GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 const STATUS_MIN = 100;
 const STATUS_MAX = 599;
 
+/// The TLS fields Node attaches to an upgraded request socket.
+type TlsSocketInfo = {
+  readonly authorized?: boolean;
+  readonly encrypted?: boolean;
+};
+
 /// Control characters must never reach a response header or status line.
 function hasControlCharacters(value: string): boolean {
   return value.includes("\u0000") || value.includes("\r") || value.includes("\n");
@@ -30,7 +36,7 @@ export function requestHeader(request: IncomingMessage, name: string): string | 
 }
 
 export function isSecure(request: IncomingMessage): boolean {
-  const socket = request.socket as { authorized?: boolean; encrypted?: boolean };
+  const socket = request.socket as TlsSocketInfo;
   return Boolean(socket.authorized || socket.encrypted);
 }
 
