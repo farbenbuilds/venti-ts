@@ -1,4 +1,5 @@
 import type { ReadyState } from "../../types/close";
+import type { BinaryType } from "../../types/socket";
 import type { ClientOptions, ServerOptions, WebSocket } from "../../types/ws";
 import { createEmitter } from "../events/emitter";
 import { createError } from "../errors";
@@ -58,7 +59,7 @@ export function createSocket(
       ) {
         return;
       }
-      state.binaryType = value as typeof state.binaryType;
+      state.binaryType = value as BinaryType;
     },
     get bufferedAmount(): number {
       return state.bufferedAmount;

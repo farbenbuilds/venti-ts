@@ -11,6 +11,9 @@ import { abortHandshake, selectProtocol, socketAccept } from "./handshake";
 
 const UPGRADED = Symbol("ventijs.upgraded");
 
+/// A transport that already carried one upgrade response.
+type UpgradedSocket = Duplex & { readonly [UPGRADED]?: true };
+
 export type UpgradeCallback = (client: WebSocket, request: IncomingMessage) => void;
 
 /// Accepts a validated upgrade: builds the 101 response, instantiates the
@@ -28,7 +31,7 @@ export function completeUpgrade(
     socket.destroy();
     return;
   }
-  if ((socket as Duplex & { [UPGRADED]?: true })[UPGRADED] === true) {
+  if ((socket as UpgradedSocket)[UPGRADED] === true) {
     throw createError(
       "ERR_INVALID_STATE",
       "server.handleUpgrade() was called more than once with the same socket, possibly due to a misconfiguration",

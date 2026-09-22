@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import type { Emitter, EmitterState, EventMap, Handler } from "../../types/events";
+import type { Emitter, EmitterState, EventMap, EventName, Listener } from "../../types/events";
 import { createError } from "../errors";
 import { dispatchWith, eventNames, listenerCount, prepend, removeAll, subscribe } from "./registry";
 import { listenerView, onceWrapper, removeTagged } from "./tags";
@@ -10,7 +10,7 @@ const ERROR_EVENT = "error";
 /// `Error` argument is thrown as-is, anything else is wrapped with the
 /// original value on `context`. Both facades share this so the policy lives
 /// in one place.
-export function emitEvent<E extends EventMap, K extends keyof E>(
+export function emitEvent<E extends EventMap, K extends EventName<E>>(
   state: EmitterState<E>,
   event: K,
   ...args: E[K]
@@ -63,7 +63,7 @@ export function createEmitter<E extends EventMap>(state: EmitterState<E>): Emitt
     emit,
     listeners: (event) => {
       const bucket = state.listeners[event] ?? [];
-      return bucket.map((entry) => listenerView(entry) as Handler<E[typeof event]>);
+      return bucket.map((entry) => listenerView(entry) as Listener<E, typeof event>);
     },
     rawListeners: (event) => [...(state.listeners[event] ?? [])],
     eventNames: () => eventNames(state.listeners),

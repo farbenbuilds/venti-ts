@@ -155,6 +155,20 @@ receiver-style functions that silently mutate captured state.
 - Async functions do not mix `await` with callback-style native completion in
   the same module. One style per boundary.
 
+### Type readability
+
+Types are documentation first. Write the shape you mean; never make the
+reader evaluate it in their head.
+
+- Prefer explicit unions over derived ones. Spell out `ErrorStatus` instead of
+  asking the reader to compute `Exclude<EngineStatus, ...>`.
+- Name every non-trivial inline shape where it appears, then use the alias.
+  Anonymous structural types nested inside signatures do not survive review.
+- Keep generics shallow: one type parameter, one constraint, one alias hop. No
+  recursive conditional types, no `infer`, no mapped-type puzzles.
+- An alias must read like its name. When a type needs a paragraph to explain,
+  split it into named pieces instead.
+
 ## 5. Zig conventions
 
 - **Files, functions, variables:** `snake_case`, overriding standard Zig

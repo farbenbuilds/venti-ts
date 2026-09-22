@@ -107,6 +107,10 @@ pipeline, so replace it as the `ws` surface lands, do not extend it.
   variants with optional-field soup or sentinel strings.
 - Numeric codes from the engine are mapped to exported `as const` unions before
   they reach consumers.
+- Types prioritize readability: explicit unions over conditional or derived
+  types, named aliases instead of inline shapes, and generics shallow enough
+  to read at a glance. No recursive, conditional, or `infer`-driven type
+  computation.
 
 ## Testing requirements
 

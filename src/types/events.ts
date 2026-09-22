@@ -2,10 +2,16 @@ export type EventMap = {
   readonly [event: string]: readonly unknown[];
 };
 
+export type EventName<E extends EventMap> = keyof E;
+
 export type Handler<Args extends readonly unknown[]> = (...args: Args) => void;
 
+/// One listener for one event.
+export type Listener<E extends EventMap, K extends EventName<E>> = Handler<E[K]>;
+
+/// Listener buckets keyed by event name.
 export type Registry<E extends EventMap> = {
-  [K in keyof E]?: readonly Handler<E[K]>[];
+  [K in EventName<E>]?: readonly Listener<E, K>[];
 };
 
 /// The mutable slice an emitter factory closes over. `target` is the record
@@ -16,23 +22,32 @@ export type EmitterState<E extends EventMap> = {
   target: unknown;
 };
 
+/// Shared shape of every `on`-style registration method.
+export type Registration<E extends EventMap> = <K extends EventName<E>>(
+  event: K,
+  handler: Listener<E, K>,
+) => void;
+
+/// Shared shape of `listeners` and `rawListeners`.
+export type Lookup<E extends EventMap> = <K extends EventName<E>>(event: K) => Listener<E, K>[];
+
 /// The Node `EventEmitter` surface both facades expose. `ws` types the
 /// registration methods as returning the emitter; the constructor boundary
 /// restores that with a cast, so the factories never touch `this`.
 export type Emitter<E extends EventMap> = {
-  on: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  addListener: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  once: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  prependListener: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  prependOnceListener: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  off: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  removeListener: <K extends keyof E>(event: K, handler: Handler<E[K]>) => void;
-  removeAllListeners: (event?: keyof E) => void;
-  emit: <K extends keyof E>(event: K, ...args: E[K]) => boolean;
-  listeners: <K extends keyof E>(event: K) => Handler<E[K]>[];
-  rawListeners: <K extends keyof E>(event: K) => Handler<E[K]>[];
-  eventNames: () => (keyof E)[];
-  listenerCount: (event: keyof E) => number;
+  on: Registration<E>;
+  addListener: Registration<E>;
+  once: Registration<E>;
+  prependListener: Registration<E>;
+  prependOnceListener: Registration<E>;
+  off: Registration<E>;
+  removeListener: Registration<E>;
+  removeAllListeners: (event?: EventName<E>) => void;
+  emit: <K extends EventName<E>>(event: K, ...args: E[K]) => boolean;
+  listeners: Lookup<E>;
+  rawListeners: Lookup<E>;
+  eventNames: () => EventName<E>[];
+  listenerCount: (event: EventName<E>) => number;
   getMaxListeners: () => number;
   setMaxListeners: (count: number) => void;
 };

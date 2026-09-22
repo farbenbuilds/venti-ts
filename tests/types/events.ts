@@ -1,8 +1,8 @@
 import { createRegistry, dispatch, subscribe } from "../../src/compat/events/registry";
 import { normalizeServerOptions } from "../../src/compat/options/server";
-import type { EventMap, Handler, Registry } from "../../src/types/events";
+import type { EventMap, EventName, Handler, Listener, Registry } from "../../src/types/events";
 import type { ServerEventMap, ServerState } from "../../src/types/server";
-import type { SocketEventMap, SocketState } from "../../src/types/socket";
+import type { BinaryType, SocketEventMap, SocketState } from "../../src/types/socket";
 import type { ServerOptions, WebSocket } from "../../src/types/ws";
 import type { ClientRequest, IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
@@ -104,6 +104,10 @@ export const serverState: ServerState = {
 
 export type SocketRegistry = Registry<SocketEventMap>;
 export type ServerRegistry = Registry<ServerEventMap>;
+export type SocketEventName = EventName<SocketEventMap>;
+export type MessageListener = Listener<SocketEventMap, "message">;
+export type OpenHandlers = Registry<SocketEventMap>["open"];
+export type SocketBinaryType = BinaryType;
 
 export function registerMessage(
   socket: SocketState,

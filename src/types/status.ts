@@ -1,10 +1,11 @@
 import type { ErrorCode } from "./errors";
 
-export type EngineStatus =
-  | "ok"
-  | "closing"
+/// Statuses that report progress rather than a failure.
+export type NonErrorStatus = "ok" | "closing" | "backpressure";
+
+/// Statuses that map to a coded error.
+export type ErrorStatus =
   | "closed"
-  | "backpressure"
   | "invalid-handle"
   | "payload-too-large"
   | "invalid-close-code"
@@ -12,6 +13,6 @@ export type EngineStatus =
   | "protocol-error"
   | "policy-violation";
 
-export type ErrorStatus = Exclude<EngineStatus, "ok" | "closing" | "backpressure">;
+export type EngineStatus = NonErrorStatus | ErrorStatus;
 
 export type StatusErrorMap = Readonly<Record<ErrorStatus, ErrorCode>>;

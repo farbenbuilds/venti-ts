@@ -1,12 +1,9 @@
-export const ENGINE_EVENT_KINDS = [
-  "listening",
-  "connectionOpen",
-  "connectionClose",
-  "engineError",
-  "serverClosed",
-] as const;
-
-export type EngineEventKind = (typeof ENGINE_EVENT_KINDS)[number];
+export type EngineEventKind =
+  | "listening"
+  | "connectionOpen"
+  | "connectionClose"
+  | "engineError"
+  | "serverClosed";
 
 export type EngineEvent = {
   readonly kind: EngineEventKind;

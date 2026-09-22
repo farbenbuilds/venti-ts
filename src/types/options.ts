@@ -1,5 +1,9 @@
 import type { PerMessageDeflateOptions, ServerOptions } from "./ws";
 
+export type ZlibDeflateOptions = PerMessageDeflateOptions["zlibDeflateOptions"];
+
+export type ZlibInflateOptions = PerMessageDeflateOptions["zlibInflateOptions"];
+
 export type NormalizedPerMessageDeflate = {
   readonly serverNoContextTakeover: boolean | undefined;
   readonly clientNoContextTakeover: boolean | undefined;
@@ -7,8 +11,8 @@ export type NormalizedPerMessageDeflate = {
   readonly clientMaxWindowBits: number | undefined;
   readonly threshold: number;
   readonly concurrencyLimit: number;
-  readonly zlibDeflateOptions: PerMessageDeflateOptions["zlibDeflateOptions"];
-  readonly zlibInflateOptions: PerMessageDeflateOptions["zlibInflateOptions"];
+  readonly zlibDeflateOptions: ZlibDeflateOptions;
+  readonly zlibInflateOptions: ZlibInflateOptions;
 };
 
 export type NormalizedServerOptions = {

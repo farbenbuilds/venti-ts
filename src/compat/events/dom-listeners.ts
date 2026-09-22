@@ -1,4 +1,4 @@
-import type { Handler } from "../../types/events";
+import type { Listener } from "../../types/events";
 import type { SocketEventMap, SocketState } from "../../types/socket";
 import type { WebSocket } from "../../types/ws";
 import {
@@ -18,15 +18,16 @@ import {
 } from "./tags";
 import { subscribe, unsubscribeMatching } from "./registry";
 
-const DOM_TYPES = ["open", "error", "close", "message"] as const;
-const ATTRIBUTES = [
+export type DomEventType = "open" | "error" | "close" | "message";
+
+const DOM_TYPES: readonly DomEventType[] = ["open", "error", "close", "message"];
+
+const ATTRIBUTES: readonly (readonly [string, DomEventType])[] = [
   ["onopen", "open"],
   ["onerror", "error"],
   ["onclose", "close"],
   ["onmessage", "message"],
-] as const;
-
-export type DomEventType = (typeof DOM_TYPES)[number];
+];
 
 export type DomListenerOptions = {
   readonly once?: boolean;
@@ -89,12 +90,12 @@ export function addEventListener(
   wrapper.listener = handler;
   wrapper[DOM_WRAPPER] = true;
   const entry = options.once
-    ? onceWrapper(state, type, wrapper as unknown as Handler<SocketEventMap[DomEventType]>)
+    ? onceWrapper(state, type, wrapper as unknown as Listener<SocketEventMap, DomEventType>)
     : (wrapper as TaggedHandler);
   state.listeners = subscribe(
     state.listeners,
     type,
-    entry as unknown as Handler<SocketEventMap[DomEventType]>,
+    entry as unknown as Listener<SocketEventMap, DomEventType>,
   );
 }
 

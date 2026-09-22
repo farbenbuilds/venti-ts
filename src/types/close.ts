@@ -1,6 +1,5 @@
-import type { WebSocket } from "./ws";
-
-export type ReadyState = WebSocket["readyState"];
+/// The four ready-state ordinals: 0 CONNECTING, 1 OPEN, 2 CLOSING, 3 CLOSED.
+export type ReadyState = 0 | 1 | 2 | 3;
 
 export type ProtocolCloseCode =
   | 1000
@@ -19,5 +18,3 @@ export type ProtocolCloseCode =
   | 1013
   | 1014
   | 1015;
-
-export type CloseReason = Buffer;

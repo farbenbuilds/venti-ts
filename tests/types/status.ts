@@ -1,5 +1,12 @@
 import type { ErrorCode } from "../../src/types/errors";
-import type { EngineStatus, ErrorStatus, StatusErrorMap } from "../../src/types/status";
+import type {
+  EngineStatus,
+  ErrorStatus,
+  NonErrorStatus,
+  StatusErrorMap,
+} from "../../src/types/status";
+
+export const nonErrorStatuses: readonly NonErrorStatus[] = ["ok", "closing", "backpressure"];
 
 export const engineStatuses: readonly EngineStatus[] = [
   "ok",

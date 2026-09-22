@@ -1,38 +1,38 @@
-import type { EventMap, Handler, Registry } from "../../types/events";
+import type { EventMap, EventName, Listener, Registry } from "../../types/events";
 
 export function createRegistry<E extends EventMap>(): Registry<E> {
   return {};
 }
 
-export function listenerCount<E extends EventMap, K extends keyof E>(
+export function listenerCount<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
 ): number {
   return registry[event]?.length ?? 0;
 }
 
-export function subscribe<E extends EventMap, K extends keyof E>(
+export function subscribe<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
-  handler: Handler<E[K]>,
+  handler: Listener<E, K>,
 ): Registry<E> {
   const bucket = registry[event] ?? [];
   return { ...registry, [event]: [...bucket, handler] };
 }
 
-export function prepend<E extends EventMap, K extends keyof E>(
+export function prepend<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
-  handler: Handler<E[K]>,
+  handler: Listener<E, K>,
 ): Registry<E> {
   const bucket = registry[event] ?? [];
   return { ...registry, [event]: [handler, ...bucket] };
 }
 
-export function unsubscribe<E extends EventMap, K extends keyof E>(
+export function unsubscribe<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
-  handler: Handler<E[K]>,
+  handler: Listener<E, K>,
 ): Registry<E> {
   return unsubscribeMatching(registry, event, (entry) => entry === handler);
 }
@@ -40,10 +40,10 @@ export function unsubscribe<E extends EventMap, K extends keyof E>(
 /// Removes the most recent entry a predicate accepts, matching
 /// `EventEmitter.removeListener`, which scans from the end. Once wrappers and
 /// DOM listeners are matched through their tags by the caller.
-export function unsubscribeMatching<E extends EventMap, K extends keyof E>(
+export function unsubscribeMatching<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
-  matches: (handler: Handler<E[K]>) => boolean,
+  matches: (handler: Listener<E, K>) => boolean,
 ): Registry<E> {
   const bucket = registry[event];
   if (bucket === undefined) return registry;
@@ -57,20 +57,23 @@ export function unsubscribeMatching<E extends EventMap, K extends keyof E>(
   return registry;
 }
 
-export function removeAll<E extends EventMap>(registry: Registry<E>, event?: keyof E): Registry<E> {
+export function removeAll<E extends EventMap>(
+  registry: Registry<E>,
+  event?: EventName<E>,
+): Registry<E> {
   if (event === undefined) return {};
   return { ...registry, [event]: [] };
 }
 
-export function eventNames<E extends EventMap>(registry: Registry<E>): (keyof E)[] {
-  const names: (keyof E)[] = [];
-  for (const key of Object.keys(registry) as (keyof E)[]) {
+export function eventNames<E extends EventMap>(registry: Registry<E>): EventName<E>[] {
+  const names: EventName<E>[] = [];
+  for (const key of Object.keys(registry) as EventName<E>[]) {
     if ((registry[key]?.length ?? 0) > 0) names.push(key);
   }
   return names;
 }
 
-export function dispatch<E extends EventMap, K extends keyof E>(
+export function dispatch<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   event: K,
   ...args: E[K]
@@ -86,7 +89,7 @@ export function dispatch<E extends EventMap, K extends keyof E>(
 /// Dispatches with the emitter as `this`, which is the contract the vendored
 /// `@types/ws` listeners declare. `Reflect.apply` accepts the readonly tuple
 /// the event map carries.
-export function dispatchWith<E extends EventMap, K extends keyof E>(
+export function dispatchWith<E extends EventMap, K extends EventName<E>>(
   registry: Registry<E>,
   target: unknown,
   event: K,
