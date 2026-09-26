@@ -54,8 +54,10 @@ export function handleUpgrade(
     abortOrEmit(state, request, socket, 400, "Missing or invalid Sec-WebSocket-Key header");
     return;
   }
-  if (version !== 8 && version !== 13) {
-    abortOrEmit(state, request, socket, 400, "Missing or invalid Sec-WebSocket-Version header");
+  if (version !== 13 && version !== 8) {
+    abortOrEmit(state, request, socket, 400, "Missing or invalid Sec-WebSocket-Version header", {
+      "Sec-WebSocket-Version": "13, 8",
+    });
     return;
   }
   if (!shouldHandle(state, request)) {

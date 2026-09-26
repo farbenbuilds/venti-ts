@@ -1,6 +1,10 @@
 allowBuilds:
   lefthook: true
 
+# Pin the dependency refresh window for the freshly released type package.
+minimumReleaseAgeExclude:
+  - "@types/node@26.6.3"
+
 # The pre-commit hooks run several pnpm commands in parallel, so pnpm's
 # automatic dependency check must not start an install mid-run and race module
 # resolution. CI installs explicitly with --frozen-lockfile.

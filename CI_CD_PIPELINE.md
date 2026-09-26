@@ -71,18 +71,21 @@ reviewers can inspect the published type surface without building locally.
 
 `ts-test.yml` runs the pure suites (`tests/protocol`, `tests/compat`,
 `tests/conformance`, `tests/tooling`) without the native toolchain, skipping
-only the suites that adopt a native connection. `tests/binding/**` and the
-addon-backed compat suites run through `pnpm test` in the planned native
-workflow.
+only the suites that adopt a native connection: `tests/binding/**`,
+`tests/compat/socket/**`, `tests/compat/stream.test.ts`, and
+`tests/conformance/close.conformance.test.ts`, which needs a live server to
+close on. A new suite that loads the addon must be added to that exclusion
+list or it will fail this job; `zig-test.yml` runs all four.
 
-`zig-test.yml` runs two jobs with the same vendor toolchain and cache: units
+`zig-test.yml` runs two jobs with the same toolchain and cache: units
 (`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
 under `src/engine-tests/`, mirroring the `src/engine/` planes) and the
 addon-backed lifecycle suite
 (`pnpm build:binding` then
 `vitest tests/binding tests/compat/socket tests/compat/stream.test.ts`). Both
-install CMake, Ninja, Perl, patch, and a zlib static prefix for the vendored C
-dependencies, then cache `.zig-cache` and `zig-pkg` between runs.
+cache `.zig-cache` and `zig-pkg` between runs. Neither installs a vendor C
+toolchain: the engine compiles BoringSSL, lsquic, libdeflate, and zlib itself
+from pinned package sources.
 
 ## Native addon matrix
 

@@ -5,22 +5,20 @@ const EngineManifest = struct {
     version: []const u8,
 };
 
-/// Configures the uWebZockets dependency with the build target, the vendored
-/// C toolchain, and the zlib prefix the dev shell provides.
+/// Configures the uWebZockets dependency for the resolved build target. The
+/// engine builds its vendored C libraries itself, so only the target, the
+/// optimization mode, and position-independent code are supplied here.
 pub fn engine_dependency(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) *std.Build.Dependency {
-    const compilers = native.vendor_compilers(b, target);
-    return b.dependency("uWebZockets", .{
+    const engine_dep = b.dependency("uWebZockets", .{
         .target = target,
         .optimize = optimize,
-        .@"zlib-prefix" = b.graph.environ_map.get("UWEBZOCKETS_ZLIB_PREFIX"),
-        .@"c-compiler" = compilers.c,
-        .@"cxx-compiler" = compilers.cxx,
-        .@"asm-compiler" = compilers.assembler,
     });
+    native.force_pic(engine_dep);
+    return engine_dep;
 }
 
 /// Reads the pinned engine version from the dependency manifest.

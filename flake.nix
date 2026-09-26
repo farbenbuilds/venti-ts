@@ -51,15 +51,6 @@
         ];
 
         mkDevShell = packagePkgs: pnpmPackage: let
-          # The uWebZockets vendor build wants one prefix holding both zlib.h
-          # and libz.a; nixpkgs splits those across the dev and static outputs.
-          zlibPrefix = packagePkgs.symlinkJoin {
-            name = "ventijs-zlib";
-            paths = [
-              packagePkgs.zlib.dev
-              packagePkgs.zlib.static
-            ];
-          };
           # Zig cannot detect the host glibc from inside the Nix store, so the
           # default target pins the libc version explicitly. uWebZockets reads
           # the same variable for its own build graph.
@@ -78,18 +69,12 @@
                 ++ [
                   packagePkgs.nodejs
                   pnpmPackage
-                  packagePkgs.zlib
-                  # The vendor build compiles BoringSSL, lsquic, and libdeflate
-                  # through CMake and Ninja; lsquic generates sources with Perl,
-                  # and prepare_lsquic_source.sh applies a patch.
-                  packagePkgs.cmakeMinimal
-                  packagePkgs.ninja
-                  packagePkgs.patch
-                  packagePkgs.perl
                 ]
                 ++ lib.optional (zon2nixPackage != null) zon2nixPackage;
 
-              UWEBZOCKETS_ZLIB_PREFIX = zlibPrefix;
+              # The engine compiles BoringSSL, lsquic, libdeflate, and zlib with
+              # `zig cc` and `zig c++` from pinned package dependencies, so the
+              # shell needs no CMake, Ninja, Perl, patch, or system zlib.
             }
             // lib.optionalAttrs (zigTarget != null) {
               UWEBZOCKETS_DEFAULT_TARGET = zigTarget;

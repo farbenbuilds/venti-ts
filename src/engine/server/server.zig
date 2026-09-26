@@ -41,6 +41,7 @@ pub fn create(config: options.ServerConfig, dispatch: napi.Callback, env: napi.E
     target.cluster = try instance.ClusterType.init_with_options(
         std.heap.smp_allocator,
         target.io.io(),
+        instance.EngineConfig,
         .{ .cpu_affinity = false },
     );
     errdefer target.cluster.deinit();

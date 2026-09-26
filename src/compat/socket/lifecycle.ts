@@ -1,15 +1,11 @@
 import { closeSocket, pauseSocket, resumeSocket } from "../../binding/socket";
-import {
-  CLOSE_ABNORMAL,
-  CLOSE_NORMAL,
-  isValidCloseReason,
-  isValidStatusCode,
-} from "../../protocol/close-codes";
+import { CLOSE_ABNORMAL, CLOSE_NORMAL, isValidStatusCode } from "../../protocol/close-codes";
 import type { SocketState } from "../../types/socket";
 import type { EngineStatus } from "../../types/status";
 import { emitEvent } from "../events/emitter";
 import { createError } from "../errors";
 import { CLOSED, CLOSING, CONNECTING } from "../ready-state";
+import { toCloseReason } from "./close-reason";
 import { bufferedAmountOf, statusError } from "./payload";
 
 const EMPTY = Buffer.alloc(0);
@@ -86,20 +82,6 @@ function assertCloseCode(code: unknown): number {
     );
   }
   return code;
-}
-
-function toCloseReason(reason: unknown): Buffer {
-  let bytes = EMPTY;
-  if (typeof reason === "string") bytes = Buffer.from(reason, "utf8");
-  else if (reason instanceof Uint8Array) bytes = Buffer.from(reason);
-  if (!isValidCloseReason(bytes)) {
-    throw createError(
-      "ERR_INVALID_CLOSE_REASON",
-      "The message must not be greater than 123 bytes",
-      RangeError,
-    );
-  }
-  return bytes;
 }
 
 export function pauseConnection(state: SocketState): void {

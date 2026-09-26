@@ -50,9 +50,7 @@ ventijs/
 ├── build.zig.zon              # pinned uWebZockets and napi-zig revisions
 ├── scripts/
 │   ├── check-staged.sh        # staged-file hygiene checks
-│   ├── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
-│   ├── zig-cc-pic             # PIC C compiler wrapper for vendored C builds
-│   └── zig-cxx-pic            # PIC C++ compiler wrapper for vendored C builds
+│   └── oxlint-plugin.mjs      # local rules for the anti-OOP conventions
 ├── src/
 │   ├── index.ts               # public type surface plus the runtime values
 │   ├── lib.zig                # napi-zig root module declaration and exports
@@ -71,6 +69,7 @@ ventijs/
 │   │   │   ├── instance.zig   # live server record and instance table
 │   │   │   ├── registry.zig   # bounded slot table for server instances
 │   │   │   ├── options.zig    # trusted listen configuration structs
+│   │   │   ├── engine_config.zig # engine application configuration record
 │   │   │   ├── ports.zig      # listener bound-port introspection
 │   │   │   └── connections.zig # engine WebSocket route trampolines
 │   │   └── socket/            # per-connection state and staging
@@ -111,6 +110,7 @@ ventijs/
 │   │   │   ├── attach.ts      # native and upgraded-stream adoption
 │   │   │   ├── send.ts        # send routing into the binding
 │   │   │   ├── payload.ts     # payload normalization and status mapping
+│   │   │   ├── close-reason.ts # close reason argument handling
 │   │   │   └── lifecycle.ts   # close/terminate/pause/resume and terminal latch
 │   │   └── server/
 │   │       ├── server.ts      # WebSocketServer constructor-shaped factory
@@ -134,11 +134,11 @@ ventijs/
 │   │   └── status.ts          # engine status to error-code mapping types
 │   └── builds/
 │       ├── orchestrator.zig   # build entry: addon, build options, tests
-│       ├── vendor.zig         # engine dependency, version, C toolchain
+│       ├── vendor.zig         # engine dependency and pinned version
 │       ├── testing.zig        # Zig unit test module and test step
 │       └── targets/
 │           ├── default.zig    # default build target query
-│           └── native.zig     # vendored C compiler overrides
+│           └── native.zig     # position-independent vendor archives
 ├── tests/
 │   ├── binding/
 │   │   ├── addon.test.ts      # native pipeline smoke test
@@ -170,11 +170,11 @@ src/
 ├── lib.zig                    # napi-zig module declaration and exports
 ├── builds/                    # Zig build graph helpers, one concern per file
 │   ├── orchestrator.zig       # build entry and wiring
-│   ├── vendor.zig             # engine dependency and vendored C toolchain
+│   ├── vendor.zig             # engine dependency and pinned version
 │   ├── testing.zig            # Zig test module and test step
 │   └── targets/               # target-specific build settings
 │       ├── default.zig        # default build target query
-│       └── native.zig         # vendored C compiler overrides
+│       └── native.zig         # position-independent vendor archives
 ├── binding/                   # native addon loading and typed N-API calls
 │   ├── load.ts                # platform/arch addon resolution, one error type
 │   ├── server.ts              # server handle create/listen/close free functions
@@ -405,6 +405,14 @@ keep the rules enforced:
   capacities, reads every integer at the 53-bit safe width, and copies them
   into fixed-capacity `ListenConfig`, `Limits`, and `ServerConfig` records;
   `maxConnections` is enforced when a peer opens.
+- `src/engine/server/engine_config.zig` owns the single engine `ServerConfig`
+  the cluster is built from. The engine compile-checks the connection, message,
+  write-queue, idle-timeout, route-capture, and HTTP/3 capacities against the
+  generated application type, so the module narrows the two the check does not
+  cover: the HTTP/2 session region and the radix router region. At the engine
+  defaults those two regions fill about 82 percent of the 82 MB per-server
+  startup slab for transports and routes ventijs never negotiates; narrowing
+  them brings the slab to about 50 MB.
 - `src/engine/server/registry.zig` is a fixed-capacity atomic slot table; `src/engine/server/instance.zig`
   holds the live `Instance` record and the bounded table that binds engine
   callbacks to server state; `src/engine/server/connections.zig` registers the comptime
@@ -498,7 +506,7 @@ remain current:
   `napi_zig.addLib`, and hands the test wiring to `src/builds/testing.zig`.
 - `src/builds/vendor.zig` configures the uWebZockets dependency and reads its
   pinned version; `src/builds/targets/` holds the default target query and the
-  vendored C compiler overrides.
+  position-independent flag the shared addon needs on every vendored archive.
 - `package.json` defines the package scripts (`build`, `build:binding`, `dev`,
   `format`, `format:check`, `lint`, `lint:fix`, `test`, `test:watch`,
   `typecheck`, `typecheck:dist`, `release`, `prepublishOnly`) and development
@@ -510,10 +518,11 @@ remain current:
   `engineVersion()`, `http3Available()`, and the server lifecycle functions.
   The engine's TLS surface (`App.init_https`, `TlsContext.init`) is reachable
   from the addon but not yet exposed to TypeScript.
-- The engine's vendored C dependencies build once into
-  `.zig-cache/vendor-build-v4/` through CMake and Ninja; non-Windows targets
-  use the PIC compiler wrappers in `scripts/` because the vendored static
-  libraries link into the shared addon.
+- The engine's vendored C dependencies (BoringSSL, lsquic, libdeflate, zlib)
+  build once into `.zig-cache/` from pinned package sources. They link into the
+  shared addon, so `src/builds/targets/native.zig` marks every archive position
+  independent through the build graph; without it the link fails on absolute
+  `R_X86_64_32` relocations.
 - `napi-zig` was wired by hand following its manual setup guide, never with
   `napi-zig new`, so the existing tsdown, oxlint, and oxfmt configuration is
   not scaffolded over.

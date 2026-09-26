@@ -47,15 +47,16 @@ of ventijs.
 
 ## Socket API (server-side connection)
 
-| Surface                   | Contract                                                                                  | Owner                                                                                   | Status   | Evidence                                    |
-| ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------- | ------------------------------------------- |
-| Observable properties     | `binaryType`, `bufferedAmount`, `extensions`, `isPaused`, `protocol`, `readyState`, `url` | `src/compat/socket/socket.ts`, `src/binding/socket.ts`, `src/engine/socket/socket.zig`  | partial  | `tests/compat/socket/socket.test.ts`        |
-| Ready-state constants     | `CONNECTING`/`OPEN`/`CLOSING`/`CLOSED` on the constructor and the instance                | `src/compat/{constructors,ready-state}.ts`                                              | done     | `tests/compat/socket/socket.test.ts`        |
-| Send and frame methods    | `send(data, options?, cb?)`, `ping`, `pong`, `close`, `terminate`, `pause`, `resume`      | `src/compat/socket/{send,lifecycle}.ts`, `src/binding/socket.ts`                        | partial  | `tests/compat/socket/socket.test.ts`        |
-| Node events               | `open`, `message`, `close`, `error`, `ping`, `pong`                                       | `src/compat/socket/socket.ts`, `src/compat/events/dom-events.ts`, `src/types/socket.ts` | partial  | `tests/compat/socket/socket.test.ts`        |
-| Client-only socket events | `upgrade`, `redirect`, `unexpected-response`                                              | deferred (client scope, ADR)                                                            | deferred | -                                           |
-| DOM handlers              | `onopen`/`onerror`/`onclose`/`onmessage`, `addEventListener`, `removeEventListener`       | `src/compat/events/{dom-listeners,dom-events}.ts`                                       | done     | `tests/compat/events/dom-listeners.test.ts` |
-| Pause gating              | `pause()` stops event emission until `resume()`                                           | `src/compat/socket/lifecycle.ts`, `src/engine/socket/socket.zig`                        | partial  | `tests/compat/socket/socket.test.ts`        |
+| Surface                   | Contract                                                                                  | Owner                                                                                   | Status   | Evidence                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------- | --------------------------------------------- |
+| Observable properties     | `binaryType`, `bufferedAmount`, `extensions`, `isPaused`, `protocol`, `readyState`, `url` | `src/compat/socket/socket.ts`, `src/binding/socket.ts`, `src/engine/socket/socket.zig`  | partial  | `tests/compat/socket/socket.test.ts`          |
+| Ready-state constants     | `CONNECTING`/`OPEN`/`CLOSING`/`CLOSED` on the constructor and the instance                | `src/compat/{constructors,ready-state}.ts`                                              | done     | `tests/compat/socket/socket.test.ts`          |
+| Send and frame methods    | `send(data, options?, cb?)`, `ping`, `pong`, `close`, `terminate`, `pause`, `resume`      | `src/compat/socket/{send,lifecycle}.ts`, `src/binding/socket.ts`                        | partial  | `tests/compat/socket/socket.test.ts`          |
+| Node events               | `open`, `message`, `close`, `error`, `ping`, `pong`                                       | `src/compat/socket/socket.ts`, `src/compat/events/dom-events.ts`, `src/types/socket.ts` | partial  | `tests/compat/socket/socket.test.ts`          |
+| Client-only socket events | `upgrade`, `redirect`, `unexpected-response`                                              | deferred (client scope, ADR)                                                            | deferred | -                                             |
+| DOM handlers              | `onopen`/`onerror`/`onclose`/`onmessage`, `addEventListener`, `removeEventListener`       | `src/compat/events/{dom-listeners,dom-events}.ts`                                       | done     | `tests/compat/events/dom-listeners.test.ts`   |
+| Close reason handling     | `close(code, reason)` mirrors `ws`: string, `Uint8Array`, or absent reason                | `src/compat/socket/close-reason.ts`                                                     | partial  | `tests/conformance/close.conformance.test.ts` |
+| Pause gating              | `pause()` stops event emission until `resume()`                                           | `src/compat/socket/lifecycle.ts`, `src/engine/socket/socket.zig`                        | partial  | `tests/compat/socket/socket.test.ts`          |
 
 Partial socket rows share one prerequisite: the engine-thread drain and the
 message receiver are not wired yet. `send`, `close`, `pause`, and `resume`
@@ -113,6 +114,16 @@ for a full staging ring, `ERR_SOCKET_NOT_OPEN` for sends before `open`, the
 close-code and close-reason codes for `close()`, and `ERR_PROTOCOL` for
 `wsClientError`; `tests/compat/socket/socket.test.ts`, `tests/compat/server/upgrade-policy.test.ts` assert them.
 
+`close(code, reason)` matches `ws` for every argument shape except one.
+`src/compat/socket/close-reason.ts` refuses a reason that is neither a string
+nor a `Uint8Array` once it carries data, which is the fix for the uninitialized
+memory disclosure advisory GHSA-58qx-3vcg-4xpx: a differently typed array
+reports a smaller element count than its `byteLength`, so accepting one would
+size a close frame from bytes that are never written. The one divergence is
+`reason === null`, which `ws` rejects with a V8-internal `TypeError` from reading
+`.length` off it and ventijs treats as an absent reason.
+`tests/conformance/close.conformance.test.ts` pins both against `ws`.
+
 The handshake is hardened beyond `ws`: a `handleProtocols` result that is not a
 token is refused instead of echoed into a response header, and control
 characters in `verifyClient` headers or status codes are dropped before the
@@ -133,6 +144,7 @@ rejection is written. `ws` forwards those values verbatim.
 | `tests/compat/{socket/socket,server/server,server/upgrade,server/upgrade-policy,stream}.test.ts` | Facade lifecycle and HTTP upgrade policy                                      | done    |
 | `tests/conformance/upgrade.conformance.test.ts`                                                  | Handshake responses compared byte-for-byte against `ws`                       | done    |
 | `tests/conformance/stream.conformance.test.ts`                                                   | Duplex adapter behavior compared against `ws`                                 | done    |
+| `tests/conformance/close.conformance.test.ts`                                                    | `close(code, reason)` argument handling compared against `ws`                 | done    |
 | `tests/tooling/oxlint-plugin.test.ts`                                                            | Anti-OOP, enum, and emoji lint rules                                          | done    |
 | `tests/types/**`                                                                                 | Compile-time public surface, every event-map entry, state records             | done    |
 | `tests/declarations/**`                                                                          | Built declarations through the package `exports` map                          | done    |

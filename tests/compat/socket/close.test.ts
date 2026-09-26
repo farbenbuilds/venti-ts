@@ -15,6 +15,65 @@ test("fractional close codes truncate like ws", { timeout: TEST_TIMEOUT_MS }, as
   }
 });
 
+/// Pins GHSA-58qx-3vcg-4xpx. A `Float32Array` reports an element count smaller
+/// than its `byteLength`, so accepting it as a close reason would size a frame
+/// from bytes that are never written. `ws` refuses the argument since 8.20.1.
+test(
+  "a typed array that is not a Uint8Array is refused as a close reason",
+  { timeout: TEST_TIMEOUT_MS },
+  async () => {
+    const { server, client, socket } = await attached();
+    try {
+      expect(() => socket.close(1000, new Float32Array(20) as never)).toThrow(
+        "Second argument must be a string or a Uint8Array",
+      );
+      expect(socket.readyState).toBe(socket.OPEN);
+    } finally {
+      terminateClient(client);
+      await server.dispose();
+    }
+  },
+);
+
+/// `ws` treats any argument without a truthy `length` as "no reason data", so
+/// these still produce a bare close frame instead of being refused. `null` is a
+/// deliberate divergence: `ws` surfaces a V8-internal `TypeError` there.
+test.each([
+  ["undefined", undefined],
+  ["null", null],
+  ["an empty string", ""],
+  ["an empty Uint8Array", new Uint8Array(0)],
+  ["an empty array", []],
+  ["a number", 42],
+  ["an object with no length", {}],
+])(
+  "an absent reason (%s) still sends a bare close frame",
+  { timeout: TEST_TIMEOUT_MS },
+  async (_name, reason) => {
+    const { server, client, socket } = await attached();
+    try {
+      expect(() => socket.close(1000, reason as never)).not.toThrow();
+      expect(socket.readyState).toBe(socket.CLOSING);
+    } finally {
+      terminateClient(client);
+      await server.dispose();
+    }
+  },
+);
+
+/// A 124-byte reason exceeds the 123-byte control-frame budget, so it must be
+/// refused before any frame is staged.
+test("an oversize close reason is refused", { timeout: TEST_TIMEOUT_MS }, async () => {
+  const { server, client, socket } = await attached();
+  try {
+    expect(() => socket.close(1000, "a".repeat(124))).toThrow(RangeError);
+    expect(socket.readyState).toBe(socket.OPEN);
+  } finally {
+    terminateClient(client);
+    await server.dispose();
+  }
+});
+
 test(
   "a close rejected by the ring surfaces an error and latches",
   {
