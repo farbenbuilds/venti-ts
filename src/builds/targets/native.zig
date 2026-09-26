@@ -1,22 +1,42 @@
-const builtin = @import("builtin");
 const std = @import("std");
 
-/// Overrides for the C toolchain that builds the vendored libraries. A null
-/// field leaves the upstream Zig C default in place.
-pub const Compilers = struct {
-    c: ?[]const u8 = null,
-    cxx: ?[]const u8 = null,
-    assembler: ?[]const u8 = null,
-};
+/// Compiles every C and C++ archive the engine links into the addon as
+/// position-independent code.
+///
+/// The addon is a shared library, but the engine builds its vendored BoringSSL,
+/// lsquic, libdeflate, and zlib archives as separate static libraries, and Zig
+/// compiles C sources non-PIC unless the owning module asks for it. A non-PIC
+/// archive cannot be linked into a shared object: the linker rejects absolute
+/// `R_X86_64_32` and `R_X86_64_32S` relocations and asks for `-fPIC`. The engine
+/// stopped accepting compiler overrides in v1.2.0, so the flag is applied to the
+/// archives through the build graph instead of through wrapper scripts.
+/// Removing this walk breaks the addon link.
+pub fn force_pic(engine_dep: *std.Build.Dependency) void {
+    force_module_pic(engine_dep.module("uWebZockets"));
+}
 
-/// The vendored C libraries link into a shared addon, so they must be
-/// position independent. Zig's C compiler defaults to PIC on glibc and macOS
-/// but not on musl, so pin it with wrappers wherever the host can run them.
-pub fn vendor_compilers(b: *std.Build, target: std.Build.ResolvedTarget) Compilers {
-    if (builtin.os.tag == .windows or target.result.os.tag == .windows) return .{};
-    return .{
-        .c = b.pathFromRoot("scripts/zig-cc-pic"),
-        .cxx = b.pathFromRoot("scripts/zig-cxx-pic"),
-        .assembler = b.pathFromRoot("scripts/zig-cc-pic"),
-    };
+/// Marks the module and every static library it links as position independent.
+fn force_module_pic(module: *std.Build.Module) void {
+    if (module.pic == null) module.pic = true;
+    for (module.link_objects.items) |object| {
+        const step = switch (object) {
+            .other_step => |other| other,
+            else => continue,
+        };
+        force_compile_pic(step);
+    }
+}
+
+/// Marks one compiled artifact as position independent. Zig and C++ sources are
+/// already position independent when they end up in a shared library, so only
+/// the presence of the flag is set; the linker decides the rest.
+fn force_compile_pic(step: *std.Build.Step.Compile) void {
+    const root = step.root_module;
+    if (root.pic == null) root.pic = true;
+    for (root.link_objects.items) |object| {
+        switch (object) {
+            .other_step => |other| force_compile_pic(other),
+            else => {},
+        }
+    }
 }

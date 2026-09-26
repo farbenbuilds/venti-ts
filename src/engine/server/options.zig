@@ -14,7 +14,15 @@ pub const connection_capacity: u32 = 128;
 pub const message_capacity: u32 = 32 * 1024;
 pub const frame_capacity: u32 = message_capacity;
 pub const write_queue_capacity: u32 = 32 * 1024;
+/// Largest request body the engine accepts, on HTTP/1.1 and per HTTP/2 stream
+/// alike. A WebSocket upgrade never carries one, so this only sizes the
+/// engine's per-connection request buffer and the narrowed HTTP/2 stream.
 pub const body_capacity: u32 = 4 * 1024;
+/// Inactivity timeout the engine application type is compiled with. Zero
+/// leaves the engine's connection sweeper unstarted, so a connection lives
+/// until the peer or the application ends it. `ws` has no idle timeout, so
+/// there is no engine-side default to match either.
+pub const idle_timeout_ms: u64 = 0;
 
 /// Fixed storage limits for host and route path. The extra byte holds the
 /// NUL sentinel the engine's `[]const u8` listeners expect.

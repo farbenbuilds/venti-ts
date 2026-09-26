@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-# The vendored C libraries link into the shared addon, so force PIC.
-exec "${UWEBZOCKETS_ZIG:?}" c++ -target "${UWEBZOCKETS_TARGET:?}" -fPIC "$@"

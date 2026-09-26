@@ -9,6 +9,7 @@ const std = @import("std");
 const napi = @import("napi-zig");
 const uwz = @import("uWebZockets");
 const callbacks = @import("../channel/callbacks.zig");
+const engine_config = @import("engine_config.zig");
 const handles = @import("../socket/handles.zig");
 const options = @import("options.zig");
 const payload = @import("../socket/payload.zig");
@@ -26,9 +27,11 @@ pub const AppType = uwz.ConfiguredAppWithTimeout(
     options.connection_capacity,
     options.message_capacity,
     options.write_queue_capacity,
-    0,
+    options.idle_timeout_ms,
 );
 pub const ClusterType = AppType.cluster(1);
+/// Engine configuration the cluster is built from; see `engine_config.zig`.
+pub const EngineConfig = engine_config.EngineConfig;
 pub const Slab = handles.connection_slab(options.connection_capacity);
 pub const Table = registry.slot_table(server_capacity, Instance);
 pub const Handle = registry.Handle;
