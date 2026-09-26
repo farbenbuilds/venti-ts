@@ -8,17 +8,20 @@ import {
 
 /// How much of the suite a run selects, and the counts the gate holds it to.
 ///
-/// The suite costs about four seconds a case and that cost is inside the Python
-/// fuzzing client, not in the target: the target answers a connect, echo, and
-/// close in 0.42 ms, so all 517 cases together are 0.2 seconds of target time
-/// against 35 minutes of suite time. Nothing on this side can make the suite
-/// faster, so the only lever is selecting fewer cases.
+/// `framing` drops the two per-message-deflate groups. They are 216 of 517 cases
+/// and every one is `UNIMPLEMENTED` because `permessage-deflate` is normalised and
+/// never negotiated, so they cannot change until deflate is implemented.
 ///
-/// `framing` drops the two deflate groups. They are 216 of 517 cases, about
-/// 42 per cent of the runtime, and every one of them is `UNIMPLEMENTED` because
-/// `permessage-deflate` is normalised and never negotiated. They cannot change
-/// until deflate is implemented, which will be its own change and can re-enable
-/// them. `full` is the authoritative set and runs on the schedule.
+/// It is not a speedup, which was the assumption when it was added. Two runs of
+/// the same job: `full` took 2100s of suite time for 517 cases, `framing` took
+/// 2086s for 301. The cost is not per case, because a deflate case whose
+/// extension is never negotiated fails almost immediately while the framing and
+/// UTF-8 groups are where the client actually waits. The cost is concentrated in
+/// the groups this mode keeps.
+///
+/// It is kept because it is the same signal for marginally less work, because
+/// the report then states what it covered, and because it will start costing real
+/// time the moment deflate is implemented and the groups have to come back.
 export type SuiteMode = "framing" | "full";
 
 export type ModeCounts = {

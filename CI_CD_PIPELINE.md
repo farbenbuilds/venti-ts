@@ -202,12 +202,22 @@ Three things changed, in descending order of effect:
    minutes of runner time. Now only a Zig source, `build.zig.zon`, the harness,
    the lockfile, or the workflow itself starts the job.
 2. **A pull request runs the `framing` selection, which omits the two
-   per-message-deflate groups.** They are 216 of 517 cases, about 42 per cent of
-   the runtime, and every one reports `UNIMPLEMENTED` because `permessage-deflate`
-   is normalised and never negotiated. They cannot change until deflate is
-   implemented, which will be its own change and can re-enable them. The
-   selection is 301 cases, about 21 minutes. A schedule or a manual run passes
-   `--full` and is the authoritative 517.
+   per-message-deflate groups.** Those are 216 of 517 cases and every one reports
+   `UNIMPLEMENTED`, because `permessage-deflate` is normalised and never
+   negotiated, so they cannot change until deflate is implemented.
+
+   This is not a speedup, which was the assumption when it was added, and the
+   measurement is why. Two runs of the same job: the full selection took 2100s of
+   suite time for 517 cases, and the framing selection took 2086s for 301. Dropping
+   42 per cent of the cases saved fourteen seconds, because the cost is not per
+   case. A deflate case whose extension is never negotiated fails almost
+   immediately, while the framing and UTF-8 groups are where the client actually
+   waits. The cost is concentrated in the groups that were kept.
+
+   The selection is kept because it is the same signal for marginally less work,
+   it makes the report state what it covered, and it will start costing real time
+   the moment deflate is implemented, at which point the groups have to come back.
+
 3. **The preflight above** turns an unloadable addon from a 21-minute failure
    into a 5-second one.
 
@@ -219,6 +229,13 @@ report trips `count-total` and `count-evaluated`.
 A case-group matrix would cut wall-clock roughly fourfold, at the cost of paying
 the addon build once per job, which increases total runner minutes. Since the
 concern is runner time, it was not done.
+
+There is no further reduction available on this side. The addon build is about
+two to four minutes against a warm cache, the image pull is sixteen seconds, and
+the per-case cost is not uniform enough for a subset to help. The honest summary
+is that the path filter is the only large win here, and the suite is expensive
+because the Autobahn fuzzing client is, not because of anything in this
+repository.
 
 ### The known-failure baseline
 

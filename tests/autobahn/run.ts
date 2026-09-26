@@ -34,9 +34,10 @@ const USAGE = [
   "machine-readable summary are written on every exit path.",
   "",
   "  --full   select all 517 cases, including the per-message-deflate groups.",
-  "           The default, framing, omits those two groups: they are 216 cases",
-  "           of UNIMPLEMENTED because deflate is never negotiated, and the",
-  "           suite costs about four seconds a case inside the Python client.",
+  "           The default, framing, omits those two groups, which are 216 cases",
+  "           of UNIMPLEMENTED because deflate is never negotiated. It is the",
+  "           same signal for marginally less work, not a speedup: 301 cases",
+  "           measured 2086s of suite time against 2100s for 517.",
   "  --force  run the fuzzing client even when the probe shows the target",
   "           cannot echo, so a failing run still captures suite evidence",
 ].join("\n");
