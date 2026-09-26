@@ -198,11 +198,30 @@ Three things changed, in descending order of effect:
 
 1. **The path filter no longer matches `src/**`.** It previously did, which
    subsumed `**.zig` and additionally matched every TypeScript file, so a change
-   to the `ws`-shaped facade, which this suite never exercises, still spent 38
-   minutes of runner time. Now only a Zig source, `build.zig.zon`, the harness,
-   the lockfile, or the workflow itself starts the job. The same defect was in
-   `perf.yml` and is fixed the same way, since the benchmark drives the native
-   engine and is equally indifferent to the facade.
+   to the `ws`-shaped facade, which this suite never exercises, still started the
+   job. Now only a Zig source, `build.zig.zon`, the harness, the lockfile, or the
+   workflow itself does. The same defect was in `perf.yml` and is fixed the same
+   way, since the benchmark drives the native engine and is equally indifferent to
+   the facade.
+
+   What this does and does not save needs stating, because the first version of
+   this section overstated it. For a `pull_request` event GitHub evaluates
+   `paths` against the **whole pull request diff**, not the incremental push, so a
+   branch that already contains a Zig or harness change re-runs this job on every
+   later push however unrelated that push is. Measured on this pull request: a
+   commit touching only `README.md` and `docs/*.md`, neither of which appears in
+   the filter, still started the job. So the filter saves a run for a pull
+   request whose cumulative diff never touches those paths, and for pushes to
+   `main`. It does not help a long-lived engine branch, which is the case this
+   pull request is.
+
+   What actually bounds the waste on a busy branch is the `concurrency` block
+   above, with `cancel-in-progress` on a pull request: two of the runs on this
+   branch show `cancelled` rather than competing. Gating the job on the
+   _incremental_ diff instead would need `github.event.before` compared against
+   the changed-files API, with a decision about what to do when that call fails.
+   It is not done here.
+
 2. **A pull request runs the `framing` selection, which omits the two
    per-message-deflate groups.** Those are 216 of 517 cases and every one reports
    `UNIMPLEMENTED`, because `permessage-deflate` is normalised and never
