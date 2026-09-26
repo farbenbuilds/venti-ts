@@ -69,23 +69,27 @@ mapping, event dispatch ordering, boundary lifetime rules, and capacity
 exhaustion. The build job uploads `dist/` and the generated `.d.ts` bundle so
 reviewers can inspect the published type surface without building locally.
 
-`ts-test.yml` runs the pure suites (`tests/protocol`, `tests/compat`,
-`tests/conformance`, `tests/tooling`) without the native toolchain, skipping
-only the suites that adopt a native connection: `tests/binding/**`,
-`tests/compat/socket/**`, `tests/compat/stream.test.ts`, and
-`tests/conformance/close.conformance.test.ts`, which needs a live server to
-close on. A new suite that loads the addon must be added to that exclusion
-list or it will fail this job; `zig-test.yml` runs all four.
+`ts-test.yml` runs a bare `vitest run` without the native toolchain, so it
+discovers new suites instead of enumerating directories, and excludes the four
+globs that need the addon: `tests/binding/**`, `tests/compat/socket/**`,
+`tests/compat/stream.test.ts`, and `tests/conformance/close.conformance.test.ts`,
+the last because it needs a live server to close on. A new suite that loads the
+addon must be added to that exclusion list or it will fail this job.
 
 `zig-test.yml` runs two jobs with the same toolchain and cache: units
 (`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
 under `src/engine-tests/`, mirroring the `src/engine/` planes) and the
-addon-backed lifecycle suite
-(`pnpm build:binding` then
-`vitest tests/binding tests/compat/socket tests/compat/stream.test.ts`). Both
-cache `.zig-cache` and `zig-pkg` between runs. Neither installs a vendor C
-toolchain: the engine compiles BoringSSL, lsquic, libdeflate, and zlib itself
-from pinned package sources.
+addon-backed lifecycle suite, which runs `pnpm build:binding`, checks the built
+declarations with `pnpm exec tsdown && pnpm run typecheck:dist`, and then runs:
+
+```sh
+vitest run tests/binding tests/compat/socket tests/compat/stream.test.ts tests/conformance
+```
+
+so every suite `ts-test.yml` excludes is covered here, and the conformance
+suites run against the real addon. Both jobs cache `.zig-cache` and `zig-pkg`
+between runs. Neither installs a vendor C toolchain: the engine compiles
+BoringSSL, lsquic, libdeflate, and zlib itself from pinned package sources.
 
 ## Native addon matrix
 
@@ -128,39 +132,82 @@ linked issue and cannot be merged silently.
 
 ## Autobahn RFC 6455 compliance
 
-The compatibility job builds the server example in release mode, waits for the
-listener, and runs the digest-pinned
-`crossbario/autobahn-testsuite:0.8.2@sha256:519915fb568b04c9383f70a1c405ae3ff44ab9e35835b085239c258b6fac3074`
-container as the fuzzing client. The runner terminates the server on every
-exit path and writes reports as the invoking POSIX user so repeated local runs
-can replace them safely.
+The harness is `node tests/autobahn/run.ts`. It starts
+`tests/autobahn/target.ts`, which drives the native engine directly, probes
+whether the target can echo, and only then runs the digest-pinned
+`crossbario/autobahn-testsuite@sha256:519915fb568b04c9383f70a1c405ae3ff44ab9e35835b085239c258b6fac3074`
+container as the fuzzing client. The target is terminated on every exit path,
+and the report plus a JSON summary are written on every exit path, including a
+failed probe, so a failed job can still be inspected. The container writes its
+reports as the invoking POSIX user so repeated local runs can replace them
+safely.
 
-The configuration selects groups 1-7 and 9-13 with no exclusions. The report
-gate requires all 517 cases with 514 `OK` and 3 `INFORMATIONAL` results. Any
-failed, `NON-STRICT`, missing, additional, or reclassified case fails the job.
-RFC 7692 groups 12 and 13 pass through negotiated no-context-takeover
-per-message deflate. HTML/JSON reports are uploaded even when the gate fails.
+The reference is digest-only. The `crossbario/autobahn-testsuite` repository
+publishes exactly two tags, `latest` and `25.10.1`, and both resolve to that
+digest; there is no `0.8.2` tag, so a tag-and-digest reference is unpullable and
+the job would fail at `docker run` rather than at a protocol assertion. Dropping
+the tag loses no information, because the two published tags are the same
+manifest.
+
+The configuration selects groups 1-7 and 9-13 with no exclusions, which is 517
+cases. The report gate requires all 517 cases with 514 `OK` and 3
+`INFORMATIONAL` results in `behaviorClose`. Any failed, missing, additional, or
+reclassified case fails the job. `NON-STRICT` is tolerated, and that is the rule
+the reference implementation forces: the 517-case `ws` report classifies 6.4.1
+through 6.4.4 as `NON-STRICT`, because the specification is genuinely ambiguous
+for a UTF-8 handling edge there. A gate that fails on `NON-STRICT` therefore
+fails `ws` itself, which cannot be the contract.
+
+Of the 517 cases, 128 are capacity-blocked and 389 are evaluated. The engine is
+compiled with a 32 KiB `message_capacity` in `src/engine/server/options.zig`, a
+`comptime` constant no harness can raise, so the blocked set is 7.1.6, 9.1
+through 9.6, 10.1.1, and the seven oversized payload rows of each of groups 12
+and 13. Each blocked case is reported as a distinct `skipped-capacity` outcome
+with its byte size, not as a pass and not as a failure. Groups 5 and 6 use small
+fragments and are not capacity-blocked. HTML and JSON reports are uploaded even
+when the gate fails.
 
 ## Benchmark
 
-The benchmark job checks the pull request and its `main` base into separate
-directories, builds both from their own working directory on the same runner,
-and runs the versioned `ventijs-ws-compare` contract:
+The harness is `pnpm bench`, which runs `node bench/index.ts`. It drives `ws` and
+the ventijs native engine through one shared echo path, so the server is the only
+variable between the two rows of the report. The ventijs leg is the native
+engine rather than the `ws`-shaped facade, because the facade's HTTP upgrade path
+does no RFC 6455 framing yet and would measure a handshake that never becomes a
+message. The `ws` client drives both legs, because ventijs client construction
+still throws `ERR_INVALID_STATE`.
 
 1. Start a `ws` echo server and the equivalent ventijs echo server.
-2. Run the same bounded client workload against each: fixed connections,
-   fixed message size, fixed duration, measured with a pinned tool.
-3. Repeat three times, discard the warm-up, and compare medians.
+2. Run the same bounded client workload against each: one connection, fixed
+   message size, fixed round-trip count, measured with `node:perf_hooks`.
+3. Repeat three times by default, discard the warm-up, and compare medians.
+4. Write a JSON report carrying commit, Node.js, pnpm, Zig, lockfile, CPU and
+   memory provenance, plus the raw samples behind every median.
 
-The regression gate fails when the candidate falls below 90 percent of the
-`main` baseline. The `ws` comparison is recorded as evidence, not as a
-pass/fail threshold, because absolute numbers vary across runners. Raw reports
-are uploaded as workflow artifacts; scheduled mainline runs append canonical
-JSON plus raw evidence to the `benchmark-data` branch. Records include runner,
-Node.js, pnpm, Zig, and lockfile provenance.
+`--gate` fails the run when ventijs's median falls below 90 percent of the `ws`
+median, and also when a configuration could not be measured, so an unverified row
+cannot read as a pass. The ten percent tolerance accounts for shared-runner
+variance.
 
-The tolerance accounts for shared-runner variance. Claims in documentation may
-cite only retained runs and must state the runner and toolchain.
+**The CI job does not pass `--gate` yet.** The first measurement with a working
+engine drain put ventijs between 0.51 and 0.65 of `ws` across 64 B to 16 KiB
+payloads on an `ubuntu-24.04` runner. Gating on that would report the project's
+honest starting point as a regression against itself on every pull request, and
+would train contributors to ignore the job. The job therefore uploads the raw
+report as an artifact on every run, including failures, and the comparison is read
+from the run rather than from a status. Enabling the gate is one flag on the
+`Measure` step in `.github/workflows/perf.yml`, and it belongs there when the
+engine reaches parity.
+
+The payload matrix is capped at 32 KiB by the engine's compiled
+`message_capacity`, and the harness rejects a larger `--sizes` entry rather than
+comparing a missing capability against a speed. `ws` accepts far more, so a row
+above the ceiling would not be a slower ventijs but an absent one.
+
+Raw reports are uploaded as workflow artifacts; scheduled mainline runs append
+canonical JSON plus raw evidence to the `benchmark-data` branch. Claims in
+documentation may cite only retained runs and must state the runner and
+toolchain.
 
 ## Publishing
 
