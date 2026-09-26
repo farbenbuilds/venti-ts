@@ -4,22 +4,40 @@ on:
   push:
     branches:
       - main
+    # The benchmark drives the native engine, so only a Zig source, the build
+    # manifest, the harness, or the toolchain can change its result.
+    #
+    # `src/**` was here for the same reason it was in `autobahn.yml`, and was
+    # wrong for the same reason: it matched every TypeScript file, including the
+    # `ws`-shaped facade, which the benchmark does not exercise. `**.zig` already
+    # covers `src/**/*.zig`; `build.zig.zon` does not match `**.zig` and is listed
+    # because it pins the engine and its vendored dependencies.
     paths:
       - "**.zig"
-      - "src/**"
+      - "build.zig.zon"
       - "bench/**"
       - "package.json"
       - "pnpm-lock.yaml"
+      - "tsconfig.json"
       - ".github/workflows/perf.yml"
   pull_request:
     branches:
       - main
+    # The benchmark drives the native engine, so only a Zig source, the build
+    # manifest, the harness, or the toolchain can change its result.
+    #
+    # `src/**` was here for the same reason it was in `autobahn.yml`, and was
+    # wrong for the same reason: it matched every TypeScript file, including the
+    # `ws`-shaped facade, which the benchmark does not exercise. `**.zig` already
+    # covers `src/**/*.zig`; `build.zig.zon` does not match `**.zig` and is listed
+    # because it pins the engine and its vendored dependencies.
     paths:
       - "**.zig"
-      - "src/**"
+      - "build.zig.zon"
       - "bench/**"
       - "package.json"
       - "pnpm-lock.yaml"
+      - "tsconfig.json"
       - ".github/workflows/perf.yml"
   workflow_dispatch:
 

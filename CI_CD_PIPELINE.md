@@ -200,7 +200,9 @@ Three things changed, in descending order of effect:
    subsumed `**.zig` and additionally matched every TypeScript file, so a change
    to the `ws`-shaped facade, which this suite never exercises, still spent 38
    minutes of runner time. Now only a Zig source, `build.zig.zon`, the harness,
-   the lockfile, or the workflow itself starts the job.
+   the lockfile, or the workflow itself starts the job. The same defect was in
+   `perf.yml` and is fixed the same way, since the benchmark drives the native
+   engine and is equally indifferent to the facade.
 2. **A pull request runs the `framing` selection, which omits the two
    per-message-deflate groups.** Those are 216 of 517 cases and every one reports
    `UNIMPLEMENTED`, because `permessage-deflate` is normalised and never
