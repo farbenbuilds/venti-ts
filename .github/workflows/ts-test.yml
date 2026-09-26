@@ -67,9 +67,12 @@ jobs:
       - name: Unit tests
         # The native addon is not built in this job, so the suites that attach
         # to it stay out exactly like tests/binding/**: the binding lifecycle
-        # tests and the compat facade suite that adopts a native connection.
+        # tests, the compat facade suite that adopts a native connection, and
+        # the close conformance suite, which needs a real server to close on.
+        # The binding job in zig-test.yml runs all four.
         run: >-
           pnpm exec vitest run
           --exclude 'tests/binding/**'
           --exclude 'tests/compat/socket/**'
           --exclude 'tests/compat/stream.test.ts'
+          --exclude 'tests/conformance/close.conformance.test.ts'

@@ -71,9 +71,11 @@ reviewers can inspect the published type surface without building locally.
 
 `ts-test.yml` runs the pure suites (`tests/protocol`, `tests/compat`,
 `tests/conformance`, `tests/tooling`) without the native toolchain, skipping
-only the suites that adopt a native connection. `tests/binding/**` and the
-addon-backed compat suites run through `pnpm test` in the planned native
-workflow.
+only the suites that adopt a native connection: `tests/binding/**`,
+`tests/compat/socket/**`, `tests/compat/stream.test.ts`, and
+`tests/conformance/close.conformance.test.ts`, which needs a live server to
+close on. A new suite that loads the addon must be added to that exclusion
+list or it will fail this job; `zig-test.yml` runs all four.
 
 `zig-test.yml` runs two jobs with the same toolchain and cache: units
 (`zig build test`, compiling `src/engine_tests.zig` and the per-module suites
