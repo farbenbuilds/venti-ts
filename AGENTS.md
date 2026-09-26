@@ -23,7 +23,7 @@ will own parsing, buffers, and backpressure.
   error-code, engine-status, and normalized option types. `src/compat/` splits
   by surface: `events/{registry,emitter,dom-events,dom-listeners}.ts` own the
   listener registry and DOM handlers, `options/{shared,server,client}.ts`
-  normalize options, `socket/{socket,state,attach,send,payload,lifecycle}.ts`
+  normalize options, `socket/{socket,state,attach,send,payload,close-reason,lifecycle}.ts`
   own the socket facade, `server/{server,close,listeners,upgrade,handshake,clients}.ts`
   own the server and Node HTTP upgrade path, and `constructors.ts`, `errors.ts`,
   `ready-state.ts`, `stream.ts` sit at the root. `src/protocol/` holds the pure
@@ -80,14 +80,16 @@ inside `nix develop` (Node 24, pnpm 12, Zig 0.16.0, zls).
 | Zig formatting                | `zig fmt --check --exclude zig-pkg src build.zig`                                  |
 | Version bump                  | `pnpm release`                                                                     |
 
-The first `pnpm build:binding` compiles BoringSSL, lsquic, and libdeflate into
-`.zig-cache/vendor-build-v4/` (minutes and roughly a gigabyte); later builds are
-incremental. `nix develop` provides CMake, Ninja, Perl, and patch, and pins
-`UWEBZOCKETS_DEFAULT_TARGET` and `UWEBZOCKETS_ZLIB_PREFIX` so the vendor build
-finds the right libc and zlib. Do not delete `.zig-cache` or `zig-pkg` casually.
-Every non-Windows target builds the vendor C libraries through the PIC
-wrappers in `scripts/`; on musl hosts `.envrc` selects `.#musl`. Cross-compile
-with `zig build -Dtarget=<triple>` plus a matching `UWEBZOCKETS_ZLIB_PREFIX`.
+The first `pnpm build:binding` compiles BoringSSL, lsquic, libdeflate, and
+zlib from pinned package dependencies into `.zig-cache/` (roughly a gigabyte);
+later builds are incremental. Since uWebZockets v1.2.0 the engine builds them
+itself with `zig cc` and `zig c++`, so no CMake, Ninja, Perl, patch, or system
+zlib is involved. `nix develop` pins `UWEBZOCKETS_DEFAULT_TARGET` so the build
+finds the right libc. Do not delete `.zig-cache` or `zig-pkg` casually. The
+vendor archives link into the shared addon, so
+`src/builds/targets/native.zig` forces `-fPIC` on them through the build
+graph; on musl hosts `.envrc` selects `.#musl`. Cross-compile with
+`zig build -Dtarget=<triple>`.
 
 `pnpm typecheck` runs `tsconfig.json` (`include: ["src", "tests/types"]`) and
 then `tsconfig.test.json` (`include: ["tests"]`, minus `tests/declarations`),

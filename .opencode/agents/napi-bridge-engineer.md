@@ -16,15 +16,15 @@ ownership transfer, and failure mapping are your responsibility.
 - `src/binding/**`: target home for addon loading and typed N-API calls
   (`load.ts` platform/arch resolution, `server.ts`, `socket.ts` free functions).
 - `src/lib.zig`: module declaration and exports as free functions.
-- `build.zig` and `build.zig.zon`: pinned `uWebZockets` v1.1.0
+- `build.zig` and `build.zig.zon`: pinned `uWebZockets` v1.7.0
   and `napi-zig` v0.2.8 revisions. A pin change is a boundary change.
 - `src/builds/orchestrator.zig` wires the addon; `src/builds/vendor.zig`
   imports the full `uWebZockets` module and passes `target` and `optimize`
   through; `src/builds/targets/native.zig` selects the PIC compiler wrappers on
   non-Windows targets. The engine's TLS (`App.init_https`, `TlsContext`) and
   QUIC (`App.init_http3`) entry points live behind that module.
-- Vendor C dependencies build into `.zig-cache/vendor-build-v4/` through
-  CMake, Ninja, Perl, and patch. Treat that cache as build output; rebuild it
+- Vendor C dependencies build into `.zig-cache/` from pinned package sources.
+  Treat that cache as build output; rebuild it
   from clean after a pin change instead of editing it.
 - `CODEBASE.md` (language boundary, ownership table, type pipeline),
   `CODING_CONVENTION.md` sections 5 and 6, `SECURITY.md` (the FFI lifetime

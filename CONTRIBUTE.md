@@ -27,13 +27,11 @@ and Zig 0.16.0 manually. No other system tooling is required for the
 TypeScript layer; the native binding is built by Zig.
 
 The first `pnpm build:binding` compiles the engine's vendored C dependencies
-(BoringSSL, lsquic, libdeflate) into `.zig-cache/vendor-build-v4/`. That takes
-minutes and about a gigabyte; later builds are incremental. The dev shell
-provides the required CMake, Ninja, Perl, and patch, and pins the default Zig
-target and zlib prefix for the vendor build. Do not delete `.zig-cache` or
-`zig-pkg` casually. Cross-compiling to another architecture
-(`zig build -Dtarget=<triple>`) additionally needs `UWEBZOCKETS_ZLIB_PREFIX`
-pointing at a zlib built for that target.
+(BoringSSL, lsquic, libdeflate, zlib) into `.zig-cache/`. That takes minutes
+and about a gigabyte; later builds are incremental. The engine builds them
+itself from pinned package sources, so the dev shell only pins the default Zig
+target. Do not delete `.zig-cache` or `zig-pkg` casually. Cross-compiling to
+another architecture is `zig build -Dtarget=<triple>`.
 
 ## Script contract
 
