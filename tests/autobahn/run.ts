@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-run --allow-read --allow-write --allow-env
 import { AUTOBAHN_IMAGE } from "./docker-args.ts";
 import { AGENT, SUMMARY_HOST_PATH } from "./paths.ts";
 import { probeTarget } from "./probe-echo.ts";
@@ -12,21 +11,15 @@ import { readReportCases, reportExists, resetReportDirectory, runFuzzingClient }
 import { startTarget } from "./target-process.ts";
 import type { TargetProcess } from "./target-process.ts";
 
-// Deno runs this file; the capability set is the shebang, and `deno task
-// autobahn` carries the same flags.
+// This runs on Node, alongside `pnpm test` and `tests/binding/**`, so the addon
+// is loaded through the one loader path the repository already has.
 //
-// The permissions are the reason this runs on Deno rather than Node. The harness
-// spawns a WebSocket server, spawns Docker, reads and writes a report directory,
-// and reads two environment variables, and it needs nothing else. Under Node
-// there is no equivalent, so a bug here has the whole filesystem.
-//
-// It uses Deno's `node:` compatibility surface rather than rewriting every call
-// to `Deno.Command` and friends. That is deliberate: it keeps the harness under
-// the repository's existing `tsc`, `oxlint`, `oxfmt`, and 150-line gates, so
-// there is one typechecker and one formatter for the whole tree, and it keeps the
-// addon load on the `createRequire` path that `tests/binding/**` already
-// exercises under Node. Deno gates `node:child_process` behind `--allow-run` all
-// the same, so the permission model is intact either way.
+// It was briefly ported to Deno, which is the better fit for a harness that
+// spawns a server and Docker and would run under an explicit capability set
+// rather than with the whole filesystem. The engine does not run under Deno: the
+// addon loads and the threadsafe function delivers the `listening` event, so the
+// bridge works, but the engine's event loop never accepts a connection and the
+// client is closed with 1006. `CI_CD_PIPELINE.md` records the measurement.
 type RunOptions = {
   readonly help: boolean;
   readonly force: boolean;
@@ -34,7 +27,7 @@ type RunOptions = {
 };
 
 const USAGE = [
-  "usage: deno task autobahn [--full] [--force]",
+  "usage: node tests/autobahn/run.ts [--full] [--force]",
   "",
   "Starts tests/autobahn/target.ts, measures whether it can echo, and runs the",
   "digest-pinned Autobahn fuzzing client against it. The report and a",

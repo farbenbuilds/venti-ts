@@ -132,43 +132,39 @@ linked issue and cannot be merged silently.
 
 ## Autobahn RFC 6455 compliance
 
-The harness runs on **Deno**, installed by `denoland/setup-deno` rather than
-added to `flake.nix`. The suite has always needed Docker, which the dev shell
-does not provide either, so it was never a job a contributor could run from
-`nix develop`; a second runtime in the dev shell would tax every contributor for
-a job only this workflow runs. Deno's capability flags are the point: the harness
-spawns a WebSocket server, spawns Docker, reads and writes a report directory,
-and reads two environment variables, so it runs under exactly
-`--allow-run --allow-read --allow-write --allow-env` and nothing else. Under Node
-there is no equivalent, so a bug in the harness has the whole filesystem.
+The harness is `node tests/autobahn/run.ts`, or `pnpm test:autobahn`. It
+deliberately does not run on Deno, which is worth recording because the idea is
+reasonable and was measured.
 
-It uses Deno's `node:` compatibility surface rather than rewriting every call to
-`Deno.Command` and friends. That keeps the harness under the repository's
-existing `tsc`, `oxlint`, `oxfmt`, and 150-line gates, so there is one
-typechecker and one formatter for the whole tree, and it keeps the addon load on
-the `createRequire` path `tests/binding/**` already exercises. Deno gates
-`node:child_process` behind `--allow-run` regardless, so the permission model is
-intact either way. The entry point is `deno task autobahn`, or the
-`deno run` line in the workflow; `pnpm test:autobahn` is the pnpm alias.
+Deno is the better fit in principle: this harness spawns a WebSocket server,
+spawns Docker, reads and writes a report directory, and reads two environment
+variables, so it would run under exactly
+`--allow-run --allow-read --allow-write --allow-env` instead of with the whole
+filesystem, and `denoland/setup-deno` would install it in the workflow without
+taxing the dev shell, which has never had Docker either.
 
-The entry point is `deno task autobahn` (`tests/autobahn/run.ts`). It starts
-`tests/autobahn/target.ts`, which drives the native engine directly, probes
-whether the target can echo, and only then runs the digest-pinned
-`crossbario/autobahn-testsuite@sha256:519915fb568b04c9383f70a1c405ae3ff44ab9e35835b085239c258b6fac3074`
-container as the fuzzing client. The target is terminated on every exit path,
-and the report plus a JSON summary are written on every exit path, including a
-failed probe, so a failed job can still be inspected. The container writes its
-reports as the invoking POSIX user so repeated local runs can replace them
-safely.
+The engine does not run under Deno. Measured in `autobahn.yml`:
 
-A preflight step runs first: `tests/autobahn/preflight.ts` loads the addon under
-Deno and prints the engine version. It costs about five seconds and it is the
-only pre-suite failure mode that would otherwise be discovered after 35 minutes
-of suite time. It is also where a C library mismatch between the runtime and the
-addon surfaces, which matters here because Deno publishes no musl build: on a
-musl host a locally built addon is musl and Deno is glibc, so this step is where
-that shows up. The CI runner is glibc and builds its own glibc addon, so the two
-agree.
+- the addon loads: a preflight that only `require`s it and prints the engine
+  version succeeds under Deno 2.x, so `dlopen` and the N-API surface are fine;
+- the threadsafe function works: the `listening` event arrives in JavaScript, so
+  the engine thread started, bound the listener, and the cross-thread callback
+  path is intact;
+- the connection then never completes. The probe records `handshake: false` and
+  a 1006 close, meaning the listener socket existed but nothing ever served the
+  connection, and even the over-limit probe that the engine answers with 1009 on
+  Node gets 1006.
+
+So the bridge works and the engine's event loop does not. Deno publishes no musl
+build, which also means this cannot be diagnosed on a musl host at all, since a
+locally built addon is musl and the only available Deno is glibc. The port was
+reverted and the harness stays on Node, which keeps it on the same addon-loading
+path `tests/binding/**` already exercises.
+
+A preflight step runs first: `tests/autobahn/preflight.ts` loads the addon and
+prints the engine version. It costs about five seconds and it is the only
+pre-suite failure mode that would otherwise be discovered after 21 minutes of
+suite time.
 
 The reference is digest-only. The `crossbario/autobahn-testsuite` repository
 publishes exactly two tags, `latest` and `25.10.1`, and both resolve to that
@@ -204,7 +200,7 @@ Three things changed, in descending order of effect:
    subsumed `**.zig` and additionally matched every TypeScript file, so a change
    to the `ws`-shaped facade, which this suite never exercises, still spent 38
    minutes of runner time. Now only a Zig source, `build.zig.zon`, the harness,
-   the Deno config, the lockfile, or the workflow itself starts the job.
+   the lockfile, or the workflow itself starts the job.
 2. **A pull request runs the `framing` selection, which omits the two
    per-message-deflate groups.** They are 216 of 517 cases, about 42 per cent of
    the runtime, and every one reports `UNIMPLEMENTED` because `permessage-deflate`
@@ -212,8 +208,8 @@ Three things changed, in descending order of effect:
    implemented, which will be its own change and can re-enable them. The
    selection is 301 cases, about 21 minutes. A schedule or a manual run passes
    `--full` and is the authoritative 517.
-3. **The preflight above** turns a broken runtime or ABI from a 38-minute
-   failure into a 5-second one.
+3. **The preflight above** turns an unloadable addon from a 21-minute failure
+   into a 5-second one.
 
 The gate holds a run to the count its mode selects, so a config and an
 expectation that disagree fail rather than pass quietly: 517 / 128 / 389 in

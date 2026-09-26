@@ -17,8 +17,6 @@ on:
       - "**.zig"
       - "build.zig.zon"
       - "tests/autobahn/**"
-      - "deno.json"
-      - "deno.lock"
       - "package.json"
       - "pnpm-lock.yaml"
       - "tsconfig.json"
@@ -39,8 +37,6 @@ on:
       - "**.zig"
       - "build.zig.zon"
       - "tests/autobahn/**"
-      - "deno.json"
-      - "deno.lock"
       - "package.json"
       - "pnpm-lock.yaml"
       - "tsconfig.json"
@@ -81,16 +77,6 @@ jobs:
           version: 0.16.0
           use-cache: false
 
-      # The harness runs on Deno. It is installed by the action rather than added
-      # to `flake.nix`, because the conformance suite already needs Docker, which
-      # the dev shell does not provide either, so it has never been a job a
-      # contributor could run from `nix develop` in the first place. A second
-      # runtime in the dev shell would tax every contributor for a job only this
-      # workflow runs.
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
       - name: Restore Zig caches
         uses: actions/cache@v4
         with:
@@ -107,10 +93,11 @@ jobs:
       - name: Build the native addon
         run: pnpm build:binding
 
-      - name: Check the addon loads under Deno
-        # Cheap and first, because it is the only pre-suite failure mode that
-        # would otherwise cost the full 35 minutes. See tests/autobahn/preflight.ts.
-        run: deno run --allow-read --allow-ffi tests/autobahn/preflight.ts
+      - name: Check the addon loads
+        # Cheap and first, because a runtime that cannot load the addon is the
+        # only pre-suite failure mode that would otherwise be discovered after
+        # 21 minutes of suite time. See tests/autobahn/preflight.ts.
+        run: node tests/autobahn/preflight.ts
 
       - name: Pull the digest-pinned fuzzing client
         # Pulled before the gate so an unpullable reference fails here with a
@@ -121,10 +108,6 @@ jobs:
         # The harness writes its report and a JSON summary on every exit path,
         # so the artifacts below exist even when the gate fails.
         #
-        # `deno run` rather than `pnpm test:autobahn`, so the job does not depend
-        # on the workspace install for a Deno-compatible runtime. The flags are
-        # the harness's capability set: spawn the target and Docker, read and
-        # write the report directory, read two environment variables.
         #
         # A pull request or a push runs the default `framing` selection, which
         # omits the two per-message-deflate groups. They are 216 of 517 cases,
@@ -133,8 +116,7 @@ jobs:
         # they cannot change until deflate is implemented. A schedule and a
         # manual run use `--full`, which is the authoritative 517.
         run: >-
-          deno run --allow-run --allow-read --allow-write --allow-env
-          tests/autobahn/run.ts
+          node tests/autobahn/run.ts
           ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '--full' || '' }}
 
       - name: Upload the report

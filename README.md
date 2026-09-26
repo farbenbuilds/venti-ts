@@ -224,7 +224,7 @@ rather than a configuration step.
 pnpm build                              # addon plus dist/; both harnesses need it
 pnpm test                               # vitest; rebuilds the addon first
 pnpm test:compat                        # the ws side-by-side conformance suite
-pnpm test:autobahn                      # deno task autobahn; needs Deno and Docker
+pnpm test:autobahn                      # node tests/autobahn/run.ts; needs Docker
 pnpm bench                              # node bench/index.ts; add -- --gate to enforce
 ```
 
@@ -247,11 +247,13 @@ Both measure the engine's real behaviour rather than a claimed one:
   target can echo at all, and only then starts the fuzzing client, so a target
   that cannot echo costs seconds instead of a half-hour of timeouts. It writes
   its report and JSON summary on every exit path, so a failed run can still be
-  inspected. It runs on Deno with an explicit capability set, installed by the
-  workflow rather than added to the dev shell;
+  inspected. It runs on Node, deliberately: Deno is a better fit for a harness
+  that spawns a server and Docker, and it was tried, but the engine's event loop
+  does not serve a connection under Deno even though the addon loads and the
+  threadsafe function delivers events. `CI_CD_PIPELINE.md` has the measurement;
 - the conformance job only starts for a change to the engine, its build
   manifest, the harness, or the lockfile, and a pull request selects 301 of the
-  517 cases. The two per-message-deflate groups are 216 cases that all report
+  517 cases, which is about 21 minutes instead of 35. The two per-message-deflate groups are 216 cases that all report
   `UNIMPLEMENTED` because deflate is never negotiated, so they run on the weekly
   schedule instead. The suite costs about four seconds a case inside the Python
   fuzzing client while the target answers a connect, echo, and close in 0.42 ms,

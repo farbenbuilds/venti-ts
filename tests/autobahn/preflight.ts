@@ -8,9 +8,6 @@ import { loadVentijsAddon } from "./addon.ts";
 /// fails the job in seconds with a one-line message instead of after a full
 /// suite run.
 ///
-/// It is also the check that proves the Deno runtime and the addon agree on the
-/// C library. Deno publishes no musl build, so on a musl host a locally built
-/// addon is musl and Deno is glibc, and this step is where that surfaces.
 const addon = loadVentijsAddon();
 process.stdout.write(
   `ventijs-preflight engine ${addon.engineVersion()} http3 ${String(addon.http3Available())}\n`,
