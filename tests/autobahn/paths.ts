@@ -25,7 +25,12 @@ export const CONTAINER_REPORTS_DIR = "/reports";
 
 /// Host-side paths: the config is mounted read-only, the report directory is
 /// mounted writable so repeated local runs replace the previous run's files.
+///
+/// Two configurations, one per suite mode. `fuzzingclient.json` is the full 517
+/// cases; `fuzzingclient-framing.json` omits the two per-message-deflate groups.
+/// See `MODE_COUNTS` in `expected-cases.ts` for why the split exists.
 export const CONFIG_HOST_PATH = join(HERE, "fuzzingclient.json");
+export const CONFIG_FRAMING_HOST_PATH = join(HERE, "fuzzingclient-framing.json");
 export const REPORTS_HOST_DIR = join(HERE, "reports");
 export const REPORT_INDEX_HOST_PATH = join(REPORTS_HOST_DIR, "servers", "index.json");
 export const SUMMARY_HOST_PATH = join(REPORTS_HOST_DIR, "summary.json");

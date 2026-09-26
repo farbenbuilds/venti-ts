@@ -46,7 +46,7 @@ Run every command through pnpm; do not invoke package binaries directly.
 | `pnpm test`           | vitest   | Unit, integration, and boundary tests                               | Wired                |
 | `pnpm test:watch`     | vitest   | Rerun tests on change                                               | Wired                |
 | `pnpm test:compat`    | vitest   | Run the `ws` behavioral conformance suite                           | Wired                |
-| `pnpm test:autobahn`  | node     | Run the Autobahn suite: `node tests/autobahn/run.ts`                | Wired                |
+| `pnpm test:autobahn`  | deno     | Run the Autobahn suite; add `-- --full` for all 517 cases           | Wired                |
 | `pnpm bench`          | node     | Compare against `ws` on the same host: `node bench/index.ts --gate` | Wired                |
 | `pnpm typecheck`      | tsc      | Strict check of `src` and `tests`, no emit                          | Wired                |
 | `pnpm typecheck:dist` | tsc      | `tsc -p tsconfig.dist-types.json`; needs `tsdown` output first      | Wired                |
@@ -136,11 +136,13 @@ the `ws` surface lands, do not extend it.
 - `ws` compatibility tests run the same scenario against both libraries and
   compare observable behavior. Import the real `ws` package as a dev
   dependency only; never ship it.
-- Protocol changes must run the RFC 6455 Autobahn suite, currently
-  `node tests/autobahn/run.ts`, against the contract in
-  [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md). It needs Docker, and it is not a CI job
-  yet, so a change that touches framing runs it locally and attaches the report
-  it writes.
+- Protocol changes must pass the RFC 6455 Autobahn suite, which is the
+  `autobahn.yml` job. The contract is in
+  [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md). The job only starts for a change to a
+  Zig source, `build.zig.zon`, the harness, the Deno config, the lockfile, or
+  the workflow, so an engine change gets it automatically. To run it by hand
+  needs both Deno and Docker; `pnpm test:autobahn` is the alias and
+  `deno task autobahn` the task.
 - Zig unit tests live in `src/engine-tests/`, one `<module>_test.zig` per
   testable source module, aggregated by `root.zig` and entered through
   `src/engine_tests.zig`. Run them with `zig build test`; `zig-test.yml` runs

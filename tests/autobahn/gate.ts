@@ -1,5 +1,7 @@
 import { baselineDrift } from "./baseline-drift.ts";
 import { KNOWN_FAILURES } from "./baseline.ts";
+import { MODE_COUNTS } from "./suite-mode.ts";
+import type { SuiteMode } from "./suite-mode.ts";
 import { closeBehaviorViolations, countOutcomes, countViolations } from "./gate-counts.ts";
 import type { CaseReport } from "./report-index.ts";
 import { isTolerated } from "./report-index.ts";
@@ -30,6 +32,7 @@ export type GateCounts = {
 
 export type GateResult = {
   readonly ok: boolean;
+  readonly mode: SuiteMode;
   readonly counts: GateCounts;
   readonly violations: readonly Violation[];
   /// Baseline entries the run did not reproduce. A case can drop out of the
@@ -73,17 +76,18 @@ function driftViolations(drift: {
   ];
 }
 
-export function evaluateGate(cases: readonly CaseReport[]): GateResult {
+export function evaluateGate(cases: readonly CaseReport[], mode: SuiteMode = "full"): GateResult {
   const counts = countOutcomes(cases);
-  const drift = baselineDrift(cases);
+  const drift = baselineDrift(cases, MODE_COUNTS[mode]);
   const violations = [
-    ...countViolations(counts),
+    ...countViolations(counts, mode),
     ...closeBehaviorViolations(cases),
     ...caseViolations(cases),
     ...driftViolations(drift),
   ];
   return {
     ok: violations.length === 0,
+    mode,
     counts,
     violations,
     staleBaseline: drift.stale,

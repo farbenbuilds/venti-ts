@@ -13,6 +13,7 @@
 /// context, not asserted here: holding ventijs to it would assert that all 389
 /// evaluated cases pass, which is the per-case gate's job.
 export const TOTAL_CASES = 517;
+
 export const CLOSURE_BEHAVIORS: ReadonlySet<string> = new Set([
   "OK",
   "INFORMATIONAL",
@@ -33,12 +34,16 @@ export const REFERENCE_CLOSURE_INFORMATIONAL_CASES = 3;
 /// and not something the harness can raise.
 export const INBOUND_LIMIT_BYTES = 32 * 1024;
 
-/// Groups 12 and 13 generate their cases from a cross product: five test
-/// payloads for group 12 and seven deflate parameter sets for group 13, each
-/// expanded over the rows of the suite's `MSG_SIZES` table. The two counts are
-/// derived from that table rather than restated, so the arithmetic cannot drift
-/// away from the sizes it is derived from.
-export const COMPRESSION_SUBGROUPS = 12;
+/// Groups 12 and 13 generate their cases from a cross product: group 12 expands
+/// five deflate parameter sets and group 13 expands seven, each over the rows of
+/// the suite's `MSG_SIZES` table. The counts are derived from that table rather
+/// than restated, so the arithmetic cannot drift away from the sizes it comes
+/// from.
+///
+/// Confirmed against a real 517-case report: group 12 is 5 x 18 = 90 cases and
+/// group 13 is 7 x 18 = 126.
+export const DEFLATE_PARAMETER_SETS_GROUP_12 = 5;
+export const DEFLATE_PARAMETER_SETS_GROUP_13 = 7;
 
 /// The payload-length column of the suite's `MSG_SIZES` table, in expansion
 /// order, for case sub-ids `12.x.1` through `12.x.18` and `13.x.1` through
@@ -49,6 +54,11 @@ export const COMPRESSION_SIZE_ROWS = [
 ] as const;
 
 export const COMPRESSION_SIZES = COMPRESSION_SIZE_ROWS.length;
+
+/// Groups 12 and 13 are the per-message-deflate groups, 216 of the 517 cases.
+export const COMPRESSION_GROUPS = ["12", "13"] as const;
+export const COMPRESSION_CASES =
+  (DEFLATE_PARAMETER_SETS_GROUP_12 + DEFLATE_PARAMETER_SETS_GROUP_13) * COMPRESSION_SIZES;
 export const COMPRESSION_OVER_LIMIT_ROWS = COMPRESSION_SIZE_ROWS.filter(
   (size) => size > INBOUND_LIMIT_BYTES,
 ).length;
@@ -80,9 +90,11 @@ export const SCALAR_CAPACITY_CASES = CAPACITY_RULES.reduce(
   0,
 );
 
-export const COMPRESSION_CAPACITY_CASES = COMPRESSION_SUBGROUPS * COMPRESSION_OVER_LIMIT_ROWS;
+export const COMPRESSION_CAPACITY_CASES =
+  (DEFLATE_PARAMETER_SETS_GROUP_12 + DEFLATE_PARAMETER_SETS_GROUP_13) * COMPRESSION_OVER_LIMIT_ROWS;
 
-/// 1 + 6 + 6 + 9 + 9 + 6 + 6 + 1 = 44, plus 12 * 7 = 84.
+/// 1 + 6 + 6 + 9 + 9 + 6 + 6 + 1 = 44, plus (5 + 7) * 7 = 84. A real report
+/// splits those 84 as 35 in group 12 and 49 in group 13.
 export const CAPACITY_CASES = SCALAR_CAPACITY_CASES + COMPRESSION_CAPACITY_CASES;
 
 /// 517 - 128 = 389 cases the pinned engine build is expected to be able to

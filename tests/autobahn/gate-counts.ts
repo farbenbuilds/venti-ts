@@ -1,10 +1,6 @@
-import {
-  CAPACITY_CASES,
-  CLOSURE_BEHAVIORS,
-  EVALUATED_CASES,
-  INBOUND_LIMIT_BYTES,
-  TOTAL_CASES,
-} from "./expected-cases.ts";
+import { CLOSURE_BEHAVIORS, INBOUND_LIMIT_BYTES } from "./expected-cases.ts";
+import { MODE_COUNTS } from "./suite-mode.ts";
+import type { SuiteMode } from "./suite-mode.ts";
 import type { CaseReport } from "./report-index.ts";
 import type { GateCounts, Violation } from "./gate.ts";
 
@@ -42,27 +38,28 @@ export function countOutcomes(cases: readonly CaseReport[]): GateCounts {
   };
 }
 
-export function countViolations(counts: GateCounts): readonly Violation[] {
+export function countViolations(counts: GateCounts, mode: SuiteMode): readonly Violation[] {
   const violations: Violation[] = [];
   // A total other than 517 means a case went missing or the suite grew, and
   // either way the per-case verdicts below cannot be trusted.
-  if (counts.total !== TOTAL_CASES) {
+  const expected = MODE_COUNTS[mode];
+  if (counts.total !== expected.total) {
     violations.push({
       kind: "count-total",
-      detail: `expected ${TOTAL_CASES} cases, report has ${counts.total}`,
+      detail: `expected ${expected.total} cases in ${mode} mode, report has ${counts.total}`,
     });
   }
-  if (counts.capacity !== CAPACITY_CASES) {
+  if (counts.capacity !== expected.capacity) {
     violations.push({
       kind: "count-capacity",
-      detail: `expected ${CAPACITY_CASES} capacity-blocked cases above ${INBOUND_LIMIT_BYTES} bytes, report has ${counts.capacity}`,
+      detail: `expected ${expected.capacity} capacity-blocked cases above ${INBOUND_LIMIT_BYTES} bytes, report has ${counts.capacity}`,
     });
   }
   const evaluated = counts.passed + counts.failed;
-  if (evaluated !== EVALUATED_CASES) {
+  if (evaluated !== expected.evaluated) {
     violations.push({
       kind: "count-evaluated",
-      detail: `expected ${EVALUATED_CASES} evaluated cases, report has ${evaluated}`,
+      detail: `expected ${expected.evaluated} evaluated cases in ${mode} mode, report has ${evaluated}`,
     });
   }
   return violations;

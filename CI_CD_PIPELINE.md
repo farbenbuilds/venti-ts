@@ -132,7 +132,26 @@ linked issue and cannot be merged silently.
 
 ## Autobahn RFC 6455 compliance
 
-The harness is `node tests/autobahn/run.ts`. It starts
+The harness runs on **Deno**, installed by `denoland/setup-deno` rather than
+added to `flake.nix`. The suite has always needed Docker, which the dev shell
+does not provide either, so it was never a job a contributor could run from
+`nix develop`; a second runtime in the dev shell would tax every contributor for
+a job only this workflow runs. Deno's capability flags are the point: the harness
+spawns a WebSocket server, spawns Docker, reads and writes a report directory,
+and reads two environment variables, so it runs under exactly
+`--allow-run --allow-read --allow-write --allow-env` and nothing else. Under Node
+there is no equivalent, so a bug in the harness has the whole filesystem.
+
+It uses Deno's `node:` compatibility surface rather than rewriting every call to
+`Deno.Command` and friends. That keeps the harness under the repository's
+existing `tsc`, `oxlint`, `oxfmt`, and 150-line gates, so there is one
+typechecker and one formatter for the whole tree, and it keeps the addon load on
+the `createRequire` path `tests/binding/**` already exercises. Deno gates
+`node:child_process` behind `--allow-run` regardless, so the permission model is
+intact either way. The entry point is `deno task autobahn`, or the
+`deno run` line in the workflow; `pnpm test:autobahn` is the pnpm alias.
+
+The entry point is `deno task autobahn` (`tests/autobahn/run.ts`). It starts
 `tests/autobahn/target.ts`, which drives the native engine directly, probes
 whether the target can echo, and only then runs the digest-pinned
 `crossbario/autobahn-testsuite@sha256:519915fb568b04c9383f70a1c405ae3ff44ab9e35835b085239c258b6fac3074`
@@ -141,6 +160,15 @@ and the report plus a JSON summary are written on every exit path, including a
 failed probe, so a failed job can still be inspected. The container writes its
 reports as the invoking POSIX user so repeated local runs can replace them
 safely.
+
+A preflight step runs first: `tests/autobahn/preflight.ts` loads the addon under
+Deno and prints the engine version. It costs about five seconds and it is the
+only pre-suite failure mode that would otherwise be discovered after 35 minutes
+of suite time. It is also where a C library mismatch between the runtime and the
+addon surfaces, which matters here because Deno publishes no musl build: on a
+musl host a locally built addon is musl and Deno is glibc, so this step is where
+that shows up. The CI runner is glibc and builds its own glibc addon, so the two
+agree.
 
 The reference is digest-only. The `crossbario/autobahn-testsuite` repository
 publishes exactly two tags, `latest` and `25.10.1`, and both resolve to that
@@ -159,6 +187,42 @@ implementation forces: the 517-case `ws` report classifies 6.4.1 through 6.4.4 a
 `NON-STRICT`, because the specification is genuinely ambiguous for a UTF-8
 handling edge there. A gate that fails on `NON-STRICT` therefore fails `ws`
 itself, which cannot be the contract.
+
+### What the job costs, and what was cut
+
+Measured step timings from a full run: setup 7s, Zig cache restore 10s, addon
+build 126s, image pull 16s, **suite 2100s**. The suite is 92 per cent of the job,
+and it is not this project's cost. The target answers a connect, echo, and close
+in **0.42 ms**, so all 517 cases together are 0.2 seconds of target time against
+35 minutes of suite time. The four seconds per case is inside `wstest`, which is
+Python, and nothing on the Node or Zig side can make it faster. The only lever
+is selecting fewer cases.
+
+Three things changed, in descending order of effect:
+
+1. **The path filter no longer matches `src/**`.** It previously did, which
+   subsumed `**.zig` and additionally matched every TypeScript file, so a change
+   to the `ws`-shaped facade, which this suite never exercises, still spent 38
+   minutes of runner time. Now only a Zig source, `build.zig.zon`, the harness,
+   the Deno config, the lockfile, or the workflow itself starts the job.
+2. **A pull request runs the `framing` selection, which omits the two
+   per-message-deflate groups.** They are 216 of 517 cases, about 42 per cent of
+   the runtime, and every one reports `UNIMPLEMENTED` because `permessage-deflate`
+   is normalised and never negotiated. They cannot change until deflate is
+   implemented, which will be its own change and can re-enable them. The
+   selection is 301 cases, about 21 minutes. A schedule or a manual run passes
+   `--full` and is the authoritative 517.
+3. **The preflight above** turns a broken runtime or ABI from a 38-minute
+   failure into a 5-second one.
+
+The gate holds a run to the count its mode selects, so a config and an
+expectation that disagree fail rather than pass quietly: 517 / 128 / 389 in
+`full`, 301 / 44 / 257 in `framing`. A deflate case that appears in a `framing`
+report trips `count-total` and `count-evaluated`.
+
+A case-group matrix would cut wall-clock roughly fourfold, at the cost of paying
+the addon build once per job, which increases total runner minutes. Since the
+concern is runner time, it was not done.
 
 ### The known-failure baseline
 

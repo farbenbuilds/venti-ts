@@ -4,10 +4,21 @@ on:
   push:
     branches:
       - main
+    # Only the engine can change RFC 6455 behaviour, so only a Zig source, a
+    # build manifest, the harness, or the toolchain may start this job.
+    #
+    # An earlier version also matched `src/**`, which subsumed `**.zig` and
+    # additionally matched every TypeScript file. That meant a change to the
+    # `ws`-shaped facade, which the suite never exercises, still spent 38 minutes
+    # of runner time re-measuring something it cannot observe. `**.zig` already
+    # covers `src/**/*.zig`; `build.zig.zon` does not match `**.zig` and is
+    # listed because it pins the engine and its vendored dependencies.
     paths:
       - "**.zig"
-      - "src/**"
+      - "build.zig.zon"
       - "tests/autobahn/**"
+      - "deno.json"
+      - "deno.lock"
       - "package.json"
       - "pnpm-lock.yaml"
       - "tsconfig.json"
@@ -15,10 +26,21 @@ on:
   pull_request:
     branches:
       - main
+    # Only the engine can change RFC 6455 behaviour, so only a Zig source, a
+    # build manifest, the harness, or the toolchain may start this job.
+    #
+    # An earlier version also matched `src/**`, which subsumed `**.zig` and
+    # additionally matched every TypeScript file. That meant a change to the
+    # `ws`-shaped facade, which the suite never exercises, still spent 38 minutes
+    # of runner time re-measuring something it cannot observe. `**.zig` already
+    # covers `src/**/*.zig`; `build.zig.zon` does not match `**.zig` and is
+    # listed because it pins the engine and its vendored dependencies.
     paths:
       - "**.zig"
-      - "src/**"
+      - "build.zig.zon"
       - "tests/autobahn/**"
+      - "deno.json"
+      - "deno.lock"
       - "package.json"
       - "pnpm-lock.yaml"
       - "tsconfig.json"
@@ -59,6 +81,16 @@ jobs:
           version: 0.16.0
           use-cache: false
 
+      # The harness runs on Deno. It is installed by the action rather than added
+      # to `flake.nix`, because the conformance suite already needs Docker, which
+      # the dev shell does not provide either, so it has never been a job a
+      # contributor could run from `nix develop` in the first place. A second
+      # runtime in the dev shell would tax every contributor for a job only this
+      # workflow runs.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Restore Zig caches
         uses: actions/cache@v4
         with:
@@ -75,6 +107,11 @@ jobs:
       - name: Build the native addon
         run: pnpm build:binding
 
+      - name: Check the addon loads under Deno
+        # Cheap and first, because it is the only pre-suite failure mode that
+        # would otherwise cost the full 35 minutes. See tests/autobahn/preflight.ts.
+        run: deno run --allow-read --allow-ffi tests/autobahn/preflight.ts
+
       - name: Pull the digest-pinned fuzzing client
         # Pulled before the gate so an unpullable reference fails here with a
         # clear message rather than surfacing as a protocol failure.
@@ -83,7 +120,22 @@ jobs:
       - name: Run the suite
         # The harness writes its report and a JSON summary on every exit path,
         # so the artifacts below exist even when the gate fails.
-        run: pnpm run test:autobahn
+        #
+        # `deno run` rather than `pnpm test:autobahn`, so the job does not depend
+        # on the workspace install for a Deno-compatible runtime. The flags are
+        # the harness's capability set: spawn the target and Docker, read and
+        # write the report directory, read two environment variables.
+        #
+        # A pull request or a push runs the default `framing` selection, which
+        # omits the two per-message-deflate groups. They are 216 of 517 cases,
+        # about 42 per cent of the runtime, and every one is UNIMPLEMENTED
+        # because `permessage-deflate` is normalised and never negotiated, so
+        # they cannot change until deflate is implemented. A schedule and a
+        # manual run use `--full`, which is the authoritative 517.
+        run: >-
+          deno run --allow-run --allow-read --allow-write --allow-env
+          tests/autobahn/run.ts
+          ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '--full' || '' }}
 
       - name: Upload the report
         if: always()

@@ -1,4 +1,5 @@
-import { ALL_BASELINE_IDS, KNOWN_FAILURES } from "./baseline.ts";
+import { idsInGroups, KNOWN_FAILURES } from "./baseline.ts";
+import type { ModeCounts } from "./suite-mode.ts";
 import type { CaseReport } from "./report-index.ts";
 import { isTolerated } from "./report-index.ts";
 
@@ -16,9 +17,10 @@ export type BaselineDrift = {
 /// Only a failure outside the list is fatal. A list entry that now passes is
 /// reported rather than ignored, so the list shrinks as the engine improves and
 /// nobody can leave a finished case sitting in it.
-export function baselineDrift(cases: readonly CaseReport[]): BaselineDrift {
+export function baselineDrift(cases: readonly CaseReport[], mode: ModeCounts): BaselineDrift {
   const stale: string[] = [];
   const fixed: string[] = [];
+  const selected = idsInGroups(mode.groups);
   const seen = new Set<string>();
   for (const entry of cases) {
     if (!KNOWN_FAILURES.has(entry.id)) continue;
@@ -26,7 +28,7 @@ export function baselineDrift(cases: readonly CaseReport[]): BaselineDrift {
     if (entry.outcome === "skipped-capacity") continue;
     if (isTolerated(entry.behavior) && isTolerated(entry.behaviorClose)) fixed.push(entry.id);
   }
-  for (const id of ALL_BASELINE_IDS) {
+  for (const id of selected) {
     if (!seen.has(id)) stale.push(id);
   }
   return { stale: stale.sort(), fixed: fixed.sort() };

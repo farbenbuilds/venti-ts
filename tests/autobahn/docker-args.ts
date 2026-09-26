@@ -1,9 +1,4 @@
-import {
-  CONFIG_HOST_PATH,
-  CONTAINER_CONFIG_PATH,
-  CONTAINER_REPORTS_DIR,
-  REPORTS_HOST_DIR,
-} from "./paths.ts";
+import { CONTAINER_CONFIG_PATH, CONTAINER_REPORTS_DIR, REPORTS_HOST_DIR } from "./paths.ts";
 
 /// Pinned by digest alone. A tag would let a rebuilt image change the case set
 /// under the gate, and the 517-case contract is only meaningful against a
@@ -30,6 +25,7 @@ export const HOST_GATEWAY = "host.docker.internal";
 export function dockerArgs(input: {
   readonly uid: string;
   readonly gid: string;
+  readonly configHostPath: string;
 }): readonly string[] {
   return [
     "run",
@@ -39,7 +35,7 @@ export function dockerArgs(input: {
     "--add-host",
     `${HOST_GATEWAY}:host-gateway`,
     "-v",
-    `${CONFIG_HOST_PATH}:${CONTAINER_CONFIG_PATH}:ro`,
+    `${input.configHostPath}:${CONTAINER_CONFIG_PATH}:ro`,
     "-v",
     `${REPORTS_HOST_DIR}:${CONTAINER_REPORTS_DIR}`,
     AUTOBAHN_IMAGE,

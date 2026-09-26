@@ -32,7 +32,7 @@
     "test": "pnpm run build:binding && vitest run --no-file-parallelism",
     "test:watch": "pnpm run build:binding && vitest",
     "test:compat": "vitest run tests/conformance",
-    "test:autobahn": "node tests/autobahn/run.ts",
+    "test:autobahn": "deno run --allow-run --allow-read --allow-write --allow-env tests/autobahn/run.ts",
     "bench": "node bench/index.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "typecheck:dist": "tsc -p tsconfig.dist-types.json",

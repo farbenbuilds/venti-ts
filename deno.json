@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "autobahn": "deno run --allow-run --allow-read --allow-write --allow-env tests/autobahn/run.ts"
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "semiColons": true,
+    "singleQuote": false
+  },
+  "exclude": ["zig-pkg", "node_modules", "dist", "zig-out", "graphify-out"]
+}

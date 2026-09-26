@@ -224,7 +224,7 @@ rather than a configuration step.
 pnpm build                              # addon plus dist/; both harnesses need it
 pnpm test                               # vitest; rebuilds the addon first
 pnpm test:compat                        # the ws side-by-side conformance suite
-pnpm test:autobahn                      # node tests/autobahn/run.ts; needs Docker
+pnpm test:autobahn                      # deno task autobahn; needs Deno and Docker
 pnpm bench                              # node bench/index.ts; add -- --gate to enforce
 ```
 
@@ -247,7 +247,15 @@ Both measure the engine's real behaviour rather than a claimed one:
   target can echo at all, and only then starts the fuzzing client, so a target
   that cannot echo costs seconds instead of a half-hour of timeouts. It writes
   its report and JSON summary on every exit path, so a failed run can still be
-  inspected;
+  inspected. It runs on Deno with an explicit capability set, installed by the
+  workflow rather than added to the dev shell;
+- the conformance job only starts for a change to the engine, its build
+  manifest, the harness, or the lockfile, and a pull request selects 301 of the
+  517 cases. The two per-message-deflate groups are 216 cases that all report
+  `UNIMPLEMENTED` because deflate is never negotiated, so they run on the weekly
+  schedule instead. The suite costs about four seconds a case inside the Python
+  fuzzing client while the target answers a connect, echo, and close in 0.42 ms,
+  so the only lever is selecting fewer cases;
 - the conformance gate is a **regression** gate, not a pass/fail wall. The first
   full run had 160 of 389 evaluated cases passing; the 229 failures are committed
   to `tests/autobahn/baseline.json` with a reason per group. A failure outside
