@@ -76,19 +76,21 @@ export function selectProtocol(
 
 /// Emits `wsClientError` when a listener exists, otherwise writes the HTTP
 /// rejection. The coded error keeps the stable `ERR_PROTOCOL` surface while
-/// the message stays byte-identical to `ws`.
+/// the message stays byte-identical to `ws`. `headers` only rides along with
+/// the written rejection, matching upstream: the emitted error carries none.
 export function abortOrEmit(
   state: ServerState,
   request: IncomingMessage,
   socket: Duplex,
   code: number,
   message: string,
+  headers?: OutgoingHttpHeaders,
 ): void {
   if (listenerCount(state.listeners, "wsClientError") > 0) {
     emitEvent(state, "wsClientError", createError("ERR_PROTOCOL", message), socket, request);
     return;
   }
-  abortHandshake(socket, code, message);
+  abortHandshake(socket, code, message, headers);
 }
 
 /// Writes the HTTP error response `ws` sends when preconditions fail. The
