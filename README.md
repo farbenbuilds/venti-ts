@@ -169,6 +169,23 @@ Status vocabulary, shared with [COMPATIBILITY.md](COMPATIBILITY.md):
 | RFC 6455 Autobahn suite                             | `done`     | `autobahn.yml`, capacity-scoped at 128 of 517 cases                      |
 | `ws` side-by-side conformance suite                 | `partial`  | Upgrade, close, stream, and options; message cases pending               |
 
+## Protocol conformance, honestly
+
+The Autobahn suite ran end to end in CI on the first full attempt. The result:
+
+| Outcome                | Cases | Meaning                                             |
+| ---------------------- | ----- | --------------------------------------------------- |
+| Passed                 | 160   | Conformant                                          |
+| Failed                 | 229   | Tracked in `tests/autobahn/baseline.json`, by cause |
+| Skipped, over capacity | 128   | Above the 32 KiB message ceiling below              |
+
+The 229 failures are the largest single source of remaining work, and they are
+not evenly spread: 132 are `permessage-deflate`, which is normalised and never
+negotiated; 76 are UTF-8 handling; 21 are fragmentation, limits, and close
+edges. The per-group breakdown and its reasoning are in
+[CI_CD_PIPELINE.md](CI_CD_PIPELINE.md) and in the baseline file itself, so the
+next person to pick this up does not have to re-derive it from a CI log.
+
 ## The 32 KiB message ceiling
 
 The engine is compiled with `message_capacity = 32 * 1024` in
@@ -230,7 +247,12 @@ Both measure the engine's real behaviour rather than a claimed one:
   target can echo at all, and only then starts the fuzzing client, so a target
   that cannot echo costs seconds instead of a half-hour of timeouts. It writes
   its report and JSON summary on every exit path, so a failed run can still be
-  inspected.
+  inspected;
+- the conformance gate is a **regression** gate, not a pass/fail wall. The first
+  full run had 160 of 389 evaluated cases passing; the 229 failures are committed
+  to `tests/autobahn/baseline.json` with a reason per group. A failure outside
+  that list fails the run, so nothing regresses quietly, and a list entry that
+  starts passing is reported until it is removed, so the list can only shrink.
 
 ## Performance
 

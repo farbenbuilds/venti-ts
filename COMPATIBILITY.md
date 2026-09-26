@@ -111,6 +111,28 @@ one. `pnpm bench` refuses a payload above the ceiling instead of comparing
 absent against present, and `tests/autobahn/` reports the 128 blocked cases as
 `skipped-capacity` rather than folding them into a pass or a failure.
 
+## RFC 6455 conformance
+
+The first full Autobahn run, in `autobahn.yml` on commit `47bfc68`, produced 517
+cases: 128 skipped over capacity, **160 of 389 evaluated cases passed**, and 229
+failed. The failures are committed to `tests/autobahn/baseline.json` with a
+reason per group, and the gate fails on any failure outside that list, so it is a
+regression gate rather than an exclusion.
+
+| Group | Cases | Gap                                                            |
+| ----- | ----- | -------------------------------------------------------------- |
+| 13    | 77    | `permessage-deflate` is never negotiated                       |
+| 12    | 55    | `permessage-deflate` is never negotiated                       |
+| 6     | 70    | UTF-8 handling across the incremental decoder                  |
+| 9     | 12    | Frame and payload limits are not enforced as the suite expects |
+| 5     | 8     | Fragmented messages are not reassembled                        |
+| 1     | 6     | Invalid or partial UTF-8 is not rejected with 1007             |
+| 7     | 1     | A close-handshake edge is not conformant                       |
+
+UTF-8 validation, fragmentation, and deflate negotiation are therefore the three
+largest protocol gaps, and they account for 210 of the 229. They are engine-side
+work in µWebZockets and the engine's own route, not facade work.
+
 ## WebSocketServer
 
 | Surface                         | Contract                                                                                                                                                                                                                 | Owner                                                | Status  | Evidence                                                                                                |

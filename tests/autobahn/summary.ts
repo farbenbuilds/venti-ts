@@ -1,3 +1,4 @@
+import { KNOWN_FAILURES } from "./baseline.ts";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
@@ -82,6 +83,14 @@ export function formatSummary(summary: AutobahnSummary): string {
   if (summary.failure !== null) lines.push(`blocked    ${summary.failure}`);
   if (!summary.suiteRun) lines.push("suite      not run");
   if (summary.counts !== null) lines.push(...describeCounts(summary.counts));
+  lines.push(
+    `baseline   ${KNOWN_FAILURES.size} known failures across ${KNOWN_FAILURES.groups.length} groups`,
+  );
+  for (const group of KNOWN_FAILURES.groups) {
+    lines.push(
+      `  group ${group.group.padEnd(3)} ${String(group.count).padStart(3)} cases  ${group.reason}`,
+    );
+  }
   for (const violation of summary.violations)
     lines.push(`  [${violation.kind}] ${violation.detail}`);
   lines.push(`result     ${summary.ok ? "PASS" : "FAIL"}`);
