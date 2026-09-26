@@ -1,7 +1,6 @@
 # ws surface compliance map
 
-The upstream `ws` API reference is vendored verbatim at
-[ventijs.md](ventijs.md). This directory maps each item in that reference to the
+The upstream `ws` API reference is vendored at [ventijs.md](ventijs.md). This directory maps each item in that reference to the
 ventijs module that implements it and to its status. It answers one question,
 "What does ventijs actually implement", which the vendored reference
 deliberately does not answer.

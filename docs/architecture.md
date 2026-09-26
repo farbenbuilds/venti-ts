@@ -12,7 +12,8 @@ exposes a `ws`-compatible TypeScript surface on top. Zig owns parsing, framing,
 buffers, and backpressure. TypeScript owns option validation, the observable
 event surface, and the generated declarations. The compatibility target is
 [`ws` 8.21.3](https://github.com/websockets/ws) plus `@types/ws` 8.18.1, whose
-API reference is vendored verbatim at [ventijs.md](ventijs.md).
+API reference is vendored at [ventijs.md](ventijs.md), credited to the `ws`
+authors at the top of that file.
 
 ## Where to look
 

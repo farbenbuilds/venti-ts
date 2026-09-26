@@ -53,9 +53,11 @@ incorporated.
 | ------------------------------------- | ------------------- | ------- |
 | [`ws` API reference](docs/ventijs.md) | `ws` 8.21.3         | MIT     |
 
-`docs/ventijs.md` is a verbatim copy of the upstream `ws` API reference document,
-credited to the `ws` authors and the
-[`websockets/ws`](https://github.com/websockets/ws) repository. It is vendored
+`docs/ventijs.md` is a copy of the upstream `ws` API reference document,
+`doc/ws.md`, credited to the `ws` authors and the
+[`websockets/ws`](https://github.com/websockets/ws) repository. The credit is at
+the top of the file as well as here. Its body is the upstream document byte for
+byte apart from the title, which is retitled for a ventijs reader. It is vendored
 because it is the compatibility contract: it is what ventijs is compared
 against. It is not ventijs documentation, it is not kept in sync by hand, and it
 is replaced wholesale when the pinned `ws` version changes.

@@ -15,10 +15,10 @@ the types, and every argument check live in TypeScript.
 is defined by `ws` 8.21.3, the MIT-licensed implementation written by the `ws`
 authors, and this project reproduces its observable behaviour rather than its
 source. ventijs is not affiliated with the `ws` project, and no `ws` source code
-is vendored into it. The upstream API reference is vendored verbatim as the
-pinned contract, with its provenance recorded in
-[docs/ventijs.md](docs/ventijs.md) and
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+is vendored into it. The upstream API reference is vendored as the pinned
+contract, credited at the top of [docs/ventijs.md](docs/ventijs.md) and recorded
+in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Its body is the upstream
+`doc/ws.md` byte for byte, apart from the title.
 
 ## Project status
 
@@ -287,20 +287,20 @@ and it belongs there when the engine reaches parity. See
 
 ## Documentation
 
-| Document                                                         | Contents                                                                                |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [COMPATIBILITY.md](COMPATIBILITY.md)                             | Parity tracker: every surface item, its owner module, its status, and its evidence test |
-| [docs/compliance.md](docs/compliance.md)                         | Index for the API surface map: the status vocabulary and the evidence rule              |
-| [docs/compliance-api.md](docs/compliance-api.md)                 | `WebSocketServer` and `WebSocket` items mapped to modules and status                    |
-| [docs/compliance-error-codes.md](docs/compliance-error-codes.md) | The 12 `WS_ERR_*` codes and the environment variables, with reachability                |
-| [docs/ventijs.md](docs/ventijs.md)                               | The vendored upstream `ws` API reference, verbatim; the pinned compatibility contract   |
-| [CODEBASE.md](CODEBASE.md)                                       | Repository layout, binding architecture, data flow, ownership rules                     |
-| [CODING_CONVENTION.md](CODING_CONVENTION.md)                     | TypeScript and Zig style, anti-OOP rules, naming, module budget                         |
-| [CONTRIBUTE.md](CONTRIBUTE.md)                                   | Environment setup, the script contract, checks, testing, pull requests, releasing       |
-| [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md)                           | Workflows, native matrix, conformance, Autobahn gate, benchmark, publishing             |
-| [SECURITY.md](SECURITY.md)                                       | Threat model, security boundaries, resource limits, private reporting                   |
-| [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)                 | Licence and revision provenance for everything runtime, vendored, or CI-only            |
-| [SKILL.md](SKILL.md)                                             | Agent engineering skill: ownership, boundary contract, working method                   |
+| Document                                                         | Contents                                                                                  |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [COMPATIBILITY.md](COMPATIBILITY.md)                             | Parity tracker: every surface item, its owner module, its status, and its evidence test   |
+| [docs/compliance.md](docs/compliance.md)                         | Index for the API surface map: the status vocabulary and the evidence rule                |
+| [docs/compliance-api.md](docs/compliance-api.md)                 | `WebSocketServer` and `WebSocket` items mapped to modules and status                      |
+| [docs/compliance-error-codes.md](docs/compliance-error-codes.md) | The 12 `WS_ERR_*` codes and the environment variables, with reachability                  |
+| [docs/ventijs.md](docs/ventijs.md)                               | The vendored upstream `ws` API reference (`doc/ws.md`); the pinned compatibility contract |
+| [CODEBASE.md](CODEBASE.md)                                       | Repository layout, binding architecture, data flow, ownership rules                       |
+| [CODING_CONVENTION.md](CODING_CONVENTION.md)                     | TypeScript and Zig style, anti-OOP rules, naming, module budget                           |
+| [CONTRIBUTE.md](CONTRIBUTE.md)                                   | Environment setup, the script contract, checks, testing, pull requests, releasing         |
+| [CI_CD_PIPELINE.md](CI_CD_PIPELINE.md)                           | Workflows, native matrix, conformance, Autobahn gate, benchmark, publishing               |
+| [SECURITY.md](SECURITY.md)                                       | Threat model, security boundaries, resource limits, private reporting                     |
+| [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)                 | Licence and revision provenance for everything runtime, vendored, or CI-only              |
+| [SKILL.md](SKILL.md)                                             | Agent engineering skill: ownership, boundary contract, working method                     |
 
 ## License and credits
 
