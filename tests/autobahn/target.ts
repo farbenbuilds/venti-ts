@@ -4,7 +4,7 @@ import { DEFAULT_TARGET_HOST, DEFAULT_TARGET_PORT } from "./paths.ts";
 import { echoState, pack, reply, type EchoState } from "./target-echo.ts";
 import { encodeTargetReady } from "./target-record.ts";
 
-/// `message_capacity` and `frame_capacity` from `src/engine/server/options.zig`.
+/// `message_capacity` and `frame_capacity` from `src/engine/server/capacities.zig`.
 /// They are `comptime` constants compiled into the addon, so the harness cannot
 /// raise them and has to account for them in the expected case counts.
 const MESSAGE_CAP = 32 * 1024;

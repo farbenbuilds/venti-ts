@@ -12,7 +12,7 @@ export const TOTAL_CASES = 517;
 export const CLOSURE_OK_CASES = 514;
 export const CLOSURE_INFORMATIONAL_CASES = 3;
 
-/// `message_capacity` in `src/engine/server/options.zig` is compiled into the
+/// `message_capacity` in `src/engine/server/capacities.zig` is compiled into the
 /// addon as a Zig `comptime` constant, so the cap is a property of the build
 /// and not something the harness can raise.
 export const INBOUND_LIMIT_BYTES = 32 * 1024;

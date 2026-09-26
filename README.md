@@ -172,7 +172,7 @@ Status vocabulary, shared with [COMPATIBILITY.md](COMPATIBILITY.md):
 ## The 32 KiB message ceiling
 
 The engine is compiled with `message_capacity = 32 * 1024` in
-`src/engine/server/options.zig`. It is a `comptime` constant baked into the
+`src/engine/server/capacities.zig`. It is a `comptime` constant baked into the
 addon, so it is a property of the build rather than a runtime setting, and
 `maxPayload` does not change it. The same constant sizes the cluster inbox
 payload slot, so it caps a single message on both sides.
@@ -253,8 +253,10 @@ lockfile hash, CPU model, and total memory. `perf.yml` uploads the raw report on
 every run, including failures.
 
 **The `perf.yml` job does not pass `--gate`.** The first run against a working
-engine drain put ventijs between 0.51 and 0.65 of `ws` across 64 B to 16 KiB
-payloads on an `ubuntu-24.04` runner. Gating on that would report the project's
+engine drain put ventijs between 0.14 and 0.38 of `ws` on a shared
+`ubuntu-24.04` runner, and between 0.57 and 0.66 of `ws` on an idle workstation;
+the shared runner is several times slower for both legs, so the ratio is the
+stable figure and the absolute numbers are not. Gating on that would report the project's
 honest starting point as a regression against itself on every pull request and
 would train contributors to ignore the job, so the job reports and the verdict
 is read from the artifact. Enabling the gate is one flag on the `Measure` step,

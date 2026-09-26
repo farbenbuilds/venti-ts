@@ -159,7 +159,7 @@ for a UTF-8 handling edge there. A gate that fails on `NON-STRICT` therefore
 fails `ws` itself, which cannot be the contract.
 
 Of the 517 cases, 128 are capacity-blocked and 389 are evaluated. The engine is
-compiled with a 32 KiB `message_capacity` in `src/engine/server/options.zig`, a
+compiled with a 32 KiB `message_capacity` in `src/engine/server/capacities.zig`, a
 `comptime` constant no harness can raise, so the blocked set is 7.1.6, 9.1
 through 9.6, 10.1.1, and the seven oversized payload rows of each of groups 12
 and 13. Each blocked case is reported as a distinct `skipped-capacity` outcome
@@ -190,8 +190,10 @@ cannot read as a pass. The ten percent tolerance accounts for shared-runner
 variance.
 
 **The CI job does not pass `--gate` yet.** The first measurement with a working
-engine drain put ventijs between 0.51 and 0.65 of `ws` across 64 B to 16 KiB
-payloads on an `ubuntu-24.04` runner. Gating on that would report the project's
+engine drain put ventijs between 0.14 and 0.38 of `ws` on a shared
+`ubuntu-24.04` runner, and between 0.57 and 0.66 of `ws` on an idle workstation.
+The shared runner is several times slower for both legs, which is why the ratio
+is the comparable figure and the absolute round-trip counts are not. Gating on that would report the project's
 honest starting point as a regression against itself on every pull request, and
 would train contributors to ignore the job. The job therefore uploads the raw
 report as an artifact on every run, including failures, and the comparison is read
